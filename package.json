@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build && node copy-config-files.js",
     "postbuild": "node copy-config-files.js",
+    "start": "node server.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -1,23 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, HashRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './index.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Gunakan HashRouter saat di production untuk menghindari masalah routing pada server static
-// BrowserRouter memerlukan konfigurasi server side untuk menangani routing
-const Router = import.meta.env.PROD ? HashRouter : BrowserRouter;
+// Menggunakan HashRouter untuk mengatasi masalah routing di static hosting
+// HashRouter menambahkan # di URL (contoh: https://example.com/#/dashboard)
+// Ini lebih handal untuk static hosting seperti Render.com dan mencegah 404 saat refresh
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Router>
+    <HashRouter>
       <ThemeProvider>
         <App />
         <ToastContainer position="top-right" autoClose={3000} />
       </ThemeProvider>
-    </Router>
+    </HashRouter>
   </React.StrictMode>
 );
