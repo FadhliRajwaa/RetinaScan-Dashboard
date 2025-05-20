@@ -23,6 +23,10 @@ function App() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [currentTitle, setCurrentTitle] = useState('Dashboard');
+  
+  // API URL from environment variables
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 
   // Update title based on current path
   useEffect(() => {
@@ -85,7 +89,7 @@ function App() {
       }
       
       // Try get profile from the correct endpoint
-      const response = await axios.get('http://localhost:5000/api/user/profile', {
+      const response = await axios.get(`${API_URL}/api/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -144,7 +148,7 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    window.location.href = 'http://localhost:5173/login';
+    window.location.href = `${FRONTEND_URL}/login`;
     return null;
   }
 
