@@ -3,8 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
 import { getHistory } from '../services/api';
-import { API_URL, getImageUrl } from '../utils/api';
+import { API_URL } from '../utils/api';
 import axios from 'axios';
+
+// Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
+const FALLBACK_API_URLS = [
+  API_URL,
+  'https://retinascan-backend-eszo.onrender.com'
+];
 import { 
   FiArrowLeft, 
   FiUser, 
@@ -17,16 +23,47 @@ import {
 
 // Format image URL properly regardless of path separator
 const formatImageUrl = (imagePath) => {
-  console.log('PatientHistoryPage - Processing imagePath:', imagePath);
+  if (!imagePath) return '/placeholder-image.png';
   
-  if (!imagePath) {
-    console.log('Image path is empty, using placeholder');
-    return '/placeholder-eye.png';
+  // Jika imagePath sudah lengkap (relatif maupun absolut), gunakan langsung
+  if (imagePath.startsWith('http')) {
+    return imagePath;
   }
   
-  const url = getImageUrl(imagePath);
-  console.log('Formatted image URL:', url);
-  return url;
+  // Ekstrak filename dari path apapun (Windows atau Unix)
+  let filename;
+  
+  // Cara 1: Ambil bagian setelah karakter / atau \ terakhir
+  const lastSlashIndex = Math.max(
+    imagePath.lastIndexOf('/'), 
+    imagePath.lastIndexOf('\\')
+  );
+  if (lastSlashIndex !== -1) {
+    filename = imagePath.substring(lastSlashIndex + 1);
+  } else {
+    filename = imagePath; // Jika tidak ada slash, maka ini sudah filename
+  }
+  
+  // Cara 2: Jika masih bermasalah, coba cara lain untuk path kompleks
+  if (!filename || filename.includes('/') || filename.includes('\\')) {
+    if (imagePath.includes('uploads')) {
+      // Pisahkan berdasarkan 'uploads' dan ambil sisanya
+      const parts = imagePath.split(/uploads[\/\\]?/);
+      if (parts.length > 1) {
+        filename = parts[parts.length - 1].replace(/^[\/\\]/, ''); // Hapus slash awal jika ada
+      }
+    }
+  }
+  
+  // Pastikan tidak ada backslash di URL (ganti dengan forward slash)
+  filename = filename.replace(/\\/g, '/');
+  
+  // Log untuk debugging
+  console.log('Original imagePath:', imagePath);
+  console.log('Extracted filename:', filename);
+  console.log('Final image URL:', `${API_URL}/uploads/${filename}`);
+  
+  return `${API_URL}/uploads/${filename}`;
 };
 
 function PatientHistoryPageComponent() {
@@ -43,7 +80,6 @@ function PatientHistoryPageComponent() {
         setIsLoading(true);
         // Ambil semua riwayat analisis
         const data = await getHistory();
-        console.log('API Response - Raw analysis data:', data);
         
         // Fungsi untuk mengelompokkan analisis berdasarkan pasien
         const groupAnalysesByPatient = (analyses) => {
@@ -94,8 +130,6 @@ function PatientHistoryPageComponent() {
         if (!patientHistory) {
           setError('Data pasien tidak ditemukan');
         } else {
-          console.log('Patient history data:', patientHistory);
-          console.log('Analyses for this patient:', patientHistory.analyses);
           setPatientData(patientHistory);
         }
       } catch (err) {
@@ -375,6 +409,45 @@ function PatientHistoryPageComponent() {
                     {/* Image Preview */}
                     <div className="bg-gray-100 p-4 rounded-lg">
                       <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
+                      {/* Debug controls */}
+                      <div className="mb-2 text-xs flex gap-1 flex-wrap">
+                        <button 
+                          onClick={() => {
+                            const el = document.getElementById('debug-image-info');
+                            if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                          }}
+                          className="px-2 py-1 bg-blue-500 text-white rounded"
+                        >
+                          Debug Info
+                        </button>
+                        {FALLBACK_API_URLS.map((url, i) => (
+                          <button 
+                            key={i}
+                            onClick={() => {
+                              const imgEl = document.getElementById('retina-image');
+                              if (imgEl && patientData.analyses[selectedAnalysisIndex].imagePath) {
+                                const filename = patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop();
+                                imgEl.src = `${url}/uploads/${filename}`;
+                              }
+                            }}
+                            className="px-2 py-1 bg-gray-500 text-white rounded"
+                          >
+                            Try API {i+1}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {/* Debug info panel */}
+                      <div id="debug-image-info" className="mb-2 p-2 bg-gray-700 text-white text-xs rounded hidden">
+                        {patientData.analyses[selectedAnalysisIndex].imagePath && (
+                          <>
+                            <p><strong>Original:</strong> {patientData.analyses[selectedAnalysisIndex].imagePath}</p>
+                            <p><strong>Filename:</strong> {patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop()}</p>
+                            <p><strong>URL:</strong> {formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}</p>
+                          </>
+                        )}
+                      </div>
+                      
                       <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
                         {patientData.analyses[selectedAnalysisIndex].imagePath ? (
                           <>
@@ -382,23 +455,32 @@ function PatientHistoryPageComponent() {
                               src={formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}
                               alt="Retina scan"
                               className="object-cover w-full h-full"
-                              onLoad={() => console.log('Image loaded successfully:', patientData.analyses[selectedAnalysisIndex].imagePath)}
                               onError={(e) => {
-                                console.error('Failed to load image:', patientData.analyses[selectedAnalysisIndex].imagePath);
-                                console.error('Error event:', e);
-                                // Try showing the original path directly as fallback
-                                const originalPath = patientData.analyses[selectedAnalysisIndex].imagePath;
-                                console.log('Trying fallback with original path:', originalPath);
-                                e.target.onerror = () => {
-                                  console.error('Fallback also failed, using placeholder');
-                                  e.target.src = '/placeholder-eye.png';
-                                };
-                                e.target.src = `${API_URL}/uploads/${originalPath.split(/[/\\]/).pop()}`;
+                                console.error('Error loading main image URL:', e.target.src);
+                                
+                                // Coba alternatiF URL - menggunakan nama file langsung
+                                const filename = patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop();
+                                const alternativeUrl = `${API_URL}/uploads/${filename}`;
+                                console.log('Trying alternative URL:', alternativeUrl);
+                                
+                                if (e.target.src !== alternativeUrl) {
+                                  e.target.src = alternativeUrl;
+                                } else {
+                                  // Jika alternative URL juga gagal, gunakan placeholder
+                                  e.target.onerror = null;
+                                  e.target.src = '/placeholder-image.png';
+                                  console.error('Both URLs failed, using placeholder');
+                                }
                               }}
                             />
-                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-xs">
-                              Path: {patientData.analyses[selectedAnalysisIndex].imagePath.split(/[/\\]/).pop()}
-                            </div>
+                            
+                            {/* Info debug URLs - hanya tampilkan di development */}
+                            {import.meta.env.DEV && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-2 text-xs text-white">
+                                <p>Original: {patientData.analyses[selectedAnalysisIndex].imagePath}</p>
+                                <p>URL: {formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}</p>
+                              </div>
+                            )}
                           </>
                         ) : (
                           <div className="flex items-center justify-center h-full">

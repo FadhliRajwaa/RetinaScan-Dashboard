@@ -25,6 +25,8 @@ const AddPatientForm = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formStep, setFormStep] = useState(1); // Step 1: Info Dasar, Step 2: Info Tambahan
+  const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,21 +56,36 @@ const AddPatientForm = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
+    
+    // Validate form data
+    if (!validateForm()) {
+      return;
+    }
+    
     try {
+      setIsSubmitting(true);
+      setError('');
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/patients', formData, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      await axios.post(`${API_URL}/api/patients`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setLoading(false);
-      onSuccess();
-      onClose();
+      
+      setSuccess('Pasien berhasil ditambahkan!');
+      resetForm();
+      
+      // Notify parent component
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err) {
-      console.error('Gagal menambahkan pasien:', err);
+      console.error('Error adding patient:', err);
       setError('Gagal menambahkan pasien. Silakan coba lagi.');
-      setLoading(false);
+    } finally {
+      setIsSubmitting(false);
+      // Scroll to top to show error/success messages
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -111,6 +128,15 @@ const AddPatientForm = ({ onClose, onSuccess }) => {
     })
   };
 
+  const validateForm = () => {
+    // Implementasi validasi form
+    return true; // Placeholder, actual implementation needed
+  };
+
+  const resetForm = () => {
+    // Implementasi reset form
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -140,6 +166,13 @@ const AddPatientForm = ({ onClose, onSuccess }) => {
         <div className="m-4 bg-red-50 text-red-600 p-3 rounded-md border-l-4 border-red-500 flex items-start text-sm">
           <div className="mr-3 mt-0.5">⚠️</div>
           <div>{error}</div>
+        </div>
+      )}
+
+      {success && (
+        <div className="m-4 bg-green-50 text-green-600 p-3 rounded-md border-l-4 border-green-500 flex items-start text-sm">
+          <div className="mr-3 mt-0.5">✅</div>
+          <div>{success}</div>
         </div>
       )}
 
@@ -515,12 +548,12 @@ const AddPatientForm = ({ onClose, onSuccess }) => {
                   </motion.button>
                   <motion.button
                     type="submit"
-                    disabled={loading}
+                    disabled={isSubmitting}
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium flex items-center justify-center w-full sm:w-auto"
-                    whileHover={!loading ? { scale: 1.03 } : {}}
-                    whileTap={!loading ? { scale: 0.98 } : {}}
+                    whileHover={!isSubmitting ? { scale: 1.03 } : {}}
+                    whileTap={!isSubmitting ? { scale: 0.98 } : {}}
                   >
-                    {loading ? 'Menyimpan...' : (
+                    {isSubmitting ? 'Menyimpan...' : (
                       <>
                         <FaSave className="mr-2" />
                         Simpan Pasien

@@ -20,12 +20,15 @@ function PatientDataForm({ onProfileComplete }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  
+  // Environment variables
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchPatientData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/user/profile', {
+        const response = await axios.get(`${API_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { 
@@ -73,7 +76,7 @@ function PatientDataForm({ onProfileComplete }) {
       }
     };
     fetchPatientData();
-  }, []);
+  }, [API_URL]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -98,7 +101,7 @@ function PatientDataForm({ onProfileComplete }) {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/user/profile', formData, {
+      await axios.put(`${API_URL}/api/user/profile`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSuccess('Data pasien berhasil disimpan!');

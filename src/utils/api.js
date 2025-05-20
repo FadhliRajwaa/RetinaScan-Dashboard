@@ -21,40 +21,37 @@ export const authHeaders = () => ({
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '/placeholder-eye.png';
   
-  console.log('Original imagePath:', imagePath);
-  
-  // Handle various formats of image paths
-  let finalPath = imagePath;
-  
-  // If the path already has the full URL structure, use it directly
-  if (finalPath.startsWith('http')) {
-    console.log('Path is already a URL:', finalPath);
-    return finalPath;
+  // Jika imagePath sudah lengkap (relatif maupun absolut), gunakan langsung
+  if (imagePath.startsWith('http')) {
+    return imagePath;
   }
   
-  // Extract just the filename in various path formats
-  // Handle Windows paths (backslashes)
-  if (finalPath.includes('\\')) {
-    const parts = finalPath.split('\\');
-    finalPath = parts[parts.length - 1];
+  // Dapatkan hanya nama file, terlepas dari format path
+  let filename = imagePath;
+  
+  // Jika itu adalah path lengkap dengan uploads (dalam format windows atau unix)
+  if (imagePath.includes('uploads\\') || imagePath.includes('uploads/')) {
+    // Pisahkan berdasarkan 'uploads' dan ambil bagian terakhir
+    const parts = imagePath.split(/uploads[\/\\]/);
+    if (parts.length > 1) {
+      filename = parts[parts.length - 1];
+    }
+  } else {
+    // Jika hanya nama file, gunakan langsung
+    // Pisahkan berdasarkan separator terakhir jika ada
+    const lastSlashIndex = Math.max(
+      imagePath.lastIndexOf('/'), 
+      imagePath.lastIndexOf('\\')
+    );
+    if (lastSlashIndex !== -1) {
+      filename = imagePath.substring(lastSlashIndex + 1);
+    }
   }
   
-  // Handle Unix paths (forward slashes)
-  if (finalPath.includes('/')) {
-    const parts = finalPath.split('/');
-    finalPath = parts[parts.length - 1];
-  }
+  // Pastikan tidak ada backslash di URL (ganti dengan forward slash)
+  filename = filename.replace(/\\/g, '/');
   
-  // Always replace backslashes with forward slashes
-  finalPath = finalPath.replace(/\\/g, '/');
-  
-  // Remove any leading slashes to avoid double slashes in the URL
-  finalPath = finalPath.replace(/^\/+/, '');
-  
-  const fullUrl = `${API_URL}/uploads/${finalPath}`;
-  console.log('Generated image URL:', fullUrl);
-  
-  return fullUrl;
+  return `${API_URL}/uploads/${filename}`;
 };
 
 // Export default config for axios

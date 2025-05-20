@@ -1,118 +1,98 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { FiUser, FiCalendar, FiPhone, FiMail, FiMapPin } from 'react-icons/fi';
 
-function PatientDataForm({ onProfileComplete }) {
+const ProfileForm = ({ updateProfileStatus }) => {
   const [formData, setFormData] = useState({
     fullName: '',
+    email: '',
+    gender: 'male',
     dateOfBirth: '',
-    age: '',
-    gender: '',
     phone: '',
     address: '',
     bloodType: '',
-    medicalHistory: '',
-    allergies: '',
-    lastCheckup: '',
-    emergencyContact: '',
+    medicalHistory: ''
   });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  
+  // Environment variables
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+  // Effect to get user profile data
   useEffect(() => {
-    const fetchPatientData = async () => {
+    const fetchProfileData = async () => {
       try {
+        setLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/user/profile', {
-          headers: { Authorization: `Bearer ${token}` },
+        const response = await axios.get(`${API_URL}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        const { 
-          fullName, 
-          dateOfBirth, 
-          gender, 
-          phone, 
-          address,
-          bloodType,
-          medicalHistory,
-          allergies,
-          lastCheckup,
-          emergencyContact 
-        } = response.data;
-        
-        // Hitung umur jika tanggal lahir tersedia
-        let calculatedAge = '';
-        if (dateOfBirth) {
-          const birthDate = new Date(dateOfBirth);
-          const today = new Date();
-          calculatedAge = today.getFullYear() - birthDate.getFullYear();
-          
-          // Koreksi umur jika belum ulang tahun
-          const monthDiff = today.getMonth() - birthDate.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            calculatedAge--;
+
+        if (response.data) {
+          // Format the date to YYYY-MM-DD for input compatibility
+          let dateOfBirth = response.data.dateOfBirth || '';
+          if (dateOfBirth) {
+            dateOfBirth = new Date(dateOfBirth).toISOString().split('T')[0];
           }
+
+          setFormData({
+            fullName: response.data.fullName || '',
+            email: response.data.email || '',
+            gender: response.data.gender || 'male',
+            dateOfBirth: dateOfBirth,
+            phone: response.data.phone || '',
+            address: response.data.address || '',
+            bloodType: response.data.bloodType || '',
+            medicalHistory: response.data.medicalHistory || ''
+          });
         }
-        
-        setFormData({
-          fullName: fullName || '',
-          dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString().split('T')[0] : '',
-          age: calculatedAge.toString(),
-          gender: gender || '',
-          phone: phone || '',
-          address: address || '',
-          bloodType: bloodType || '',
-          medicalHistory: medicalHistory || '',
-          allergies: allergies || '',
-          lastCheckup: lastCheckup ? new Date(lastCheckup).toISOString().split('T')[0] : '',
-          emergencyContact: emergencyContact || '',
-        });
       } catch (err) {
-        console.error('Gagal memuat data pasien:', err);
+        console.error('Gagal memuat data profil:', err);
+        setError('Gagal memuat data profil. Silakan coba lagi.');
+      } finally {
+        setLoading(false);
       }
     };
-    fetchPatientData();
-  }, []);
+
+    fetchProfileData();
+  }, [API_URL]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    
-    // Hitung umur otomatis saat tanggal lahir berubah
-    if (e.target.name === 'dateOfBirth' && e.target.value) {
-      const birthDate = new Date(e.target.value);
-      const today = new Date();
-      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      
-      // Koreksi umur jika belum ulang tahun
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        calculatedAge--;
-      }
-      
-      setFormData(prev => ({ ...prev, age: calculatedAge.toString() }));
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
     try {
       const token = localStorage.getItem('token');
-      await axios.put('http://localhost:5000/api/user/profile', formData, {
-        headers: { Authorization: `Bearer ${token}` },
+      await axios.put(`${API_URL}/api/user/profile`, formData, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      setSuccess('Data pasien berhasil disimpan!');
-      setError('');
+
+      setSuccess('Data profil berhasil disimpan!');
       
-      // Update profile complete status
-      if (onProfileComplete) {
-        onProfileComplete();
+      // If updating profile is successful, update the profile status in parent component
+      if (updateProfileStatus) {
+        updateProfileStatus();
       }
-      
-      setTimeout(() => navigate('/'), 1500);
     } catch (err) {
-      setError('Gagal menyimpan data pasien.');
-      setSuccess('');
+      console.error('Gagal menyimpan profil:', err);
+      setError('Gagal menyimpan profil. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -308,4 +288,4 @@ function PatientDataForm({ onProfileComplete }) {
   );
 }
 
-export default PatientDataForm;
+export default ProfileForm;

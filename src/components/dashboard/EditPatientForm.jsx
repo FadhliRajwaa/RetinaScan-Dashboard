@@ -23,6 +23,8 @@ const EditPatientForm = ({ patient, onClose, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Mengisi form data saat komponen di-mount atau patient berubah
   useEffect(() => {
@@ -71,21 +73,34 @@ const EditPatientForm = ({ patient, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
     try {
+      setIsSubmitting(true);
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/patients/${patient._id}`, formData, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await axios.put(`${API_URL}/api/patients/${patient._id}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setLoading(false);
-      onSuccess();
-      onClose();
+      setSuccess('Data pasien berhasil diperbarui!');
+      setError('');
+      
+      // Update local state
+      setPatient(prev => ({ ...prev, ...formData }));
+      
+      // Notify parent component
+      if (onUpdateSuccess) {
+        onUpdateSuccess(formData);
+      }
+      
+      // Close drawer if in a drawer
+      if (onClose) {
+        setTimeout(() => onClose(), 1500);
+      }
     } catch (err) {
-      console.error('Gagal mengupdate pasien:', err);
-      setError('Gagal mengupdate data pasien. Silakan coba lagi.');
-      setLoading(false);
+      console.error('Error updating patient:', err);
+      setError('Gagal memperbarui data pasien.');
+      setSuccess('');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
