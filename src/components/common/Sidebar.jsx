@@ -12,6 +12,9 @@ import {
   ArrowLeftCircleIcon,
 } from '@heroicons/react/24/outline';
 
+// Environment variables
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
+
 const menuItems = [
   { name: 'Dashboard', path: '/', icon: HomeIcon },
   { name: 'Data Pasien', path: '/patient-data', icon: UserIcon },
@@ -19,7 +22,7 @@ const menuItems = [
   { name: 'History', path: '/history', icon: ClockIcon },
   { 
     name: 'Kembali ke Beranda', 
-    path: 'http://localhost:5173',
+    path: FRONTEND_URL,
     icon: ArrowLeftCircleIcon,
     external: true
   },
@@ -32,7 +35,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = 'http://localhost:5173?logout=true';
+    window.location.href = `${FRONTEND_URL}?logout=true`;
   };
 
   const sidebarVariants = {
