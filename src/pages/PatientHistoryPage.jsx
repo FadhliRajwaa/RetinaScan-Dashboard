@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
 import { getHistory } from '../services/api';
+import { API_URL, getImageUrl } from '../utils/api';
+import axios from 'axios';
 import { 
   FiArrowLeft, 
   FiUser, 
@@ -12,6 +14,20 @@ import {
   FiFileText,
   FiBarChart2
 } from 'react-icons/fi';
+
+// Format image URL properly regardless of path separator
+const formatImageUrl = (imagePath) => {
+  console.log('PatientHistoryPage - Processing imagePath:', imagePath);
+  
+  if (!imagePath) {
+    console.log('Image path is empty, using placeholder');
+    return '/placeholder-eye.png';
+  }
+  
+  const url = getImageUrl(imagePath);
+  console.log('Formatted image URL:', url);
+  return url;
+};
 
 function PatientHistoryPageComponent() {
   const { patientId } = useParams();
@@ -27,6 +43,7 @@ function PatientHistoryPageComponent() {
         setIsLoading(true);
         // Ambil semua riwayat analisis
         const data = await getHistory();
+        console.log('API Response - Raw analysis data:', data);
         
         // Fungsi untuk mengelompokkan analisis berdasarkan pasien
         const groupAnalysesByPatient = (analyses) => {
@@ -77,6 +94,8 @@ function PatientHistoryPageComponent() {
         if (!patientHistory) {
           setError('Data pasien tidak ditemukan');
         } else {
+          console.log('Patient history data:', patientHistory);
+          console.log('Analyses for this patient:', patientHistory.analyses);
           setPatientData(patientHistory);
         }
       } catch (err) {
@@ -358,16 +377,29 @@ function PatientHistoryPageComponent() {
                       <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
                       <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
                         {patientData.analyses[selectedAnalysisIndex].imagePath ? (
-                          <img 
-                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/${patientData.analyses[selectedAnalysisIndex].imagePath.split('uploads\\')[1]}`}
-                            alt="Retina scan"
-                            className="object-cover w-full h-full"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = '/placeholder-image.png';
-                              console.error('Error loading image:', e);
-                            }}
-                          />
+                          <>
+                            <img 
+                              src={formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}
+                              alt="Retina scan"
+                              className="object-cover w-full h-full"
+                              onLoad={() => console.log('Image loaded successfully:', patientData.analyses[selectedAnalysisIndex].imagePath)}
+                              onError={(e) => {
+                                console.error('Failed to load image:', patientData.analyses[selectedAnalysisIndex].imagePath);
+                                console.error('Error event:', e);
+                                // Try showing the original path directly as fallback
+                                const originalPath = patientData.analyses[selectedAnalysisIndex].imagePath;
+                                console.log('Trying fallback with original path:', originalPath);
+                                e.target.onerror = () => {
+                                  console.error('Fallback also failed, using placeholder');
+                                  e.target.src = '/placeholder-eye.png';
+                                };
+                                e.target.src = `${API_URL}/uploads/${originalPath.split(/[/\\]/).pop()}`;
+                              }}
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-1 text-xs">
+                              Path: {patientData.analyses[selectedAnalysisIndex].imagePath.split(/[/\\]/).pop()}
+                            </div>
+                          </>
                         ) : (
                           <div className="flex items-center justify-center h-full">
                             <p className="text-gray-500 text-sm">Gambar tidak tersedia</p>

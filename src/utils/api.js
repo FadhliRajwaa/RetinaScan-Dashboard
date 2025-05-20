@@ -19,13 +19,42 @@ export const authHeaders = () => ({
 
 // Formats a full image URL from a relative path
 export const getImageUrl = (imagePath) => {
-  if (!imagePath) return '/placeholder-image.png';
+  if (!imagePath) return '/placeholder-eye.png';
   
-  // If imagePath contains 'uploads\\', extract the part after it
-  const parts = imagePath.split('uploads\\');
-  const imagePathFormatted = parts.length > 1 ? parts[1] : imagePath;
+  console.log('Original imagePath:', imagePath);
   
-  return `${API_URL}/uploads/${imagePathFormatted}`;
+  // Handle various formats of image paths
+  let finalPath = imagePath;
+  
+  // If the path already has the full URL structure, use it directly
+  if (finalPath.startsWith('http')) {
+    console.log('Path is already a URL:', finalPath);
+    return finalPath;
+  }
+  
+  // Extract just the filename in various path formats
+  // Handle Windows paths (backslashes)
+  if (finalPath.includes('\\')) {
+    const parts = finalPath.split('\\');
+    finalPath = parts[parts.length - 1];
+  }
+  
+  // Handle Unix paths (forward slashes)
+  if (finalPath.includes('/')) {
+    const parts = finalPath.split('/');
+    finalPath = parts[parts.length - 1];
+  }
+  
+  // Always replace backslashes with forward slashes
+  finalPath = finalPath.replace(/\\/g, '/');
+  
+  // Remove any leading slashes to avoid double slashes in the URL
+  finalPath = finalPath.replace(/^\/+/, '');
+  
+  const fullUrl = `${API_URL}/uploads/${finalPath}`;
+  console.log('Generated image URL:', fullUrl);
+  
+  return fullUrl;
 };
 
 // Export default config for axios
