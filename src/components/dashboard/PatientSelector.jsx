@@ -18,7 +18,8 @@ const PatientSelector = ({ onSelectPatient, selectedPatient }) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/patients', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await axios.get(`${API_URL}/api/patients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPatients(response.data);

@@ -359,7 +359,7 @@ function PatientHistoryPageComponent() {
                       <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
                         {patientData.analyses[selectedAnalysisIndex].imagePath ? (
                           <img 
-                            src={`http://localhost:5000/uploads/${patientData.analyses[selectedAnalysisIndex].imagePath.split('uploads\\')[1]}`}
+                            src={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/uploads/${patientData.analyses[selectedAnalysisIndex].imagePath.split('uploads\\')[1]}`}
                             alt="Retina scan"
                             className="object-cover w-full h-full"
                             onError={(e) => {

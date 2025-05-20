@@ -37,7 +37,8 @@ function EditPatientPageComponent() {
       try {
         setPatientLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:5000/api/patients/${patientId}`, {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/patients/${patientId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
@@ -106,7 +107,8 @@ function EditPatientPageComponent() {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/patients/${patientId}`, formData, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await axios.put(`${API_URL}/api/patients/${patientId}`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Data pasien berhasil diperbarui');

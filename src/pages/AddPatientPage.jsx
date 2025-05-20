@@ -62,7 +62,8 @@ const AddPatientPage = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/patients', formData, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await axios.post(`${API_URL}/api/patients`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setLoading(false);
