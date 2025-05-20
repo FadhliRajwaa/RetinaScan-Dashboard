@@ -342,12 +342,16 @@ const DashboardCharts = () => {
   const fetchData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      console.log('Fetching data from API:', API_URL);
+      
       const [analysesRes, patientsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/analysis/history', { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get('http://localhost:5000/api/patients', { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_URL}/api/analysis/history`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/api/patients`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setAnalyses(analysesRes.data);
       setPatients(patientsRes.data);
+      console.log('Data fetched successfully:', { analyses: analysesRes.data.length, patients: patientsRes.data.length });
     } catch (err) {
       console.error('Gagal mengambil data dashboard:', err);
     } finally {
@@ -360,7 +364,10 @@ const DashboardCharts = () => {
 
     // Setup Socket.IO connection with retry logic
     const setupSocket = () => {
-      const newSocket = io('http://localhost:5000', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      console.log('Connecting to Socket.IO server at:', API_URL);
+      
+      const newSocket = io(API_URL, {
         auth: {
           token: localStorage.getItem('token')
         },

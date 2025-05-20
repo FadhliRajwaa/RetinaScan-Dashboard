@@ -25,7 +25,8 @@ function PatientDataPageComponent() {
   const confirmDeletePatient = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/patients/${confirmDelete}`, {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await axios.delete(`${API_URL}/api/patients/${confirmDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       

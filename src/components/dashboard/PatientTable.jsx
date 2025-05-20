@@ -20,9 +20,13 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/patients', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      console.log('Fetching patients from:', `${API_URL}/api/patients`);
+      
+      const response = await axios.get(`${API_URL}/api/patients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('Patients data received:', response.data.length);
       setPatients(response.data);
       setError('');
     } catch (err) {

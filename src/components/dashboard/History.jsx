@@ -48,10 +48,12 @@ function History() {
     const fetchPatients = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:5000/api/patients', {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/patients`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPatients(response.data);
+        console.log('Fetched patients:', response.data.length);
       } catch (err) {
         console.error('Gagal memuat data pasien:', err);
       }
