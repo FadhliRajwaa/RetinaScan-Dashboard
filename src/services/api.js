@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const getToken = () => localStorage.getItem('token');
 
 export const uploadImage = async (formData) => {
-  const response = await axios.post(`${API_URL}/analysis/upload`, formData, {
+  const response = await axios.post(`${API_URL}/api/analysis/upload`, formData, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
       'Content-Type': 'multipart/form-data',
@@ -15,7 +15,7 @@ export const uploadImage = async (formData) => {
 };
 
 export const getHistory = async () => {
-  const response = await axios.get(`${API_URL}/analysis/history`, {
+  const response = await axios.get(`${API_URL}/api/analysis/history`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
@@ -147,7 +147,7 @@ function getClinicalSignsFromSeverity(severity) {
 export const getDashboardData = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/dashboard/stats`, {
+    const response = await axios.get(`${API_URL}/api/dashboard/stats`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

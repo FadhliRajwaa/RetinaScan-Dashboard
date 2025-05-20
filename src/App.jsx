@@ -25,7 +25,7 @@ function App() {
   const [currentTitle, setCurrentTitle] = useState('Dashboard');
   
   // API URL from environment variables
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 
   // Update title based on current path
