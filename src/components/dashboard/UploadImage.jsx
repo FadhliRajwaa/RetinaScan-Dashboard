@@ -13,10 +13,20 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Gunakan ref untuk melacak apakah file sudah diupload
+  const uploadedFileRef = useRef(null);
+  
   // Effect untuk auto upload saat file atau pasien berubah
   useEffect(() => {
-    if (file && autoUpload && selectedPatient) {
+    // Hanya upload jika file dan pasien ada, dan file belum diupload
+    if (file && autoUpload && selectedPatient && 
+        (!uploadedFileRef.current || uploadedFileRef.current !== file.name + selectedPatient._id)) {
+      
       console.log('Auto uploading file:', file.name, 'for patient:', selectedPatient.fullName || selectedPatient.name);
+      
+      // Tandai file ini sebagai sedang diupload
+      uploadedFileRef.current = file.name + selectedPatient._id;
+      
       // Gunakan setTimeout untuk memastikan UI diupdate terlebih dahulu
       setTimeout(() => {
         handleSubmit();
@@ -26,7 +36,18 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+    
     processFile(selectedFile);
+    
+    // Jika pasien sudah dipilih dan autoUpload aktif, langsung upload
+    if (selectedPatient && autoUpload) {
+      console.log('File dipilih dan pasien sudah ada, langsung upload');
+      // Kita tidak perlu setTimeout di sini karena processFile sudah mengupdate state
+      // dan useEffect akan menangani upload otomatis
+    } else if (!selectedPatient && autoUpload) {
+      console.log('File dipilih, tapi pasien belum dipilih. Menunggu pemilihan pasien...');
+    }
   };
 
   const processFile = (selectedFile) => {
@@ -86,12 +107,19 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
       return;
     }
     
+    // Cek apakah file ini sudah dalam proses upload
+    if (isLoading) {
+      console.log('Upload sudah dalam proses, menghindari duplikasi');
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const formData = new FormData();
       formData.append('image', file);
       formData.append('patientId', selectedPatient._id);
       
+      console.log('Mengunggah file:', file.name, 'untuk pasien:', selectedPatient.fullName || selectedPatient.name);
       const response = await uploadImage(formData);
       setSuccess(`Gambar berhasil diunggah!`);
       setError('');
@@ -111,10 +139,14 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
         // Jika autoUpload aktif, reset file dan preview
         setFile(null);
         setPreview(null);
+        // Reset tracking
+        uploadedFileRef.current = null;
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal mengunggah gambar. Coba lagi.');
       setSuccess('');
+      // Reset tracking jika gagal
+      uploadedFileRef.current = null;
     } finally {
       setIsLoading(false);
     }
@@ -260,13 +292,27 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
               >
                 Format: JPEG/PNG (maks. 5MB)
               </motion.p>
-              {autoUpload && file && (
-                <motion.p
-                  className={`mt-2 text-xs ${isLoading ? 'text-blue-500' : 'text-green-500'}`}
+              {autoUpload && (
+                <motion.div
+                  className={`mt-2 text-xs ${isLoading ? 'text-blue-500' : file ? 'text-green-500' : 'text-gray-500'}`}
                   variants={itemVariants}
                 >
-                  {isLoading ? 'Sedang mengunggah otomatis...' : selectedPatient ? 'Siap untuk upload otomatis' : 'Pilih pasien untuk upload otomatis'}
-                </motion.p>
+                  {isLoading ? (
+                    <p className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-3 w-3" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sedang mengunggah otomatis...
+                    </p>
+                  ) : file && selectedPatient ? (
+                    <p>Upload otomatis akan dimulai segera...</p>
+                  ) : file ? (
+                    <p>Pilih pasien untuk upload otomatis</p>
+                  ) : (
+                    <p>Setelah memilih file, upload akan dilakukan otomatis</p>
+                  )}
+                </motion.div>
               )}
             </div>
           </motion.div>
@@ -293,6 +339,8 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                   onClick={() => {
                     setFile(null);
                     setPreview(null);
+                    // Reset uploaded file tracking
+                    uploadedFileRef.current = null;
                   }}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -304,6 +352,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
           )}
         </AnimatePresence>
 
+        {/* Tombol upload hanya muncul jika autoUpload tidak aktif */}
         {!autoUpload && (
           <motion.div variants={itemVariants}>
             <button
@@ -327,6 +376,17 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                 'Unggah Gambar'
               )}
             </button>
+          </motion.div>
+        )}
+        
+        {/* Tombol untuk mode autoUpload yang hanya muncul jika file dan pasien sudah dipilih tapi belum diupload */}
+        {autoUpload && file && selectedPatient && !isLoading && (
+          <motion.div variants={itemVariants}>
+            <div className="flex justify-center">
+              <p className="text-sm text-green-600">
+                Gambar akan diunggah otomatis...
+              </p>
+            </div>
           </motion.div>
         )}
       </form>
