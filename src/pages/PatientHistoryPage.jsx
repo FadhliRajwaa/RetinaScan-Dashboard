@@ -13,7 +13,8 @@ import {
   FiPercent, 
   FiFileText,
   FiBarChart2,
-  FiRefreshCcw
+  FiRefreshCcw,
+  FiTrash2
 } from 'react-icons/fi';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
@@ -35,8 +36,8 @@ const checkImageExistence = async (url) => {
 
 // Format image URL properly regardless of path separator
 const formatImageUrl = (imagePath) => {
-  // Default fallback image (embedded base64 untuk hindari 404)
-  const DEFAULT_IMAGE = 'data:image/png;base64,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';
+  // Default fallback image (menggunakan gambar dari public folder)
+  const DEFAULT_IMAGE = '/images/not-found.jpg';
 
   if (!imagePath) return DEFAULT_IMAGE;
   
@@ -98,6 +99,8 @@ function PatientHistoryPageComponent() {
   const [imageStatus, setImageStatus] = useState('loading'); // 'loading', 'success', 'error'
   const [imageLoadAttempt, setImageLoadAttempt] = useState(0);
   const [activeImageUrl, setActiveImageUrl] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchPatientHistory = async () => {
@@ -206,7 +209,57 @@ function PatientHistoryPageComponent() {
 
   // Handle back to history page
   const handleBack = () => {
-    navigate('/history');
+    navigate('/patient-data');
+  };
+
+  const handleDeleteAnalysis = async (analysisId, index, e) => {
+    e.stopPropagation(); // Mencegah pemilihan item saat mengklik tombol delete
+    
+    if (deleteConfirm === analysisId) {
+      // Konfirmasi delete, lakukan penghapusan
+      try {
+        setIsDeleting(true);
+        const token = localStorage.getItem('token');
+        await axios.delete(`${API_URL}/api/analysis/${analysisId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        // Update state setelah berhasil menghapus
+        const updatedAnalyses = [...patientData.analyses];
+        updatedAnalyses.splice(index, 1);
+        
+        setPatientData({
+          ...patientData,
+          analyses: updatedAnalyses,
+          totalAnalyses: updatedAnalyses.length
+        });
+        
+        // Jika item yang dihapus adalah yang sedang dipilih, pilih item pertama
+        if (selectedAnalysisIndex === index) {
+          setSelectedAnalysisIndex(0);
+        } else if (selectedAnalysisIndex > index) {
+          // Jika item yang dihapus berada sebelum item yang dipilih, sesuaikan indeks
+          setSelectedAnalysisIndex(selectedAnalysisIndex - 1);
+        }
+        
+        setDeleteConfirm(null);
+      } catch (err) {
+        console.error('Error deleting analysis:', err);
+        alert('Gagal menghapus analisis. Silakan coba lagi.');
+      } finally {
+        setIsDeleting(false);
+      }
+    } else {
+      // Tampilkan konfirmasi delete
+      setDeleteConfirm(analysisId);
+      
+      // Otomatis hilangkan konfirmasi setelah 3 detik jika tidak diklik
+      setTimeout(() => {
+        setDeleteConfirm(prevState => prevState === analysisId ? null : prevState);
+      }, 3000);
+    }
   };
 
   // Menghitung distribusi tingkat keparahan
@@ -420,13 +473,27 @@ function PatientHistoryPageComponent() {
                             </span>
                           </div>
                         </div>
-                        {selectedAnalysisIndex === index && (
-                          <div className="bg-blue-500 text-white p-1 rounded-full">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        )}
+                        <div className="flex items-center">
+                          {selectedAnalysisIndex === index && (
+                            <div className="bg-blue-500 text-white p-1 rounded-full mr-2">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                          <button
+                            onClick={(e) => handleDeleteAnalysis(analysis._id, index, e)}
+                            className={`p-1 rounded-full transition-colors ${
+                              deleteConfirm === analysis._id
+                                ? 'bg-red-500 text-white'
+                                : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500'
+                            }`}
+                            disabled={isDeleting}
+                            title={deleteConfirm === analysis._id ? "Klik lagi untuk konfirmasi" : "Hapus pemindaian"}
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -555,7 +622,7 @@ function PatientHistoryPageComponent() {
                                 }
                                 
                                 // Gunakan base64 image default sebagai fallback terakhir
-                                const DEFAULT_IMAGE = 'data:image/png;base64,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';
+                                const DEFAULT_IMAGE = '/images/not-found.jpg';
                                 e.target.src = DEFAULT_IMAGE;
                                 console.log('Using default placeholder image');
                               }}
