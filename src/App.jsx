@@ -51,9 +51,10 @@ function App() {
       localStorage.setItem('token', tokenFromURL);
       console.log('Token saved to localStorage');
       
-      // Remove token from URL for security
-      window.history.replaceState({}, document.title, window.location.pathname);
-      console.log('Token removed from URL');
+      // Remove token from URL for security using HashRouter compatible method
+      const newUrl = window.location.pathname + window.location.hash.split('?')[0];
+      window.history.replaceState({}, document.title, newUrl);
+      console.log('Token removed from URL, new URL:', newUrl);
       
       // Verifikasi token yang baru disimpan
       const verifyNewToken = async () => {
@@ -87,6 +88,34 @@ function App() {
       };
       
       verifyNewToken();
+    } else {
+      console.log('No token in URL, checking localStorage');
+      // Jika tidak ada token di URL, periksa di localStorage
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        console.log('Token found in localStorage, verifying...');
+        const verifyStoredToken = async () => {
+          const authResult = await checkAuth();
+          setIsAuthenticated(authResult);
+          if (authResult) {
+            try {
+              const decodedToken = jwtDecode(storedToken);
+              if (decodedToken && decodedToken.id) {
+                setUserId(decodedToken.id);
+              }
+            } catch (error) {
+              console.error('Failed to decode stored token:', error);
+            }
+            checkProfile();
+          } else {
+            setLoading(false);
+          }
+        };
+        verifyStoredToken();
+      } else {
+        console.log('No token found anywhere');
+        setLoading(false);
+      }
     }
   }, [searchParams]);
 
@@ -102,27 +131,36 @@ function App() {
       return false;
     }
     
-    console.log('Token found in localStorage');
+    console.log('Token found in localStorage:', token.substring(0, 10) + '...');
     
     try {
       // Pertama verifikasi token di sisi klien
-      const decodedToken = jwtDecode(token);
-      console.log('Token decoded successfully:', { id: decodedToken.id, exp: decodedToken.exp });
-      
-      const currentTime = Date.now() / 1000;
-      console.log('Current time:', currentTime);
-      
-      if (decodedToken.exp < currentTime) {
-        console.log('Token expired');
-        localStorage.removeItem('token');
-        setLoading(false);
-        return false;
+      try {
+        const { jwtDecode } = await import('jwt-decode');
+        const decodedToken = jwtDecode(token);
+        console.log('Token decoded successfully:', { id: decodedToken.id, exp: decodedToken.exp });
+        
+        const currentTime = Date.now() / 1000;
+        console.log('Current time:', currentTime);
+        
+        if (decodedToken.exp < currentTime) {
+          console.log('Token expired');
+          localStorage.removeItem('token');
+          setLoading(false);
+          return false;
+        }
+        
+        console.log('Token not expired, validating with server...');
+      } catch (decodeError) {
+        console.error('Failed to decode token:', decodeError);
+        // Lanjutkan ke validasi server meskipun decode gagal
       }
-      
-      console.log('Token not expired, validating with server...');
       
       // Kemudian validasi dengan server untuk memastikan token masih valid
       try {
+        console.log('Sending request to:', `${API_URL}/api/user/profile`);
+        console.log('With headers:', { Authorization: `Bearer ${token.substring(0, 10)}...` });
+        
         const response = await axios.get(`${API_URL}/api/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -130,6 +168,7 @@ function App() {
         });
         
         console.log('Server validation successful:', response.status);
+        setLoading(false);
         return true;
       } catch (apiError) {
         console.error('Token tidak valid atau sesi telah berakhir:', apiError);
@@ -144,6 +183,7 @@ function App() {
           });
           
           console.log('Alternative validation successful:', altResponse.status);
+          setLoading(false);
           return true;
         } catch (altError) {
           console.error('Alternative validation failed:', altError);
@@ -153,7 +193,7 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('Invalid token format:', error);
+      console.error('Invalid token format or network error:', error);
       localStorage.removeItem('token');
       setLoading(false);
       return false;
@@ -253,7 +293,8 @@ function App() {
   if (!isAuthenticated) {
     console.log('User not authenticated, redirecting to frontend');
     // Arahkan ke halaman landing page dengan parameter untuk menandai asal redirect
-    window.location.href = `${FRONTEND_URL}/?from=dashboard&auth=failed`;
+    // Pastikan URL menggunakan format yang benar untuk HashRouter di frontend
+    window.location.href = `${FRONTEND_URL}/#/?from=dashboard&auth=failed`;
     return null;
   }
 

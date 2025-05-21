@@ -34,14 +34,22 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const { theme } = useTheme();
 
   const handleLogout = () => {
+    console.log('Logging out from dashboard');
+    
     // Hapus token dari localStorage
     localStorage.removeItem('token');
+    console.log('Token removed from localStorage');
     
     // Hapus semua data session lainnya jika ada
     sessionStorage.clear();
+    console.log('Session storage cleared');
     
     // Redirect ke landing page dengan parameter logout=true
-    window.location.href = `${FRONTEND_URL}/?logout=true&from=dashboard`;
+    // Pastikan URL menggunakan format yang benar untuk HashRouter di frontend
+    const logoutUrl = `${FRONTEND_URL}/#/?logout=true&from=dashboard`;
+    console.log('Redirecting to:', logoutUrl);
+    
+    window.location.href = logoutUrl;
   };
 
   const sidebarVariants = {
