@@ -9,7 +9,7 @@ import {
   FaArrowLeft, FaUser, FaIdCard, FaCalendarAlt, FaMale, FaFemale, 
   FaPhone, FaMapMarkerAlt, FaTint, FaNotesMedical, FaAllergies, 
   FaCalendarCheck, FaPhoneVolume, FaSave, FaEdit, FaTrash,
-  FaHistory, FaFileMedical, FaUserMd, FaClipboardList
+  FaHistory, FaFileMedical, FaUserMd, FaClipboardList, FaEye
 } from 'react-icons/fa';
 
 function PatientProfilePageComponent() {
