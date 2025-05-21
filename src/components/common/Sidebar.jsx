@@ -34,8 +34,14 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const { theme } = useTheme();
 
   const handleLogout = () => {
+    // Hapus token dari localStorage
     localStorage.removeItem('token');
-    window.location.href = `${FRONTEND_URL}`;
+    
+    // Hapus semua data session lainnya jika ada
+    sessionStorage.clear();
+    
+    // Pastikan redirect ke landing page dengan parameter logout=true
+    window.location.href = `${FRONTEND_URL}/?logout=true`;
   };
 
   const sidebarVariants = {

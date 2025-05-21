@@ -51,7 +51,7 @@ function App() {
     }
   }, [searchParams]);
 
-  const checkAuth = () => {
+  const checkAuth = async () => {
     const token = localStorage.getItem('token');
     
     if (!token) {
@@ -60,16 +60,31 @@ function App() {
     }
     
     try {
+      // Pertama verifikasi token di sisi klien
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
       
       if (decodedToken.exp < currentTime) {
+        console.log('Token expired');
         localStorage.removeItem('token');
         setLoading(false);
         return false;
       }
       
-      return true;
+      // Kemudian validasi dengan server untuk memastikan token masih valid
+      try {
+        await axios.get(`${API_URL}/api/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        return true;
+      } catch (apiError) {
+        console.error('Token tidak valid atau sesi telah berakhir:', apiError.message);
+        localStorage.removeItem('token');
+        setLoading(false);
+        return false;
+      }
     } catch (error) {
       console.error('Invalid token:', error);
       localStorage.removeItem('token');
@@ -113,14 +128,18 @@ function App() {
   };
 
   useEffect(() => {
-    const authResult = checkAuth();
-    setIsAuthenticated(authResult);
+    const verifyAuth = async () => {
+      const authResult = await checkAuth();
+      setIsAuthenticated(authResult);
+      
+      if (authResult) {
+        checkProfile();
+      } else {
+        setLoading(false);
+      }
+    };
     
-    if (authResult) {
-      checkProfile();
-    } else {
-      setLoading(false);
-    }
+    verifyAuth();
   }, []);
 
   const toggleMobileMenu = () => {
@@ -148,7 +167,8 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    window.location.href = `${FRONTEND_URL}/login`;
+    // Arahkan ke halaman landing page daripada langsung ke login
+    window.location.href = `${FRONTEND_URL}/?from=dashboard`;
     return null;
   }
 
