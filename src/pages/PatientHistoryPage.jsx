@@ -172,44 +172,19 @@ function PatientHistoryPageComponent() {
   useEffect(() => {
     if (patientData && patientData.analyses.length > 0) {
       setImageStatus('loading');
-      setImageLoadAttempt(prev => prev + 1);
       
-      // Generate URL with unique query parameter untuk menghindari cache
-      const timestamp = new Date().getTime();
-      const baseUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
-      const urlWithTimestamp = `${baseUrl}?nocache=${timestamp}`;
-      
-      setActiveImageUrl(urlWithTimestamp);
+      // Jika tidak ada imageData, coba gunakan path sebagai fallback
+      if (!patientData.analyses[selectedAnalysisIndex].imageData && patientData.analyses[selectedAnalysisIndex].imagePath) {
+        const baseUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+        const timestamp = new Date().getTime();
+        const urlWithTimestamp = `${baseUrl}?nocache=${timestamp}`;
+        setActiveImageUrl(urlWithTimestamp);
+      } else {
+        // Jika ada imageData, tidak perlu URL tambahan
+        setActiveImageUrl('');
+      }
     }
   }, [selectedAnalysisIndex, patientData]);
-
-  // Polling untuk cek ketersediaan gambar secara berkala
-  useEffect(() => {
-    if (!activeImageUrl || imageStatus === 'success') return;
-    
-    // Jumlah percobaan terbatas untuk mencegah loop tak terbatas
-    const MAX_ATTEMPTS = 2;
-    let attempts = 0;
-    
-    // Buat interval untuk coba load gambar berulang kali
-    const intervalId = setInterval(async () => {
-      if (imageStatus === 'error' && attempts < MAX_ATTEMPTS) {
-        attempts++;
-        // Coba URL alternatif jika mengalami error dengan parameter berbeda
-        const timestamp = new Date().getTime();
-        const baseUrl = activeImageUrl.split('?')[0];
-        const alternativeUrl = `${baseUrl}?retry=${timestamp}`;
-        setActiveImageUrl(alternativeUrl);
-        setImageStatus('loading');
-        console.log(`Trying to reload image (attempt ${attempts}/${MAX_ATTEMPTS}):`, alternativeUrl);
-      } else if (attempts >= MAX_ATTEMPTS) {
-        // Hentikan polling setelah mencapai batas percobaan
-        clearInterval(intervalId);
-      }
-    }, 5000); // Cek setiap 5 detik
-    
-    return () => clearInterval(intervalId);
-  }, [activeImageUrl, imageStatus]);
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -547,7 +522,7 @@ function PatientHistoryPageComponent() {
                       </div>
                       
                       <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
-                        {patientData.analyses[selectedAnalysisIndex].imagePath ? (
+                        {patientData.analyses[selectedAnalysisIndex] ? (
                           <>
                             {imageStatus === 'loading' && (
                               <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
@@ -559,29 +534,23 @@ function PatientHistoryPageComponent() {
                             )}
                             <img 
                               id="retina-image"
-                              src={activeImageUrl}
+                              src={patientData.analyses[selectedAnalysisIndex].imageData || activeImageUrl}
                               alt="Retina scan"
                               className="object-cover w-full h-full"
                               onLoad={() => setImageStatus('success')}
                               onError={(e) => {
-                                console.error('Error loading image URL:', e.target.src);
+                                console.error('Error loading image:', e.target.src.substring(0, 50) + '...');
                                 
                                 // Stop onError dari berjalan lagi untuk mencegah infinite loop
                                 e.target.onerror = null;
                                 
-                                // Tandai error dan biarkan useEffect polling menangani percobaan ulang
+                                // Tandai error dan gunakan gambar default
                                 setImageStatus('error');
                                 
-                                // Jika sudah mencoba lebih dari sekali, gunakan gambar fallback
-                                const attemptCount = parseInt(e.target.dataset.attempts || '0') + 1;
-                                e.target.dataset.attempts = attemptCount.toString();
-                                
-                                if (attemptCount >= 2) {
-                                  // Gunakan base64 image default dari formatImageUrl
-                                  const DEFAULT_IMAGE = 'data:image/png;base64,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';
-                                  e.target.src = DEFAULT_IMAGE;
-                                  console.log('Using default placeholder image');
-                                }
+                                // Gunakan base64 image default sebagai fallback
+                                const DEFAULT_IMAGE = 'data:image/png;base64,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';
+                                e.target.src = DEFAULT_IMAGE;
+                                console.log('Using default placeholder image');
                               }}
                             />
                             
