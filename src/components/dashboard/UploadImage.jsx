@@ -62,7 +62,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
     e.stopPropagation();
     setIsDragging(false);
     
-    if (!file && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       processFile(e.dataTransfer.files[0]);
     }
   };
@@ -201,7 +201,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            onClick={() => !file && fileInputRef.current.click()}
+            onClick={() => fileInputRef.current.click()}
           >
             <input
               ref={fileInputRef}
@@ -209,7 +209,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
               accept="image/jpeg,image/png"
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              disabled={isLoading || file}
+              disabled={isLoading}
             />
             <div className="text-center">
               <motion.div 
@@ -241,7 +241,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                 className="mt-4 text-sm sm:text-base font-medium text-gray-700"
                 variants={itemVariants}
               >
-                {file ? file.name : 'Seret gambar atau klik untuk memilih'}
+                {file ? `${file.name} (klik untuk mengganti)` : 'Seret gambar atau klik untuk memilih'}
               </motion.p>
               <motion.p 
                 className="mt-2 text-xs text-gray-500"
