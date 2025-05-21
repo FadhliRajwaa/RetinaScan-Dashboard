@@ -53,10 +53,8 @@ function App() {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
-    console.log('Memeriksa token autentikasi:', token ? 'Token tersedia' : 'Token tidak tersedia');
     
     if (!token) {
-      console.log('Tidak ada token di localStorage');
       setLoading(false);
       return false;
     }
@@ -65,12 +63,6 @@ function App() {
       // Pertama verifikasi token di sisi klien
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
-      
-      console.log('Token info:', { 
-        id: decodedToken.id, 
-        exp: new Date(decodedToken.exp * 1000).toLocaleString(),
-        currentTime: new Date(currentTime * 1000).toLocaleString()
-      });
       
       if (decodedToken.exp < currentTime) {
         console.log('Token expired');
@@ -81,13 +73,11 @@ function App() {
       
       // Kemudian validasi dengan server untuk memastikan token masih valid
       try {
-        console.log('Memvalidasi token dengan server API');
-        const response = await axios.get(`${API_URL}/api/user/profile`, {
+        await axios.get(`${API_URL}/api/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        console.log('Token valid, profil diterima:', response.data);
         return true;
       } catch (apiError) {
         console.error('Token tidak valid atau sesi telah berakhir:', apiError.message);
@@ -96,7 +86,7 @@ function App() {
         return false;
       }
     } catch (error) {
-      console.error('Invalid token:', error.message);
+      console.error('Invalid token:', error);
       localStorage.removeItem('token');
       setLoading(false);
       return false;
@@ -137,12 +127,29 @@ function App() {
     }
   };
 
+  // Simpan userId dalam state untuk digunakan di seluruh aplikasi
+  const [userId, setUserId] = useState(null);
+
   useEffect(() => {
     const verifyAuth = async () => {
       const authResult = await checkAuth();
       setIsAuthenticated(authResult);
       
       if (authResult) {
+        // Ambil dan simpan ID pengguna dari token
+        try {
+          const token = localStorage.getItem('token');
+          const decodedToken = jwtDecode(token);
+          console.log('Token decoded:', decodedToken);
+          
+          if (decodedToken && decodedToken.id) {
+            setUserId(decodedToken.id);
+            console.log('User ID set:', decodedToken.id);
+          }
+        } catch (error) {
+          console.error('Failed to extract user ID from token:', error);
+        }
+        
         checkProfile();
       } else {
         setLoading(false);
@@ -177,9 +184,9 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    // Arahkan ke halaman landing page daripada langsung ke login
-    console.log('User not authenticated, redirecting to frontend with logout parameter');
-    window.location.href = `${FRONTEND_URL}/?from=dashboard&logout=true`;
+    console.log('User not authenticated, redirecting to frontend');
+    // Arahkan ke halaman landing page dengan parameter untuk menandai asal redirect
+    window.location.href = `${FRONTEND_URL}/?from=dashboard&auth=failed`;
     return null;
   }
 
@@ -200,16 +207,16 @@ function App() {
         
         <AnimatePresence mode="wait" initial={false}>
           <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/patient-data" element={<PatientDataPage updateProfileStatus={updateProfileStatus} />} />
-            <Route path="/add-patient" element={<AddPatientPage />} />
-            <Route path="/edit-patient/:patientId" element={<EditPatientPage />} />
-            <Route path="/scan-retina" element={<ScanRetinaPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/patient-history/:patientId" element={<PatientHistoryPage />} />
-            <Route path="/analysis" element={<AnalysisPage />} />
-            <Route path="/report" element={<ReportPage />} />
+            <Route path="/" element={<Dashboard userId={userId} />} />
+            <Route path="/dashboard" element={<Dashboard userId={userId} />} />
+            <Route path="/patient-data" element={<PatientDataPage userId={userId} updateProfileStatus={updateProfileStatus} />} />
+            <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
+            <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
+            <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
+            <Route path="/history" element={<HistoryPage userId={userId} />} />
+            <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
+            <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
+            <Route path="/report" element={<ReportPage userId={userId} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
