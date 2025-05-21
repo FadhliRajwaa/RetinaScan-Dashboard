@@ -510,9 +510,23 @@ function PatientHistoryPageComponent() {
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="p-4 bg-gray-50 border-b">
                     <h2 className="text-lg font-semibold">Detail Analisis</h2>
-                    <p className="text-sm text-gray-500">
-                      {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
-                    </p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-gray-500">
+                        {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
+                      </p>
+                      <button
+                        onClick={(e) => handleDeleteAnalysis(patientData.analyses[selectedAnalysisIndex]._id, selectedAnalysisIndex, e)}
+                        className={`p-2 rounded transition-colors flex items-center ${
+                          deleteConfirm === patientData.analyses[selectedAnalysisIndex]._id
+                            ? 'bg-red-500 text-white'
+                            : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500'
+                        }`}
+                        disabled={isDeleting}
+                        title={deleteConfirm === patientData.analyses[selectedAnalysisIndex]._id ? "Klik lagi untuk konfirmasi" : "Hapus pemindaian"}
+                      >
+                        <FiTrash2 className="mr-1" /> {deleteConfirm === patientData.analyses[selectedAnalysisIndex]._id ? "Konfirmasi Hapus" : "Hapus"}
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="p-6 space-y-6">
