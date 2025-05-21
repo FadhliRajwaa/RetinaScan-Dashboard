@@ -35,7 +35,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = `${FRONTEND_URL}?logout=true`;
+    window.location.href = `${FRONTEND_URL}`;
   };
 
   const sidebarVariants = {
