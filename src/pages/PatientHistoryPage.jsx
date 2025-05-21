@@ -23,6 +23,9 @@ const FALLBACK_API_URLS = [
   'https://retinascan-backend-eszo.onrender.com'
 ];
 
+// Default fallback image ketika gambar tidak dapat ditemukan
+const DEFAULT_IMAGE = '/images/not-found.jpg';
+
 // Fungsi untuk cek apakah gambar benar-benar ada di server
 const checkImageExistence = async (url) => {
   try {
@@ -36,8 +39,6 @@ const checkImageExistence = async (url) => {
 
 // Format image URL properly regardless of path separator
 const formatImageUrl = (imagePath) => {
-  // Default fallback image 
-  const DEFAULT_IMAGE = '/images/not-found.jpg';
 
   if (!imagePath) return DEFAULT_IMAGE;
   
@@ -591,7 +592,7 @@ function PatientHistoryPageComponent() {
                             )}
                             <img 
                               id="retina-image"
-                              src={patientData.analyses[selectedAnalysisIndex].imageData || activeImageUrl}
+                              src={patientData.analyses[selectedAnalysisIndex].imageData || activeImageUrl || DEFAULT_IMAGE}
                               alt="Retina scan"
                               className="object-cover w-full h-full"
                               onLoad={() => setImageStatus('success')}
@@ -613,7 +614,7 @@ function PatientHistoryPageComponent() {
                                 
                                 // Gunakan gambar not-found.jpg sebagai fallback terakhir
                                 e.target.src = DEFAULT_IMAGE;
-                                console.log('Using default placeholder image');
+                                console.log('Menggunakan gambar tidak ditemukan:', DEFAULT_IMAGE);
                               }}
                             />
                             
