@@ -53,8 +53,10 @@ function App() {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
+    console.log('Memeriksa token autentikasi:', token ? 'Token tersedia' : 'Token tidak tersedia');
     
     if (!token) {
+      console.log('Tidak ada token di localStorage');
       setLoading(false);
       return false;
     }
@@ -63,6 +65,12 @@ function App() {
       // Pertama verifikasi token di sisi klien
       const decodedToken = jwtDecode(token);
       const currentTime = Date.now() / 1000;
+      
+      console.log('Token info:', { 
+        id: decodedToken.id, 
+        exp: new Date(decodedToken.exp * 1000).toLocaleString(),
+        currentTime: new Date(currentTime * 1000).toLocaleString()
+      });
       
       if (decodedToken.exp < currentTime) {
         console.log('Token expired');
@@ -73,11 +81,13 @@ function App() {
       
       // Kemudian validasi dengan server untuk memastikan token masih valid
       try {
-        await axios.get(`${API_URL}/api/user/profile`, {
+        console.log('Memvalidasi token dengan server API');
+        const response = await axios.get(`${API_URL}/api/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
+        console.log('Token valid, profil diterima:', response.data);
         return true;
       } catch (apiError) {
         console.error('Token tidak valid atau sesi telah berakhir:', apiError.message);
@@ -86,7 +96,7 @@ function App() {
         return false;
       }
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Invalid token:', error.message);
       localStorage.removeItem('token');
       setLoading(false);
       return false;
@@ -168,7 +178,8 @@ function App() {
 
   if (!isAuthenticated) {
     // Arahkan ke halaman landing page daripada langsung ke login
-    window.location.href = `${FRONTEND_URL}/?from=dashboard`;
+    console.log('User not authenticated, redirecting to frontend with logout parameter');
+    window.location.href = `${FRONTEND_URL}/?from=dashboard&logout=true`;
     return null;
   }
 

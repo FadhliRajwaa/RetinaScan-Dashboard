@@ -34,14 +34,24 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const { theme } = useTheme();
 
   const handleLogout = () => {
-    // Hapus token dari localStorage
-    localStorage.removeItem('token');
+    console.log('Logging out from dashboard');
     
-    // Hapus semua data session lainnya jika ada
-    sessionStorage.clear();
+    // Animasi fadeout sebelum logout
+    const body = document.querySelector('body');
+    body.style.transition = 'opacity 0.5s ease';
+    body.style.opacity = '0';
     
-    // Pastikan redirect ke landing page dengan parameter logout=true
-    window.location.href = `${FRONTEND_URL}/?logout=true`;
+    // Delay sedikit untuk menyelesaikan animasi
+    setTimeout(() => {
+      // Hapus token dari localStorage
+      localStorage.removeItem('token');
+      
+      // Hapus semua data session lainnya jika ada
+      sessionStorage.clear();
+      
+      // Pastikan redirect ke landing page dengan parameter logout=true
+      window.location.href = `${FRONTEND_URL}/?logout=true`;
+    }, 500);
   };
 
   const sidebarVariants = {
