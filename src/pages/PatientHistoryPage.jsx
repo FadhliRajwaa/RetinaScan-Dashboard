@@ -35,7 +35,10 @@ const checkImageExistence = async (url) => {
 
 // Format image URL properly regardless of path separator
 const formatImageUrl = (imagePath) => {
-  if (!imagePath) return '/placeholder-image.png';
+  // Default fallback image (embedded base64 untuk hindari 404)
+  const DEFAULT_IMAGE = 'data:image/png;base64,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';
+
+  if (!imagePath) return DEFAULT_IMAGE;
   
   // Jika imagePath sudah lengkap (relatif maupun absolut), gunakan langsung
   if (imagePath.startsWith('http')) {
@@ -76,16 +79,13 @@ const formatImageUrl = (imagePath) => {
   // Hapus karakter khusus atau path traversal yang tidak valid dalam URL
   filename = filename.replace(/[\/\\:*?"<>|]/g, '');
   
-  // Tambahkan timestamp untuk menghindari cache browser
-  const timestamp = new Date().getTime();
-  
   if (!filename || filename.trim() === '') {
     console.error('Failed to extract valid filename from path:', imagePath);
-    return '/placeholder-image.png';
+    return DEFAULT_IMAGE;
   }
   
-  // Coba semua alternatif URL yang mungkin
-  return `${API_URL}/uploads/${filename}?t=${timestamp}`;
+  // Coba semua alternatif URL yang mungkin (tanpa timestamp)
+  return `${API_URL}/uploads/${filename}`;
 };
 
 function PatientHistoryPageComponent() {
@@ -174,12 +174,10 @@ function PatientHistoryPageComponent() {
       setImageStatus('loading');
       setImageLoadAttempt(prev => prev + 1);
       
-      // Generate URL with timestamp untuk menghindari cache
+      // Generate URL with unique query parameter untuk menghindari cache
       const timestamp = new Date().getTime();
       const baseUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
-      const urlWithTimestamp = baseUrl.includes('?') 
-        ? `${baseUrl}&t=${timestamp}` 
-        : `${baseUrl}?t=${timestamp}`;
+      const urlWithTimestamp = `${baseUrl}?nocache=${timestamp}`;
       
       setActiveImageUrl(urlWithTimestamp);
     }
@@ -189,17 +187,26 @@ function PatientHistoryPageComponent() {
   useEffect(() => {
     if (!activeImageUrl || imageStatus === 'success') return;
     
+    // Jumlah percobaan terbatas untuk mencegah loop tak terbatas
+    const MAX_ATTEMPTS = 2;
+    let attempts = 0;
+    
     // Buat interval untuk coba load gambar berulang kali
     const intervalId = setInterval(async () => {
-      if (imageStatus === 'error') {
-        // Coba URL alternatif jika mengalami error
+      if (imageStatus === 'error' && attempts < MAX_ATTEMPTS) {
+        attempts++;
+        // Coba URL alternatif jika mengalami error dengan parameter berbeda
         const timestamp = new Date().getTime();
-        const alternativeUrl = activeImageUrl.split('?')[0] + `?t=${timestamp}`;
+        const baseUrl = activeImageUrl.split('?')[0];
+        const alternativeUrl = `${baseUrl}?retry=${timestamp}`;
         setActiveImageUrl(alternativeUrl);
         setImageStatus('loading');
-        console.log('Trying to reload image with new URL:', alternativeUrl);
+        console.log(`Trying to reload image (attempt ${attempts}/${MAX_ATTEMPTS}):`, alternativeUrl);
+      } else if (attempts >= MAX_ATTEMPTS) {
+        // Hentikan polling setelah mencapai batas percobaan
+        clearInterval(intervalId);
       }
-    }, 10000); // Cek setiap 10 detik
+    }, 5000); // Cek setiap 5 detik
     
     return () => clearInterval(intervalId);
   }, [activeImageUrl, imageStatus]);
@@ -558,27 +565,22 @@ function PatientHistoryPageComponent() {
                               onLoad={() => setImageStatus('success')}
                               onError={(e) => {
                                 console.error('Error loading image URL:', e.target.src);
-                                setImageStatus('error');
                                 
-                                // Stop onError from running again to prevent infinite loop
+                                // Stop onError dari berjalan lagi untuk mencegah infinite loop
                                 e.target.onerror = null;
                                 
-                                // Try alternative URL with a new timestamp
-                                const timestamp = new Date().getTime();
-                                const baseUrl = e.target.src.split('?')[0];
-                                const alternativeUrl = `${baseUrl}?t=${timestamp}`;
+                                // Tandai error dan biarkan useEffect polling menangani percobaan ulang
+                                setImageStatus('error');
                                 
-                                console.log('Trying alternative URL with new timestamp:', alternativeUrl);
+                                // Jika sudah mencoba lebih dari sekali, gunakan gambar fallback
+                                const attemptCount = parseInt(e.target.dataset.attempts || '0') + 1;
+                                e.target.dataset.attempts = attemptCount.toString();
                                 
-                                // Set a flag on the element to track attempts
-                                if (!e.target.dataset.fallbackAttempted) {
-                                  e.target.dataset.fallbackAttempted = "true";
-                                  e.target.src = alternativeUrl;
-                                  setImageStatus('loading');
-                                } else {
-                                  // If we've already tried the alternative, use placeholder
-                                  e.target.src = '/placeholder-image.png';
-                                  console.error('All URLs failed, using placeholder');
+                                if (attemptCount >= 2) {
+                                  // Gunakan base64 image default dari formatImageUrl
+                                  const DEFAULT_IMAGE = 'data:image/png;base64,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';
+                                  e.target.src = DEFAULT_IMAGE;
+                                  console.log('Using default placeholder image');
                                 }
                               }}
                             />
