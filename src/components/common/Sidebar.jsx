@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 // eslint-disable-next-line
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { safeLogout } from '../../utils/logoutHelper';
 import {
   HomeIcon,
   UserIcon,
@@ -33,23 +34,18 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const location = useLocation();
   const { theme } = useTheme();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('Logging out from dashboard');
     
-    // Hapus token dari localStorage
-    localStorage.removeItem('token');
-    console.log('Token removed from localStorage');
-    
-    // Hapus semua data session lainnya jika ada
-    sessionStorage.clear();
-    console.log('Session storage cleared');
-    
-    // Redirect ke landing page dengan parameter logout=true
-    // Pastikan URL menggunakan format yang benar untuk HashRouter di frontend
-    const logoutUrl = `${FRONTEND_URL}/#/?logout=true&from=dashboard`;
-    console.log('Redirecting to:', logoutUrl);
-    
-    window.location.href = logoutUrl;
+    try {
+      // Gunakan helper function untuk logout yang lebih aman
+      await safeLogout(FRONTEND_URL);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Fallback jika terjadi error
+      alert('Terjadi kesalahan saat logout. Mencoba metode alternatif...');
+      window.location.href = `${FRONTEND_URL}/#/?logout=true&from=dashboard&error=true`;
+    }
   };
 
   const sidebarVariants = {
@@ -219,7 +215,16 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             transition={{ delay: 0.2, duration: 0.2 }}
           >
             <motion.button
-              onClick={handleLogout}
+              onClick={(e) => {
+                e.preventDefault(); // Prevent any default action
+                e.stopPropagation(); // Stop event bubbling
+                toggleMobileMenu(); // Close mobile menu first
+                
+                // Use timeout to ensure mobile menu is closed before logout
+                setTimeout(() => {
+                  handleLogout(); // Call the logout function
+                }, 100);
+              }}
               className="flex items-center p-4 w-full rounded-xl transition-all duration-200"
               style={{ 
                 background: 'linear-gradient(135deg, #ef4444, #f87171)',
@@ -389,7 +394,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         {/* Logout Button for Desktop */}
         <div className={`p-4 border-t border-white/10 ${isOpen ? 'block' : 'hidden'}`}>
           <motion.button
-            onClick={handleLogout}
+            onClick={(e) => {
+              e.preventDefault(); // Prevent any default action
+              e.stopPropagation(); // Stop event bubbling
+              handleLogout(); // Call the logout function
+            }}
             className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
             style={{ 
               background: 'linear-gradient(135deg, #ef4444, #f87171)',
@@ -415,7 +424,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         {!isOpen && (
           <div className="p-4 border-t border-white/10">
             <motion.button
-              onClick={handleLogout}
+              onClick={(e) => {
+                e.preventDefault(); // Prevent any default action
+                e.stopPropagation(); // Stop event bubbling
+                handleLogout(); // Call the logout function
+              }}
               className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
               style={{ 
                 background: 'linear-gradient(135deg, #ef4444, #f87171)',
