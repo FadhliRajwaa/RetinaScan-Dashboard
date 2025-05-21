@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 import Dashboard from './pages/Dashboard';
 import PatientDataPage from './pages/PatientDataPage';
 import HistoryPage from './pages/HistoryPage';
@@ -14,6 +15,7 @@ import ReportPage from './pages/ReportPage';
 import AddPatientPage from './pages/AddPatientPage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
+import { safeLogout } from './utils/logoutHelper';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -72,18 +74,29 @@ function App() {
               if (decodedToken && decodedToken.id) {
                 setUserId(decodedToken.id);
                 console.log('User ID set from new token:', decodedToken.id);
+                
+                // Tampilkan notifikasi sukses
+                toast.success('Login berhasil! Selamat datang di dashboard.');
               }
             } catch (error) {
               console.error('Failed to decode new token:', error);
+              toast.error('Terjadi kesalahan saat memproses token.');
             }
             
             checkProfile();
           } else {
             setLoading(false);
+            toast.error('Token tidak valid. Silakan login kembali.');
+            
+            // Redirect ke halaman login jika token tidak valid
+            setTimeout(() => {
+              safeLogout(FRONTEND_URL);
+            }, 2000);
           }
         } catch (error) {
           console.error('Error verifying new token:', error);
           setLoading(false);
+          toast.error('Terjadi kesalahan saat verifikasi. Silakan login kembali.');
         }
       };
       
@@ -105,19 +118,29 @@ function App() {
               }
             } catch (error) {
               console.error('Failed to decode stored token:', error);
+              toast.error('Token tidak valid. Silakan login kembali.');
             }
             checkProfile();
           } else {
             setLoading(false);
+            toast.error('Sesi Anda telah berakhir. Silakan login kembali.');
+            
+            // Redirect ke halaman login jika token tidak valid
+            setTimeout(() => {
+              safeLogout(FRONTEND_URL);
+            }, 2000);
           }
         };
         verifyStoredToken();
       } else {
         console.log('No token found anywhere');
         setLoading(false);
+        
+        // Redirect ke halaman login jika tidak ada token
+        safeLogout(FRONTEND_URL);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, API_URL, FRONTEND_URL]);
 
   const checkAuth = async () => {
     console.log('Checking authentication...');
@@ -136,7 +159,6 @@ function App() {
     try {
       // Pertama verifikasi token di sisi klien
       try {
-        const { jwtDecode } = await import('jwt-decode');
         const decodedToken = jwtDecode(token);
         console.log('Token decoded successfully:', { id: decodedToken.id, exp: decodedToken.exp });
         
@@ -147,6 +169,7 @@ function App() {
           console.log('Token expired');
           localStorage.removeItem('token');
           setLoading(false);
+          toast.error('Token Anda telah kadaluarsa. Silakan login kembali.');
           return false;
         }
         
@@ -189,6 +212,7 @@ function App() {
           console.error('Alternative validation failed:', altError);
           localStorage.removeItem('token');
           setLoading(false);
+          toast.error('Sesi Anda telah berakhir. Silakan login kembali.');
           return false;
         }
       }
@@ -196,6 +220,7 @@ function App() {
       console.error('Invalid token format or network error:', error);
       localStorage.removeItem('token');
       setLoading(false);
+      toast.error('Token tidak valid. Silakan login kembali.');
       return false;
     }
   };
@@ -225,6 +250,7 @@ function App() {
       } else {
         console.log('Data pasien belum lengkap');
         setIsProfileComplete(false);
+        toast.info('Silakan lengkapi data profil Anda.');
       }
       
       setLoading(false);

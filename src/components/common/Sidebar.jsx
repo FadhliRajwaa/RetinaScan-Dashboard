@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 // eslint-disable-next-line
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { safeLogout } from '../../utils/logoutHelper';
+import { safeLogout, handleLogoutEvent } from '../../utils/logoutHelper';
 import {
   HomeIcon,
   UserIcon,
@@ -215,16 +215,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             transition={{ delay: 0.2, duration: 0.2 }}
           >
             <motion.button
-              onClick={(e) => {
-                e.preventDefault(); // Prevent any default action
-                e.stopPropagation(); // Stop event bubbling
-                toggleMobileMenu(); // Close mobile menu first
-                
-                // Use timeout to ensure mobile menu is closed before logout
-                setTimeout(() => {
-                  handleLogout(); // Call the logout function
-                }, 100);
-              }}
+              onClick={(e) => handleLogoutEvent(e, toggleMobileMenu, FRONTEND_URL)}
               className="flex items-center p-4 w-full rounded-xl transition-all duration-200"
               style={{ 
                 background: 'linear-gradient(135deg, #ef4444, #f87171)',
@@ -394,11 +385,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         {/* Logout Button for Desktop */}
         <div className={`p-4 border-t border-white/10 ${isOpen ? 'block' : 'hidden'}`}>
           <motion.button
-            onClick={(e) => {
-              e.preventDefault(); // Prevent any default action
-              e.stopPropagation(); // Stop event bubbling
-              handleLogout(); // Call the logout function
-            }}
+            onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
             className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
             style={{ 
               background: 'linear-gradient(135deg, #ef4444, #f87171)',
@@ -424,11 +411,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         {!isOpen && (
           <div className="p-4 border-t border-white/10">
             <motion.button
-              onClick={(e) => {
-                e.preventDefault(); // Prevent any default action
-                e.stopPropagation(); // Stop event bubbling
-                handleLogout(); // Call the logout function
-              }}
+              onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
               className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
               style={{ 
                 background: 'linear-gradient(135deg, #ef4444, #f87171)',

@@ -16,8 +16,9 @@ export const safeLogout = async (frontendUrl) => {
     console.log('Step 2: Clearing sessionStorage');
     sessionStorage.clear();
     
-    // Step 3: Prepare redirect URL
+    // Step 3: Prepare redirect URL with correct HashRouter format
     const timestamp = Date.now();
+    // Pastikan URL menggunakan format yang benar untuk HashRouter: frontendUrl/#/?logout=true
     const logoutUrl = `${frontendUrl}/#/?logout=true&from=dashboard&t=${timestamp}`;
     console.log('Step 3: Prepared redirect URL', logoutUrl);
     
@@ -52,4 +53,26 @@ export const safeLogout = async (frontendUrl) => {
     
     return false;
   }
+};
+
+/**
+ * Utility function to handle logout events
+ * @param {Event} e - Event object
+ * @param {Function} callback - Optional callback after logout
+ * @param {string} frontendUrl - URL of the frontend to redirect to
+ */
+export const handleLogoutEvent = (e, callback, frontendUrl) => {
+  // Prevent default behavior
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  // Execute callback if provided
+  if (typeof callback === 'function') {
+    callback();
+  }
+  
+  // Perform logout
+  safeLogout(frontendUrl);
 };
