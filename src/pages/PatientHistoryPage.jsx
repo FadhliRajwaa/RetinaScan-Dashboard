@@ -76,17 +76,16 @@ const formatImageUrl = (imagePath) => {
   // Hapus karakter khusus atau path traversal yang tidak valid dalam URL
   filename = filename.replace(/[\/\\:*?"<>|]/g, '');
   
-  // Log untuk debugging
-  console.log('Original imagePath:', imagePath);
-  console.log('Extracted filename:', filename);
-  console.log('Final image URL:', `${API_URL}/uploads/${filename}`);
+  // Tambahkan timestamp untuk menghindari cache browser
+  const timestamp = new Date().getTime();
   
   if (!filename || filename.trim() === '') {
     console.error('Failed to extract valid filename from path:', imagePath);
     return '/placeholder-image.png';
   }
   
-  return `${API_URL}/uploads/${filename}`;
+  // Coba semua alternatif URL yang mungkin
+  return `${API_URL}/uploads/${filename}?t=${timestamp}`;
 };
 
 function PatientHistoryPageComponent() {
@@ -98,6 +97,7 @@ function PatientHistoryPageComponent() {
   const [error, setError] = useState(null);
   const [imageStatus, setImageStatus] = useState('loading'); // 'loading', 'success', 'error'
   const [imageLoadAttempt, setImageLoadAttempt] = useState(0);
+  const [activeImageUrl, setActiveImageUrl] = useState('');
 
   useEffect(() => {
     const fetchPatientHistory = async () => {
@@ -173,8 +173,36 @@ function PatientHistoryPageComponent() {
     if (patientData && patientData.analyses.length > 0) {
       setImageStatus('loading');
       setImageLoadAttempt(prev => prev + 1);
+      
+      // Generate URL with timestamp untuk menghindari cache
+      const timestamp = new Date().getTime();
+      const baseUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+      const urlWithTimestamp = baseUrl.includes('?') 
+        ? `${baseUrl}&t=${timestamp}` 
+        : `${baseUrl}?t=${timestamp}`;
+      
+      setActiveImageUrl(urlWithTimestamp);
     }
-  }, [selectedAnalysisIndex]);
+  }, [selectedAnalysisIndex, patientData]);
+
+  // Polling untuk cek ketersediaan gambar secara berkala
+  useEffect(() => {
+    if (!activeImageUrl || imageStatus === 'success') return;
+    
+    // Buat interval untuk coba load gambar berulang kali
+    const intervalId = setInterval(async () => {
+      if (imageStatus === 'error') {
+        // Coba URL alternatif jika mengalami error
+        const timestamp = new Date().getTime();
+        const alternativeUrl = activeImageUrl.split('?')[0] + `?t=${timestamp}`;
+        setActiveImageUrl(alternativeUrl);
+        setImageStatus('loading');
+        console.log('Trying to reload image with new URL:', alternativeUrl);
+      }
+    }, 10000); // Cek setiap 10 detik
+    
+    return () => clearInterval(intervalId);
+  }, [activeImageUrl, imageStatus]);
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -524,7 +552,7 @@ function PatientHistoryPageComponent() {
                             )}
                             <img 
                               id="retina-image"
-                              src={formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}
+                              src={activeImageUrl}
                               alt="Retina scan"
                               className="object-cover w-full h-full"
                               onLoad={() => setImageStatus('success')}
@@ -535,14 +563,12 @@ function PatientHistoryPageComponent() {
                                 // Stop onError from running again to prevent infinite loop
                                 e.target.onerror = null;
                                 
-                                // Try alternative URL - using filename directly
-                                const filename = patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop();
+                                // Try alternative URL with a new timestamp
+                                const timestamp = new Date().getTime();
+                                const baseUrl = e.target.src.split('?')[0];
+                                const alternativeUrl = `${baseUrl}?t=${timestamp}`;
                                 
-                                // Filter out any remaining path separators or invalid characters
-                                const cleanFilename = filename.replace(/[\/\\:*?"<>|]/g, '');
-                                
-                                const alternativeUrl = `${API_URL}/uploads/${cleanFilename}`;
-                                console.log('Trying alternative URL:', alternativeUrl);
+                                console.log('Trying alternative URL with new timestamp:', alternativeUrl);
                                 
                                 // Set a flag on the element to track attempts
                                 if (!e.target.dataset.fallbackAttempted) {
