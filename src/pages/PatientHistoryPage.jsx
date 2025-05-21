@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
-import { getHistory } from '../services/api';
+import { getHistory, deleteAnalysis } from '../services/api';
 import { API_URL } from '../utils/api';
 import axios from 'axios';
 import { 
@@ -14,7 +14,7 @@ import {
   FiFileText,
   FiBarChart2,
   FiRefreshCcw,
-  FiTrash2
+  FiTrash
 } from 'react-icons/fi';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
@@ -36,7 +36,7 @@ const checkImageExistence = async (url) => {
 
 // Format image URL properly regardless of path separator
 const formatImageUrl = (imagePath) => {
-  // Default fallback image (menggunakan gambar dari public folder)
+  // Default fallback image 
   const DEFAULT_IMAGE = '/images/not-found.jpg';
 
   if (!imagePath) return DEFAULT_IMAGE;
@@ -99,8 +99,8 @@ function PatientHistoryPageComponent() {
   const [imageStatus, setImageStatus] = useState('loading'); // 'loading', 'success', 'error'
   const [imageLoadAttempt, setImageLoadAttempt] = useState(0);
   const [activeImageUrl, setActiveImageUrl] = useState('');
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [idToDelete, setIdToDelete] = useState(null);
 
   useEffect(() => {
     const fetchPatientHistory = async () => {
@@ -209,56 +209,51 @@ function PatientHistoryPageComponent() {
 
   // Handle back to history page
   const handleBack = () => {
-    navigate('/patient-data');
+    navigate('/history');
   };
-
-  const handleDeleteAnalysis = async (analysisId, index, e) => {
-    e.stopPropagation(); // Mencegah pemilihan item saat mengklik tombol delete
-    
-    if (deleteConfirm === analysisId) {
-      // Konfirmasi delete, lakukan penghapusan
-      try {
-        setIsDeleting(true);
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_URL}/api/analysis/${analysisId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        // Update state setelah berhasil menghapus
-        const updatedAnalyses = [...patientData.analyses];
-        updatedAnalyses.splice(index, 1);
-        
-        setPatientData({
-          ...patientData,
-          analyses: updatedAnalyses,
-          totalAnalyses: updatedAnalyses.length
-        });
-        
-        // Jika item yang dihapus adalah yang sedang dipilih, pilih item pertama
-        if (selectedAnalysisIndex === index) {
-          setSelectedAnalysisIndex(0);
-        } else if (selectedAnalysisIndex > index) {
-          // Jika item yang dihapus berada sebelum item yang dipilih, sesuaikan indeks
-          setSelectedAnalysisIndex(selectedAnalysisIndex - 1);
-        }
-        
-        setDeleteConfirm(null);
-      } catch (err) {
-        console.error('Error deleting analysis:', err);
-        alert('Gagal menghapus analisis. Silakan coba lagi.');
-      } finally {
-        setIsDeleting(false);
-      }
-    } else {
-      // Tampilkan konfirmasi delete
-      setDeleteConfirm(analysisId);
+  
+  // Menampilkan konfirmasi delete
+  const handleDelete = (id, e) => {
+    e.stopPropagation(); // Mencegah event click menyebar ke div parent
+    setIdToDelete(id);
+    setShowConfirmDelete(true);
+  };
+  
+  // Menghandle konfirmasi delete
+  const handleConfirmDelete = async () => {
+    try {
+      setIsLoading(true);
+      await deleteAnalysis(idToDelete);
       
-      // Otomatis hilangkan konfirmasi setelah 3 detik jika tidak diklik
-      setTimeout(() => {
-        setDeleteConfirm(prevState => prevState === analysisId ? null : prevState);
-      }, 3000);
+      // Update patientData dengan menghapus analisis dari state
+      const updatedAnalyses = patientData.analyses.filter(
+        analysis => analysis._id !== idToDelete
+      );
+      
+      if (updatedAnalyses.length === 0) {
+        // Jika tidak ada analisis lagi, kembali ke halaman history
+        navigate('/history');
+        return;
+      }
+      
+      setPatientData({
+        ...patientData,
+        analyses: updatedAnalyses,
+        totalAnalyses: updatedAnalyses.length
+      });
+      
+      // Jika index yang dihapus adalah yang sedang dipilih, pilih index 0
+      if (selectedAnalysisIndex >= updatedAnalyses.length) {
+        setSelectedAnalysisIndex(0);
+      }
+      
+      setShowConfirmDelete(false);
+      setIdToDelete(null);
+    } catch (error) {
+      setError('Gagal menghapus analisis. Silakan coba lagi.');
+      console.error('Error deleting analysis:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -473,26 +468,21 @@ function PatientHistoryPageComponent() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => handleDelete(analysis._id, e)}
+                            className="p-1 text-red-500 hover:bg-red-50 rounded-full"
+                            title="Hapus Analisis"
+                          >
+                            <FiTrash size={16} />
+                          </button>
                           {selectedAnalysisIndex === index && (
-                            <div className="bg-blue-500 text-white p-1 rounded-full mr-2">
+                            <div className="bg-blue-500 text-white p-1 rounded-full">
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           )}
-                          <button
-                            onClick={(e) => handleDeleteAnalysis(analysis._id, index, e)}
-                            className={`p-1 rounded-full transition-colors ${
-                              deleteConfirm === analysis._id
-                                ? 'bg-red-500 text-white'
-                                : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500'
-                            }`}
-                            disabled={isDeleting}
-                            title={deleteConfirm === analysis._id ? "Klik lagi untuk konfirmasi" : "Hapus pemindaian"}
-                          >
-                            <FiTrash2 className="w-4 h-4" />
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -510,23 +500,9 @@ function PatientHistoryPageComponent() {
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="p-4 bg-gray-50 border-b">
                     <h2 className="text-lg font-semibold">Detail Analisis</h2>
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm text-gray-500">
-                        {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
-                      </p>
-                      <button
-                        onClick={(e) => handleDeleteAnalysis(patientData.analyses[selectedAnalysisIndex]._id, selectedAnalysisIndex, e)}
-                        className={`p-2 rounded transition-colors flex items-center ${
-                          deleteConfirm === patientData.analyses[selectedAnalysisIndex]._id
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500'
-                        }`}
-                        disabled={isDeleting}
-                        title={deleteConfirm === patientData.analyses[selectedAnalysisIndex]._id ? "Klik lagi untuk konfirmasi" : "Hapus pemindaian"}
-                      >
-                        <FiTrash2 className="mr-1" /> {deleteConfirm === patientData.analyses[selectedAnalysisIndex]._id ? "Konfirmasi Hapus" : "Hapus"}
-                      </button>
-                    </div>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
+                    </p>
                   </div>
                   
                   <div className="p-6 space-y-6">
@@ -635,8 +611,7 @@ function PatientHistoryPageComponent() {
                                   return;
                                 }
                                 
-                                // Gunakan base64 image default sebagai fallback terakhir
-                                const DEFAULT_IMAGE = '/images/not-found.jpg';
+                                // Gunakan gambar not-found.jpg sebagai fallback terakhir
                                 e.target.src = DEFAULT_IMAGE;
                                 console.log('Using default placeholder image');
                               }}
@@ -734,6 +709,33 @@ function PatientHistoryPageComponent() {
             </motion.div>
           </div>
         </motion.div>
+      )}
+
+      {/* Modal Konfirmasi Delete */}
+      {showConfirmDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 animate-fade-in">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Konfirmasi Hapus</h3>
+            <p className="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus data pemindaian ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowConfirmDelete(false);
+                  setIdToDelete(null);
+                }}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-gray-800"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-md text-white"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -83,6 +83,20 @@ export const getReport = async () => {
   };
 };
 
+export const deleteAnalysis = async (analysisId) => {
+  try {
+    const response = await axios.delete(`${API_URL}/api/analysis/${analysisId}`, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting analysis:', error);
+    throw error;
+  }
+};
+
 // Fungsi helper untuk menghasilkan detail berdasarkan tingkat keparahan
 function getDetailsFromSeverity(severity) {
   switch (severity) {
