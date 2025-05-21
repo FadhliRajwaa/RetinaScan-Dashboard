@@ -19,7 +19,6 @@ import { safeLogout } from './utils/logoutHelper';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
@@ -76,14 +75,12 @@ function App() {
                 console.log('User ID set from new token:', decodedToken.id);
                 
                 // Tampilkan notifikasi sukses
-                toast.success('Login berhasil! Selamat datang di dashboard.');
+                toast.success('Login berhasil! Selamat datang di dashboard admin.');
               }
             } catch (error) {
               console.error('Failed to decode new token:', error);
               toast.error('Terjadi kesalahan saat memproses token.');
             }
-            
-            checkProfile();
           } else {
             setLoading(false);
             toast.error('Token tidak valid. Silakan login kembali.');
@@ -115,12 +112,13 @@ function App() {
               const decodedToken = jwtDecode(storedToken);
               if (decodedToken && decodedToken.id) {
                 setUserId(decodedToken.id);
+                setLoading(false);
               }
             } catch (error) {
               console.error('Failed to decode stored token:', error);
               toast.error('Token tidak valid. Silakan login kembali.');
+              setLoading(false);
             }
-            checkProfile();
           } else {
             setLoading(false);
             toast.error('Sesi Anda telah berakhir. Silakan login kembali.');
@@ -225,41 +223,6 @@ function App() {
     }
   };
 
-  // Check profile completion
-  const checkProfile = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      
-      // Try get profile from the correct endpoint
-      const response = await axios.get(`${API_URL}/api/user/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      // Check if profile has required fields
-      console.log('Profile data:', response.data);
-      if (response.data && response.data.fullName && response.data.dateOfBirth && response.data.gender) {
-        console.log('Data pasien sudah lengkap');
-        setIsProfileComplete(true);
-      } else {
-        console.log('Data pasien belum lengkap');
-        setIsProfileComplete(false);
-        toast.info('Silakan lengkapi data profil Anda.');
-      }
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error memeriksa data pasien:', error);
-      setLoading(false);
-    }
-  };
-
   // Simpan userId dalam state untuk digunakan di seluruh aplikasi
   const [userId, setUserId] = useState(null);
 
@@ -283,7 +246,7 @@ function App() {
           console.error('Failed to extract user ID from token:', error);
         }
         
-        checkProfile();
+        setLoading(false);
       } else {
         setLoading(false);
       }
@@ -296,16 +259,6 @@ function App() {
     console.log('Toggling mobile menu, current state:', isMobileMenuOpen);
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
-
-  const updateProfileStatus = () => {
-    console.log('Memperbarui status data pasien menjadi lengkap');
-    setIsProfileComplete(true);
-  };
-
-  // Logging profile status for debugging
-  useEffect(() => {
-    console.log('Status kelengkapan data pasien:', isProfileComplete);
-  }, [isProfileComplete]);
 
   // Early return for loading state
   if (loading) {
@@ -343,7 +296,7 @@ function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Dashboard userId={userId} />} />
             <Route path="/dashboard" element={<Dashboard userId={userId} />} />
-            <Route path="/patient-data" element={<PatientDataPage userId={userId} updateProfileStatus={updateProfileStatus} />} />
+            <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
             <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
             <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
             <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
