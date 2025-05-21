@@ -44,25 +44,73 @@ function App() {
   // Handle token from URL query parameter
   useEffect(() => {
     const tokenFromURL = searchParams.get('token');
+    console.log('Token from URL:', tokenFromURL ? 'Present (hidden for security)' : 'Not present');
+    
     if (tokenFromURL) {
+      // Simpan token ke localStorage
       localStorage.setItem('token', tokenFromURL);
+      console.log('Token saved to localStorage');
+      
       // Remove token from URL for security
       window.history.replaceState({}, document.title, window.location.pathname);
+      console.log('Token removed from URL');
+      
+      // Verifikasi token yang baru disimpan
+      const verifyNewToken = async () => {
+        try {
+          const authResult = await checkAuth();
+          console.log('New token verification result:', authResult);
+          setIsAuthenticated(authResult);
+          
+          if (authResult) {
+            // Ambil dan simpan ID pengguna dari token
+            try {
+              const decodedToken = jwtDecode(tokenFromURL);
+              console.log('Token decoded successfully');
+              
+              if (decodedToken && decodedToken.id) {
+                setUserId(decodedToken.id);
+                console.log('User ID set from new token:', decodedToken.id);
+              }
+            } catch (error) {
+              console.error('Failed to decode new token:', error);
+            }
+            
+            checkProfile();
+          } else {
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error verifying new token:', error);
+          setLoading(false);
+        }
+      };
+      
+      verifyNewToken();
     }
   }, [searchParams]);
 
   const checkAuth = async () => {
+    console.log('Checking authentication...');
+    console.log('API URL:', API_URL);
+    
     const token = localStorage.getItem('token');
     
     if (!token) {
+      console.log('No token found in localStorage');
       setLoading(false);
       return false;
     }
     
+    console.log('Token found in localStorage');
+    
     try {
       // Pertama verifikasi token di sisi klien
       const decodedToken = jwtDecode(token);
+      console.log('Token decoded successfully:', { id: decodedToken.id, exp: decodedToken.exp });
+      
       const currentTime = Date.now() / 1000;
+      console.log('Current time:', currentTime);
       
       if (decodedToken.exp < currentTime) {
         console.log('Token expired');
@@ -71,22 +119,41 @@ function App() {
         return false;
       }
       
+      console.log('Token not expired, validating with server...');
+      
       // Kemudian validasi dengan server untuk memastikan token masih valid
       try {
-        await axios.get(`${API_URL}/api/user/profile`, {
+        const response = await axios.get(`${API_URL}/api/user/profile`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
+        
+        console.log('Server validation successful:', response.status);
         return true;
       } catch (apiError) {
-        console.error('Token tidak valid atau sesi telah berakhir:', apiError.message);
-        localStorage.removeItem('token');
-        setLoading(false);
-        return false;
+        console.error('Token tidak valid atau sesi telah berakhir:', apiError);
+        
+        // Coba dengan endpoint lain jika tersedia
+        try {
+          console.log('Trying alternative endpoint for validation...');
+          const altResponse = await axios.get(`${API_URL}/api/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          console.log('Alternative validation successful:', altResponse.status);
+          return true;
+        } catch (altError) {
+          console.error('Alternative validation failed:', altError);
+          localStorage.removeItem('token');
+          setLoading(false);
+          return false;
+        }
       }
     } catch (error) {
-      console.error('Invalid token:', error);
+      console.error('Invalid token format:', error);
       localStorage.removeItem('token');
       setLoading(false);
       return false;
