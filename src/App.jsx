@@ -13,6 +13,7 @@ import ScanRetinaPage from './pages/ScanRetinaPage';
 import AnalysisPage from './pages/AnalysisPage';
 import ReportPage from './pages/ReportPage';
 import AddPatientPage from './pages/AddPatientPage';
+import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
@@ -299,6 +300,7 @@ function App() {
             <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
             <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
             <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
+            <Route path="/patient-profile/:patientId" element={<PatientProfilePage userId={userId} />} />
             <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
             <Route path="/history" element={<HistoryPage userId={userId} />} />
             <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />

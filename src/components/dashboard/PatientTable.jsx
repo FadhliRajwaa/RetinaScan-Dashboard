@@ -123,6 +123,10 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
     navigate(`/patient-history/${patient._id}`);
   };
   
+  const handleViewPatientProfile = (patient) => {
+    navigate(`/patient-profile/${patient._id}`);
+  };
+  
   const requestSort = (key) => {
     let direction = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -375,9 +379,9 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                         <motion.button
                           whileHover={{ scale: 1.2 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleViewPatientHistory(patient)}
+                          onClick={() => handleViewPatientProfile(patient)}
                           className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                          title="Lihat Riwayat"
+                          title="Profil Pasien"
                         >
                           <FaEye />
                         </motion.button>
