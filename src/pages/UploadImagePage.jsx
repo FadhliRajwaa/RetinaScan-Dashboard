@@ -6,7 +6,7 @@ function UploadImagePage({ toggleMobileMenu, isMobileMenuOpen }) {
     <div className="p-4 sm:p-6 lg:p-8">
       <Header title="Unggah Citra" toggleMobileMenu={toggleMobileMenu} isMobileMenuOpen={isMobileMenuOpen} />
       <div className="mt-6">
-        <UploadImage />
+        <UploadImage autoUpload={true} />
       </div>
     </div>
   );

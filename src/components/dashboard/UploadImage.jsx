@@ -13,12 +13,16 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Effect untuk auto upload saat file berubah
+  // Effect untuk auto upload saat file atau pasien berubah
   useEffect(() => {
     if (file && autoUpload && selectedPatient) {
-      handleSubmit();
+      console.log('Auto uploading file:', file.name, 'for patient:', selectedPatient.fullName || selectedPatient.name);
+      // Gunakan setTimeout untuk memastikan UI diupdate terlebih dahulu
+      setTimeout(() => {
+        handleSubmit();
+      }, 100);
     }
-  }, [file, autoUpload, selectedPatient]);
+  }, [file, selectedPatient]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -100,6 +104,13 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
           patient: selectedPatient,
           response
         });
+      }
+      
+      // Reset form setelah upload berhasil
+      if (autoUpload) {
+        // Jika autoUpload aktif, reset file dan preview
+        setFile(null);
+        setPreview(null);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal mengunggah gambar. Coba lagi.');
@@ -249,12 +260,12 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
               >
                 Format: JPEG/PNG (maks. 5MB)
               </motion.p>
-              {autoUpload && file && isLoading && (
+              {autoUpload && file && (
                 <motion.p
-                  className="mt-2 text-xs text-blue-500"
+                  className={`mt-2 text-xs ${isLoading ? 'text-blue-500' : 'text-green-500'}`}
                   variants={itemVariants}
                 >
-                  Sedang mengunggah...
+                  {isLoading ? 'Sedang mengunggah otomatis...' : selectedPatient ? 'Siap untuk upload otomatis' : 'Pilih pasien untuk upload otomatis'}
                 </motion.p>
               )}
             </div>
