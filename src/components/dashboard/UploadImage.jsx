@@ -124,13 +124,16 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
       setSuccess(`Gambar berhasil diunggah!`);
       setError('');
       
-      // Call the callback function if provided
+      console.log('Hasil analisis dari Flask API:', response.prediction);
+      
+      // Call the callback function if provided with the prediction result
       if (onUploadSuccess) {
         onUploadSuccess({
           file,
           preview: preview,
           patient: selectedPatient,
-          response
+          response: response,
+          prediction: response.prediction // Tambahkan hasil prediksi
         });
       }
       
@@ -143,6 +146,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
         uploadedFileRef.current = null;
       }
     } catch (err) {
+      console.error('Error saat upload:', err);
       setError(err.response?.data?.message || 'Gagal mengunggah gambar. Coba lagi.');
       setSuccess('');
       // Reset tracking jika gagal

@@ -2,18 +2,54 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLatestAnalysis } from '../../services/api';
 
-function Analysis({ image, onAnalysisComplete }) {
-  const [analysis, setAnalysis] = useState(null);
+function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
+  const [analysis, setAnalysis] = useState(initialAnalysis || null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [animateProgress, setAnimateProgress] = useState(false);
 
-  // Auto-analyze when image is provided
+  // Auto-analyze when image is provided and no initial analysis
   useEffect(() => {
-    if (image) {
+    if (image && !initialAnalysis) {
       handleAnalyze();
+    } else if (initialAnalysis) {
+      // Jika analysis sudah disediakan, gunakan itu
+      // Pastikan data memiliki format yang benar
+      const normalizedAnalysis = normalizeAnalysisData(initialAnalysis);
+      setAnalysis(normalizedAnalysis);
+      setAnimateProgress(true);
     }
-  }, [image]);
+  }, [image, initialAnalysis]);
+
+  // Fungsi untuk menormalisasi data analisis
+  const normalizeAnalysisData = (data) => {
+    if (!data) return null;
+    
+    // Buat salinan data untuk dimodifikasi
+    const normalized = { ...data };
+    
+    // Pastikan severity ada dengan format yang benar
+    if (!normalized.severity && normalized.frontendSeverity) {
+      normalized.severity = normalized.frontendSeverity;
+    }
+    
+    // Pastikan severityLevel ada dengan format yang benar
+    if (!normalized.severityLevel && normalized.frontendSeverityLevel !== undefined) {
+      normalized.severityLevel = normalized.frontendSeverityLevel;
+    }
+    
+    // Pastikan confidence ada
+    if (!normalized.confidence) {
+      normalized.confidence = 0.8; // Default confidence
+    }
+    
+    // Pastikan recommendation ada
+    if (!normalized.recommendation && normalized.notes) {
+      normalized.recommendation = normalized.notes;
+    }
+    
+    return normalized;
+  };
 
   const handleAnalyze = async () => {
     try {
@@ -22,9 +58,12 @@ function Analysis({ image, onAnalysisComplete }) {
       // Menambahkan delay sedikit untuk animasi loading
       const data = await getLatestAnalysis();
       
+      // Normalisasi data
+      const normalizedData = normalizeAnalysisData(data);
+      
       // Tambahkan gambar ke objek analisis
       const analysisWithImage = {
-        ...data,
+        ...normalizedData,
         image: image // Menyimpan gambar yang diupload dalam hasil analisis
       };
       
@@ -223,11 +262,12 @@ function Analysis({ image, onAnalysisComplete }) {
                 >
                   <p className="text-blue-800 text-sm">
                     <span className="font-medium block mb-1">Rekomendasi:</span>
-                    {analysis.severity === 'Ringan' 
+                    {analysis.recommendation || 
+                      (analysis.severity === 'Ringan' 
                       ? 'Lakukan pemeriksaan rutin setiap 12 bulan.' 
                       : analysis.severity === 'Sedang'
                       ? 'Konsultasi dengan dokter mata dalam 3-6 bulan.'
-                      : 'Segera konsultasikan ke dokter mata spesialis.'
+                      : 'Segera konsultasikan ke dokter mata spesialis.')
                     }
                   </p>
                 </motion.div>

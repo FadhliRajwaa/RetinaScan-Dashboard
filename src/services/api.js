@@ -24,47 +24,85 @@ export const getHistory = async () => {
 };
 
 export const getLatestAnalysis = async () => {
-  // Endpoint ini belum ada, gunakan mock data yang lebih lengkap
-  // Dalam implementasi nyata, data ini akan diambil dari hasil analisis ML
-  
-  // Pilih secara acak salah satu tingkat keparahan untuk simulasi
-  const severities = ['Ringan', 'Sedang', 'Berat'];
-  const randomIndex = Math.floor(Math.random() * severities.length);
-  const severity = severities[randomIndex];
-  
-  // Atur tingkat kepercayaan berdasarkan keparahan
-  let confidence;
-  switch (severity) {
-    case 'Ringan':
-      confidence = 0.75 + Math.random() * 0.2; // 0.75-0.95
-      break;
-    case 'Sedang':
-      confidence = 0.70 + Math.random() * 0.15; // 0.70-0.85
-      break;
-    case 'Berat':
-      confidence = 0.85 + Math.random() * 0.15; // 0.85-1.0
-      break;
-    default:
-      confidence = 0.8;
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/api/analysis/latest`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    
+    // Pastikan data memiliki format yang diharapkan
+    if (response.data) {
+      // Pastikan severity ada, jika tidak gunakan fallback
+      if (!response.data.severity && response.data.frontendSeverity) {
+        response.data.severity = response.data.frontendSeverity;
+      }
+      
+      // Pastikan severityLevel ada, jika tidak gunakan fallback
+      if (!response.data.severityLevel && response.data.frontendSeverityLevel !== undefined) {
+        response.data.severityLevel = response.data.frontendSeverityLevel;
+      }
+      
+      // Pastikan recommendation ada
+      if (!response.data.recommendation && response.data.notes) {
+        response.data.recommendation = response.data.notes;
+      }
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching latest analysis:', error);
+    
+    // Fallback ke data mock jika endpoint belum tersedia atau error
+    console.warn('Menggunakan data mock untuk getLatestAnalysis');
+    
+    // Pilih secara acak salah satu tingkat keparahan untuk simulasi
+    const severities = ['Ringan', 'Sedang', 'Berat'];
+    const randomIndex = Math.floor(Math.random() * severities.length);
+    const severity = severities[randomIndex];
+    
+    // Atur tingkat kepercayaan berdasarkan keparahan
+    let confidence;
+    switch (severity) {
+      case 'Ringan':
+        confidence = 0.75 + Math.random() * 0.2; // 0.75-0.95
+        break;
+      case 'Sedang':
+        confidence = 0.70 + Math.random() * 0.15; // 0.70-0.85
+        break;
+      case 'Berat':
+        confidence = 0.85 + Math.random() * 0.15; // 0.85-1.0
+        break;
+      default:
+        confidence = 0.8;
+    }
+    
+    // Tambahkan tanda-tanda klinis yang terdeteksi berdasarkan tingkat keparahan
+    let clinicalSigns = [];
+    if (severity === 'Ringan') {
+      clinicalSigns = ['Mikroaneurisma', 'Pendarahan intraretinal ringan'];
+    } else if (severity === 'Sedang') {
+      clinicalSigns = ['Mikroaneurisma multipel', 'Pendarahan intraretinal', 'Eksudat keras', 'Cotton wool spots'];
+    } else if (severity === 'Berat') {
+      clinicalSigns = ['Pendarahan intraretinal luas', 'Eksudat keras multipel', 'Cotton wool spots multipel', 'Anomali vaskular'];
+    }
+    
+    return {
+      severity,
+      severityLevel: severity === 'Ringan' ? 1 : severity === 'Sedang' ? 2 : 3,
+      confidence: parseFloat(confidence.toFixed(2)),
+      clinicalSigns,
+      analysisDate: new Date().toISOString(),
+      riskFactor: severity === 'Ringan' ? 'Rendah' : severity === 'Sedang' ? 'Menengah' : 'Tinggi',
+      recommendation: severity === 'Ringan' ? 
+        'Lakukan pemeriksaan rutin setiap 12 bulan.' : 
+        severity === 'Sedang' ?
+        'Konsultasi dengan dokter mata dalam 3-6 bulan.' :
+        'Segera konsultasikan ke dokter mata spesialis.',
+      isSimulation: true
+    };
   }
-  
-  // Tambahkan tanda-tanda klinis yang terdeteksi berdasarkan tingkat keparahan
-  let clinicalSigns = [];
-  if (severity === 'Ringan') {
-    clinicalSigns = ['Mikroaneurisma', 'Pendarahan intraretinal ringan'];
-  } else if (severity === 'Sedang') {
-    clinicalSigns = ['Mikroaneurisma multipel', 'Pendarahan intraretinal', 'Eksudat keras', 'Cotton wool spots'];
-  } else if (severity === 'Berat') {
-    clinicalSigns = ['Pendarahan intraretinal luas', 'Eksudat keras multipel', 'Cotton wool spots multipel', 'Anomali vaskular'];
-  }
-  
-  return {
-    severity,
-    confidence: parseFloat(confidence.toFixed(2)),
-    clinicalSigns,
-    analysisDate: new Date().toISOString(),
-    riskFactor: severity === 'Ringan' ? 'Rendah' : severity === 'Sedang' ? 'Menengah' : 'Tinggi',
-  };
 };
 
 export const getReport = async () => {
