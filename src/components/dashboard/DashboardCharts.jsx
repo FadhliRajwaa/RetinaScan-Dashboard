@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import React from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import ReactApexChart from 'react-apexcharts';
 import { useTheme } from '../../context/ThemeContext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { getFlaskApiInfo, testFlaskConnection } from '../../services/api';
-import { useState, useEffect, useCallback, useMemo } from 'react';
 
 // Komponen untuk menampilkan status Flask API
 const FlaskApiStatus = () => {
