@@ -695,12 +695,20 @@ function PatientHistoryPageComponent() {
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
                       <p className="text-base text-blue-700">
-                        {patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'ringan' ? (
-                          'Konsultasi dengan dokter mata dalam 6-12 bulan. Kontrol gula darah secara ketat.'
+                        {patientData.analyses[selectedAnalysisIndex].notes ? (
+                          patientData.analyses[selectedAnalysisIndex].notes
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
+                          'Lakukan pemeriksaan rutin setiap tahun.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'ringan' ? (
+                          'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
                         ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'sedang' ? (
-                          'Konsultasi dengan dokter mata dalam 3-6 bulan. Evaluasi faktor risiko kardiovaskular.'
+                          'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'berat' ? (
+                          'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'sangat berat' ? (
+                          'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
                         ) : (
-                          'Konsultasi dengan dokter mata spesialis retina segera (dalam 1 bulan). Kontrol gula darah secara ketat.'
+                          'Lakukan pemeriksaan rutin setiap tahun.'
                         )}
                       </p>
                     </div>

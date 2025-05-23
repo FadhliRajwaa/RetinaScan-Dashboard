@@ -4,6 +4,76 @@ import ReactApexChart from 'react-apexcharts';
 import { useTheme } from '../../context/ThemeContext';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { getFlaskApiInfo, testFlaskConnection } from '../../services/api';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+
+// Komponen untuk menampilkan status Flask API
+const FlaskApiStatus = () => {
+  const [apiInfo, setApiInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchApiInfo = async () => {
+      try {
+        setLoading(true);
+        const info = await getFlaskApiInfo();
+        setApiInfo(info);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchApiInfo();
+  }, []);
+  
+  if (loading) {
+    return (
+      <div className="p-4 bg-white rounded-xl shadow-md">
+        <div className="animate-pulse space-y-2">
+          <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
+        <h3 className="text-red-800 font-medium">Flask API Status: Error</h3>
+        <p className="text-red-600 text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="p-4 bg-white rounded-xl shadow-md">
+      <h3 className="font-medium text-gray-800">Flask API Status</h3>
+      <div className="mt-2">
+        <div className="flex items-center">
+          <div className={`w-3 h-3 rounded-full mr-2 ${apiInfo?.success ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className={`text-sm ${apiInfo?.success ? 'text-green-700' : 'text-red-700'}`}>
+            {apiInfo?.success ? 'Online' : 'Offline'}
+          </span>
+        </div>
+        {apiInfo?.success && apiInfo?.info && (
+          <div className="mt-2 text-xs text-gray-600">
+            <p>Model: {apiInfo.info.model_name || 'Unknown'}</p>
+            <p>Simulation Mode: {apiInfo.info.simulation_mode ? 'Yes' : 'No'}</p>
+            <p>API Version: {apiInfo.info.api_version || '1.0.0'}</p>
+          </div>
+        )}
+        <div className="mt-2 text-xs text-gray-500">
+          <p>URL: {apiInfo?.flaskApiUrl || 'Not configured'}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const SeverityDistributionChart = ({ severityDistribution }) => {
   const { theme } = useTheme();
@@ -475,6 +545,33 @@ const DashboardCharts = () => {
       transition={{ duration: 0.5, delay: 0.2 }}
       className="mt-8"
     >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="md:col-span-2 bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+        >
+          <h3 className="text-lg font-semibold mb-3">Status Sistem</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FlaskApiStatus />
+            <div className="p-4 bg-white rounded-xl shadow-md">
+              <h3 className="font-medium text-gray-800">Backend API Status</h3>
+              <div className="mt-2">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
+                  <span className="text-sm text-green-700">Online</span>
+                </div>
+                <div className="mt-2 text-xs text-gray-600">
+                  <p>URL: {import.meta.env.VITE_API_URL || 'http://localhost:5000'}</p>
+                  <p>Socket Status: {socketStatus}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}

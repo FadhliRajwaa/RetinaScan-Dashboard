@@ -254,11 +254,17 @@ function Report({ result }) {
               <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mt-auto">
                 <h4 className="font-medium text-blue-800 mb-2">Rekomendasi</h4>
                 <p className="text-blue-700 text-sm">
-                  {severity === 'Ringan' 
-                    ? 'Lakukan pemeriksaan rutin setiap 12 bulan sekali untuk memantau kondisi retina.' 
+                  {severity === 'Tidak ada' 
+                    ? 'Lakukan pemeriksaan rutin setiap tahun.' 
+                    : severity === 'Ringan'
+                    ? 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.' 
                     : severity === 'Sedang'
-                    ? 'Disarankan untuk berkonsultasi dengan dokter mata dalam waktu 3-6 bulan ke depan untuk evaluasi lebih lanjut.'
-                    : 'Segera konsultasikan dengan dokter mata spesialis untuk penanganan lebih lanjut dalam waktu dekat.'}
+                    ? 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+                    : severity === 'Berat'
+                    ? 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+                    : severity === 'Sangat Berat'
+                    ? 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+                    : 'Lakukan pemeriksaan rutin setiap tahun.'}
                 </p>
               </div>
             </motion.div>

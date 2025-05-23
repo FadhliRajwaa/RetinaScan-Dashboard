@@ -31,11 +31,23 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     // Pastikan severity ada dengan format yang benar
     if (!normalized.severity && normalized.frontendSeverity) {
       normalized.severity = normalized.frontendSeverity;
+    } else if (!normalized.severity && normalized.class) {
+      // Handle format dari Flask API
+      const severityMapping = {
+        'No DR': 'Tidak ada',
+        'Mild': 'Ringan',
+        'Moderate': 'Sedang',
+        'Severe': 'Berat',
+        'Proliferative DR': 'Sangat Berat'
+      };
+      normalized.severity = severityMapping[normalized.class] || normalized.class;
     }
     
     // Pastikan severityLevel ada dengan format yang benar
     if (!normalized.severityLevel && normalized.frontendSeverityLevel !== undefined) {
       normalized.severityLevel = normalized.frontendSeverityLevel;
+    } else if (!normalized.severityLevel && normalized.severity_level !== undefined) {
+      normalized.severityLevel = normalized.severity_level;
     }
     
     // Pastikan confidence ada
@@ -46,6 +58,20 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     // Pastikan recommendation ada
     if (!normalized.recommendation && normalized.notes) {
       normalized.recommendation = normalized.notes;
+    }
+
+    // Tambahkan mapping rekomendasi berdasarkan severity jika tidak ada
+    // Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
+    if (!normalized.recommendation) {
+      const recommendationMapping = {
+        'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
+        'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+        'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+        'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+        'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+      };
+      
+      normalized.recommendation = recommendationMapping[normalized.severity] || 'Konsultasikan dengan dokter mata.';
     }
     
     return normalized;
@@ -254,7 +280,7 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                 >
                   <p className="text-blue-800 text-sm">
                     <span className="font-medium block mb-1">Rekomendasi:</span>
-                    {analysis.recommendation || 
+                    {analysis.recommendation || analysis.notes || 
                       (analysis.severity === 'Ringan' 
                       ? 'Lakukan pemeriksaan rutin setiap 12 bulan.' 
                       : analysis.severity === 'Sedang'

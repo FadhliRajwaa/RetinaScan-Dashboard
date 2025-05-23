@@ -20,6 +20,59 @@ export const getHistory = async () => {
       Authorization: `Bearer ${getToken()}`,
     },
   });
+  
+  // Normalisasi data untuk konsistensi
+  if (Array.isArray(response.data)) {
+    response.data.forEach(analysis => {
+      // Pastikan severity konsisten
+      if (!analysis.severity && analysis.frontendSeverity) {
+        analysis.severity = analysis.frontendSeverity;
+      } else if (!analysis.severity && analysis.class) {
+        const severityMapping = {
+          'No DR': 'Tidak ada',
+          'Mild': 'Ringan',
+          'Moderate': 'Sedang',
+          'Severe': 'Berat',
+          'Proliferative DR': 'Sangat Berat'
+        };
+        analysis.severity = severityMapping[analysis.class] || analysis.class;
+      }
+      
+      // Pastikan severityLevel konsisten
+      if (!analysis.severityLevel && analysis.frontendSeverityLevel !== undefined) {
+        analysis.severityLevel = analysis.frontendSeverityLevel;
+      } else if (!analysis.severityLevel && analysis.severity_level !== undefined) {
+        analysis.severityLevel = analysis.severity_level;
+      } else if (analysis.severity) {
+        const severityLevelMapping = {
+          'Tidak ada': 0,
+          'Ringan': 1,
+          'Sedang': 2,
+          'Berat': 3,
+          'Sangat Berat': 4
+        };
+        analysis.severityLevel = severityLevelMapping[analysis.severity] || 0;
+      }
+      
+      // Pastikan notes/recommendation konsisten
+      if (!analysis.notes && analysis.recommendation) {
+        analysis.notes = analysis.recommendation;
+      } else if (!analysis.recommendation && analysis.notes) {
+        analysis.recommendation = analysis.notes;
+      } else if (!analysis.notes && !analysis.recommendation && analysis.severity) {
+        const recommendationMapping = {
+          'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
+          'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+          'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+          'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+          'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+        };
+        analysis.notes = recommendationMapping[analysis.severity] || 'Konsultasikan dengan dokter mata.';
+        analysis.recommendation = analysis.notes;
+      }
+    });
+  }
+  
   return response.data;
 };
 
@@ -37,16 +90,53 @@ export const getLatestAnalysis = async () => {
       // Pastikan severity ada, jika tidak gunakan fallback
       if (!response.data.severity && response.data.frontendSeverity) {
         response.data.severity = response.data.frontendSeverity;
+      } else if (!response.data.severity && response.data.class) {
+        // Handle format dari Flask API
+        const severityMapping = {
+          'No DR': 'Tidak ada',
+          'Mild': 'Ringan',
+          'Moderate': 'Sedang',
+          'Severe': 'Berat',
+          'Proliferative DR': 'Sangat Berat'
+        };
+        response.data.severity = severityMapping[response.data.class] || response.data.class;
       }
       
       // Pastikan severityLevel ada, jika tidak gunakan fallback
       if (!response.data.severityLevel && response.data.frontendSeverityLevel !== undefined) {
         response.data.severityLevel = response.data.frontendSeverityLevel;
+      } else if (!response.data.severityLevel && response.data.severity_level !== undefined) {
+        response.data.severityLevel = response.data.severity_level;
+      } else if (response.data.severity) {
+        // Tentukan severityLevel berdasarkan severity jika tidak ada
+        const severityLevelMapping = {
+          'Tidak ada': 0,
+          'Ringan': 1,
+          'Sedang': 2,
+          'Berat': 3,
+          'Sangat Berat': 4
+        };
+        response.data.severityLevel = severityLevelMapping[response.data.severity] || 0;
       }
       
       // Pastikan recommendation ada
       if (!response.data.recommendation && response.data.notes) {
         response.data.recommendation = response.data.notes;
+      }
+      
+      // Tambahkan rekomendasi jika tidak ada
+      if (!response.data.recommendation && !response.data.notes) {
+        // Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
+        const recommendationMapping = {
+          'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
+          'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+          'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+          'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+          'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+        };
+        response.data.recommendation = recommendationMapping[response.data.severity] || 'Konsultasikan dengan dokter mata.';
+        // Simpan juga ke notes untuk konsistensi
+        response.data.notes = response.data.recommendation;
       }
     }
     
@@ -150,14 +240,19 @@ function getDetailsFromSeverity(severity) {
 }
 
 // Fungsi helper untuk menghasilkan rekomendasi berdasarkan tingkat keparahan
+// Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
 function getRecommendationsFromSeverity(severity) {
   switch (severity) {
     case 'Ringan':
-      return 'Konsultasi dengan dokter mata dalam 6-12 bulan. Kontrol gula darah secara ketat dengan target HbA1c < 7%. Pantau tekanan darah dan kolesterol. Lakukan pemeriksaan fundus secara berkala. Perhatikan perubahan penglihatan seperti penglihatan kabur atau bintik-bintik.';
+      return 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
     case 'Sedang':
-      return 'Konsultasi dengan dokter mata dalam 3-6 bulan. Kontrol gula darah secara ketat. Pertimbangkan pemeriksaan OCT untuk mengevaluasi ketebalan makula. Perhatikan perubahan penglihatan dan segera konsultasi jika ada perubahan. Evaluasi dan manajemen faktor risiko kardiovaskular seperti hipertensi dan dislipidemia.';
+      return 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
     case 'Berat':
-      return 'Konsultasi dengan dokter mata spesialis retina segera (dalam 1 bulan). Kontrol gula darah secara ketat. Persiapkan kemungkinan tindakan laser panretinal photocoagulation (PRP) untuk mencegah neovaskularisasi. Evaluasi untuk kemungkinan edema makula diabetik yang memerlukan pengobatan. Manajemen agresif terhadap faktor risiko sistemik seperti tekanan darah dan profil lipid.';
+      return 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
+    case 'Sangat Berat':
+      return 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
+    default:
+      return 'Lakukan pemeriksaan rutin setiap tahun.';
     default:
       return 'Lakukan pemeriksaan rutin dengan dokter mata setiap tahun. Jaga gula darah tetap terkontrol. Lakukan gaya hidup sehat dengan diet seimbang dan olahraga teratur. Hindari merokok dan batasi konsumsi alkohol.';
   }
@@ -208,5 +303,43 @@ export const getDashboardData = async () => {
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
     throw error;
+  }
+};
+
+// Fungsi untuk mendapatkan info Flask API
+export const getFlaskApiInfo = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/api/analysis/flask-info`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Flask API info:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Fungsi untuk menguji koneksi Flask API
+export const testFlaskConnection = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/api/analysis/test-flask-connection`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error testing Flask connection:', error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 };
