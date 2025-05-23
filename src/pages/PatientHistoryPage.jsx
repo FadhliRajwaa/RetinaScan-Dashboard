@@ -177,15 +177,23 @@ function PatientHistoryPageComponent() {
     if (patientData && patientData.analyses.length > 0) {
       setImageStatus('loading');
       
+      // Prioritaskan penggunaan imageData (base64) jika tersedia
+      if (patientData.analyses[selectedAnalysisIndex].imageData) {
+        // Jika ada imageData, tidak perlu URL tambahan
+        setActiveImageUrl('');
+        console.log('Menggunakan data base64 dari database untuk analisis');
+      } 
       // Jika tidak ada imageData, coba gunakan path sebagai fallback
-      if (!patientData.analyses[selectedAnalysisIndex].imageData && patientData.analyses[selectedAnalysisIndex].imagePath) {
+      else if (patientData.analyses[selectedAnalysisIndex].imagePath) {
         const baseUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
         const timestamp = new Date().getTime();
         const urlWithTimestamp = `${baseUrl}?nocache=${timestamp}`;
         setActiveImageUrl(urlWithTimestamp);
+        console.log('Menggunakan URL gambar sebagai fallback:', urlWithTimestamp);
       } else {
-        // Jika ada imageData, tidak perlu URL tambahan
-        setActiveImageUrl('');
+        // Tidak ada imageData atau imagePath, gunakan gambar default
+        setActiveImageUrl(DEFAULT_IMAGE);
+        console.log('Tidak ada data gambar tersedia, menggunakan gambar default');
       }
     }
   }, [selectedAnalysisIndex, patientData]);
@@ -647,8 +655,20 @@ function PatientHistoryPageComponent() {
                                 // Tandai error dan gunakan gambar default
                                 setImageStatus('error');
                                 
+                                // Prioritaskan imageData (base64) jika tersedia
+                                if (patientData.analyses[selectedAnalysisIndex].imageData) {
+                                  console.log('Menggunakan data base64 dari database');
+                                  
+                                  // Pastikan imageData adalah string base64 yang valid
+                                  const imageData = patientData.analyses[selectedAnalysisIndex].imageData;
+                                  if (imageData && imageData.startsWith('data:')) {
+                                    e.target.src = imageData;
+                                    return;
+                                  }
+                                }
+                                
                                 // Coba file path sebagai alternatif jika yang gagal adalah base64
-                                if (patientData.analyses[selectedAnalysisIndex].imageData && activeImageUrl) {
+                                if (activeImageUrl) {
                                   console.log('Mencoba menggunakan URL file sebagai fallback');
                                   e.target.src = activeImageUrl;
                                   return;
