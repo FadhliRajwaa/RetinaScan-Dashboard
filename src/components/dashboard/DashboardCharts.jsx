@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import ReactApexChart from 'react-apexcharts';
 import { useTheme } from '../../context/ThemeContext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { getFlaskApiInfo, testFlaskConnection } from '../../services/api';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 // Komponen untuk menampilkan status Flask API
 const FlaskApiStatus = () => {
@@ -83,8 +84,8 @@ const SeverityDistributionChart = ({ severityDistribution }) => {
       type: 'donut',
       fontFamily: 'Inter, sans-serif',
     },
-    colors: ['#10B981', '#FBBF24', '#EF4444'],
-    labels: ['Ringan', 'Sedang', 'Berat'],
+    colors: ['#34D399', '#10B981', '#FBBF24', '#F59E0B', '#EF4444'],
+    labels: ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'],
     legend: {
       position: 'bottom',
       fontFamily: 'Inter, sans-serif',
@@ -489,14 +490,25 @@ const DashboardCharts = () => {
 
   // Agregasi data untuk chart
   const severityDistribution = useMemo(() => {
-    const dist = { Ringan: 0, Sedang: 0, Berat: 0 };
+    const dist = { 'Tidak ada': 0, Ringan: 0, Sedang: 0, Berat: 0, 'Sangat Berat': 0 };
     analyses.forEach(a => {
       const sev = a.severity?.toLowerCase();
-      if (sev === 'ringan' || sev === 'rendah') dist.Ringan++;
+      if (sev === 'tidak ada' || sev === 'normal') dist['Tidak ada']++;
+      else if (sev === 'ringan' || sev === 'rendah') dist.Ringan++;
       else if (sev === 'sedang') dist.Sedang++;
-      else dist.Berat++;
+      else if (sev === 'berat' || sev === 'parah') dist.Berat++;
+      else if (sev === 'sangat berat' || sev === 'proliferative dr') dist['Sangat Berat']++;
+      else {
+        // Fallback berdasarkan severityLevel jika ada
+        const level = a.severityLevel || 0;
+        if (level === 0) dist['Tidak ada']++;
+        else if (level === 1) dist.Ringan++;
+        else if (level === 2) dist.Sedang++;
+        else if (level === 3) dist.Berat++;
+        else if (level === 4) dist['Sangat Berat']++;
+      }
     });
-    return [dist.Ringan, dist.Sedang, dist.Berat];
+    return [dist['Tidak ada'], dist.Ringan, dist.Sedang, dist.Berat, dist['Sangat Berat']];
   }, [analyses]);
 
   const monthlyTrend = useMemo(() => {

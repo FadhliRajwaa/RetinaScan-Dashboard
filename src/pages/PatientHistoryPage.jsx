@@ -199,12 +199,27 @@ function PatientHistoryPageComponent() {
   // Get severity badge style
   const getSeverityBadge = (severity) => {
     const severityLower = severity.toLowerCase();
-    if (severityLower === 'ringan' || severityLower === 'rendah') {
+    if (severityLower === 'tidak ada' || severityLower === 'normal') {
+      return 'bg-blue-100 text-blue-800';
+    } else if (severityLower === 'ringan' || severityLower === 'rendah') {
       return 'bg-green-100 text-green-800';
     } else if (severityLower === 'sedang') {
       return 'bg-yellow-100 text-yellow-800';
-    } else {
+    } else if (severityLower === 'berat' || severityLower === 'parah') {
+      return 'bg-orange-100 text-orange-800';
+    } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
       return 'bg-red-100 text-red-800';
+    } else {
+      // Fallback berdasarkan severityLevel jika ada
+      const level = parseInt(severity);
+      if (!isNaN(level)) {
+        if (level === 0) return 'bg-blue-100 text-blue-800';
+        if (level === 1) return 'bg-green-100 text-green-800';
+        if (level === 2) return 'bg-yellow-100 text-yellow-800';
+        if (level === 3) return 'bg-orange-100 text-orange-800';
+        if (level === 4) return 'bg-red-100 text-red-800';
+      }
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -263,19 +278,34 @@ function PatientHistoryPageComponent() {
     if (!patientData) return {};
     
     const distribution = {
+      tidakAda: 0,
       ringan: 0,
       sedang: 0,
-      berat: 0
+      berat: 0,
+      sangatBerat: 0
     };
     
     patientData.analyses.forEach(analysis => {
       const severity = analysis.severity.toLowerCase();
-      if (severity === 'ringan' || severity === 'rendah') {
+      if (severity === 'tidak ada' || severity === 'normal') {
+        distribution.tidakAda++;
+      } else if (severity === 'ringan' || severity === 'rendah') {
         distribution.ringan++;
       } else if (severity === 'sedang') {
         distribution.sedang++;
-      } else {
+      } else if (severity === 'berat' || severity === 'parah') {
         distribution.berat++;
+      } else if (severity === 'sangat berat' || severity === 'proliferative dr') {
+        distribution.sangatBerat++;
+      } else {
+        // Fallback berdasarkan severityLevel jika ada
+        const level = analysis.severityLevel || 0;
+        if (level === 0) distribution.tidakAda++;
+        else if (level === 1) distribution.ringan++;
+        else if (level === 2) distribution.sedang++;
+        else if (level === 3) distribution.berat++;
+        else if (level === 4) distribution.sangatBerat++;
+        else distribution.ringan++; // Default fallback
       }
     });
     
@@ -410,24 +440,36 @@ function PatientHistoryPageComponent() {
               {/* Severity distribution */}
               <div className="mt-6">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Distribusi Tingkat Keparahan</h3>
-                <div className="flex space-x-4">
-                  <div className="flex-1 bg-gray-50 p-3 rounded-lg text-center">
-                    <div className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm">
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="bg-gray-50 p-2 rounded-lg text-center">
+                    <div className="inline-block px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">
+                      Tidak ada
+                    </div>
+                    <p className="text-lg font-bold mt-1">{severityDistribution.tidakAda || 0}</p>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded-lg text-center">
+                    <div className="inline-block px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">
                       Ringan
                     </div>
-                    <p className="text-xl font-bold mt-1">{severityDistribution.ringan || 0}</p>
+                    <p className="text-lg font-bold mt-1">{severityDistribution.ringan || 0}</p>
                   </div>
-                  <div className="flex-1 bg-gray-50 p-3 rounded-lg text-center">
-                    <div className="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm">
+                  <div className="bg-gray-50 p-2 rounded-lg text-center">
+                    <div className="inline-block px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs">
                       Sedang
                     </div>
-                    <p className="text-xl font-bold mt-1">{severityDistribution.sedang || 0}</p>
+                    <p className="text-lg font-bold mt-1">{severityDistribution.sedang || 0}</p>
                   </div>
-                  <div className="flex-1 bg-gray-50 p-3 rounded-lg text-center">
-                    <div className="inline-block px-3 py-1 rounded-full bg-red-100 text-red-800 text-sm">
+                  <div className="bg-gray-50 p-2 rounded-lg text-center">
+                    <div className="inline-block px-2 py-1 rounded-full bg-orange-100 text-orange-800 text-xs">
                       Berat
                     </div>
-                    <p className="text-xl font-bold mt-1">{severityDistribution.berat || 0}</p>
+                    <p className="text-lg font-bold mt-1">{severityDistribution.berat || 0}</p>
+                  </div>
+                  <div className="bg-gray-50 p-2 rounded-lg text-center">
+                    <div className="inline-block px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs">
+                      Sangat Berat
+                    </div>
+                    <p className="text-lg font-bold mt-1">{severityDistribution.sangatBerat || 0}</p>
                   </div>
                 </div>
               </div>

@@ -147,13 +147,28 @@ function History() {
 
   // Get severity badge style
   const getSeverityBadge = (severity) => {
-    const severityLower = severity.toLowerCase();
-    if (severityLower === 'ringan' || severityLower === 'rendah') {
+    const severityLower = severity?.toLowerCase() || '';
+    if (severityLower === 'tidak ada' || severityLower === 'normal') {
+      return 'bg-blue-100 text-blue-800';
+    } else if (severityLower === 'ringan' || severityLower === 'rendah') {
       return 'bg-green-100 text-green-800';
     } else if (severityLower === 'sedang') {
       return 'bg-yellow-100 text-yellow-800';
-    } else {
+    } else if (severityLower === 'berat' || severityLower === 'parah') {
+      return 'bg-orange-100 text-orange-800';
+    } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
       return 'bg-red-100 text-red-800';
+    } else {
+      // Fallback berdasarkan severityLevel jika ada
+      const level = parseInt(severity);
+      if (!isNaN(level)) {
+        if (level === 0) return 'bg-blue-100 text-blue-800';
+        if (level === 1) return 'bg-green-100 text-green-800';
+        if (level === 2) return 'bg-yellow-100 text-yellow-800';
+        if (level === 3) return 'bg-orange-100 text-orange-800';
+        if (level === 4) return 'bg-red-100 text-red-800';
+      }
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -350,7 +365,7 @@ function History() {
                           <div>
                             <p className="text-xs font-medium text-gray-500">Tingkat Keparahan Terakhir</p>
                             <span className={`px-2 py-1 rounded-full text-xs inline-block mt-1 ${getSeverityBadge(item.latestAnalysis.severity)}`}>
-                              {item.latestAnalysis.severity}
+                              {item.latestAnalysis.severity || 'Tidak ada'}
                             </span>
                           </div>
                         </div>
