@@ -160,15 +160,7 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <motion.div 
-                    className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <p className="text-gray-700 font-medium">Menganalisis...</p>
-                  </motion.div>
+                  <LoadingIndicator />
                 </motion.div>
               )}
             </div>
@@ -346,5 +338,58 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     </motion.div>
   );
 }
+
+// Tambahkan komponen LoadingIndicator
+const LoadingIndicator = () => {
+  const [elapsedTime, setElapsedTime] = useState(0);
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+  
+  // Pesan dinamis berdasarkan waktu
+  const getMessage = () => {
+    if (elapsedTime < 10) {
+      return "Menganalisis gambar...";
+    } else if (elapsedTime < 30) {
+      return "Pemrosesan gambar membutuhkan waktu lebih lama dari biasanya...";
+    } else if (elapsedTime < 60) {
+      return "Saat ini server free-tier mungkin sedang dalam cold start (2-3 menit)...";
+    } else if (elapsedTime < 120) {
+      return "Cold start pada free tier menghabiskan waktu hingga 2-3 menit, mohon bersabar...";
+    } else {
+      return "Masih menunggu respons server, ini mungkin disebabkan oleh lalu lintas tinggi...";
+    }
+  };
+  
+  return (
+    <motion.div 
+      className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center max-w-sm"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+      <p className="text-gray-700 font-medium">{getMessage()}</p>
+      {elapsedTime > 20 && (
+        <p className="text-xs text-gray-500 mt-2">
+          Waktu tunggu: {Math.floor(elapsedTime / 60)}m {elapsedTime % 60}s
+        </p>
+      )}
+      {elapsedTime > 30 && (
+        <div className="mt-3 text-xs text-gray-600 bg-gray-100 p-2 rounded">
+          <p>
+            <b>Info:</b> Free tier pada layanan cloud sering mengalami "sleep mode" 
+            setelah 15 menit tidak aktif. Startup pertama bisa memakan waktu 2-3 menit.
+          </p>
+        </div>
+      )}
+    </motion.div>
+  );
+};
 
 export default Analysis;
