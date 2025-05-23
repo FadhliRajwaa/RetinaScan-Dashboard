@@ -189,6 +189,11 @@ function History() {
     }
     return '-';
   };
+  
+  // Helper untuk menangani gambar yang dapat dimuat
+  const canLoadImage = (src) => {
+    return src && (src.startsWith('data:image') || src.startsWith('http'));
+  };
 
   // Fungsi untuk mengelompokkan analisis berdasarkan pasien
   const groupAnalysesByPatient = (analyses) => {
