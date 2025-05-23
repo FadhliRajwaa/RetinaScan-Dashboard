@@ -5,7 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { getFlaskApiInfo, testFlaskConnection } from '../../services/api';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 // Komponen untuk menampilkan status Flask API
 const FlaskApiStatus = () => {
@@ -488,7 +488,7 @@ const DashboardCharts = () => {
   }, [fetchData]);
 
   // Agregasi data untuk chart
-  const severityDistribution = React.useMemo(() => {
+  const severityDistribution = useMemo(() => {
     const dist = { Ringan: 0, Sedang: 0, Berat: 0 };
     analyses.forEach(a => {
       const sev = a.severity?.toLowerCase();
@@ -499,7 +499,7 @@ const DashboardCharts = () => {
     return [dist.Ringan, dist.Sedang, dist.Berat];
   }, [analyses]);
 
-  const monthlyTrend = React.useMemo(() => {
+  const monthlyTrend = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
     const trend = Array(12).fill(0);
     analyses.forEach(a => {
@@ -509,7 +509,7 @@ const DashboardCharts = () => {
     return { categories: months, data: trend };
   }, [analyses]);
 
-  const ageGroups = React.useMemo(() => {
+  const ageGroups = useMemo(() => {
     const groups = { '< 30': 0, '30-40': 0, '41-50': 0, '51-60': 0, '61-70': 0, '> 70': 0 };
     patients.forEach(p => {
       const age = p.age || 0;
@@ -523,7 +523,7 @@ const DashboardCharts = () => {
     return { categories: Object.keys(groups), data: Object.values(groups) };
   }, [patients]);
 
-  const confidenceLevels = React.useMemo(() => {
+  const confidenceLevels = useMemo(() => {
     const levels = { '< 70%': 0, '70-80%': 0, '81-90%': 0, '91-95%': 0, '96-100%': 0 };
     analyses.forEach(a => {
       const conf = (a.confidence || 0) * 100;
