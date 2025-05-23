@@ -148,13 +148,18 @@ export const getLatestAnalysis = async () => {
     console.warn('Menggunakan data mock untuk getLatestAnalysis');
     
     // Pilih secara acak salah satu tingkat keparahan untuk simulasi
-    const severities = ['Ringan', 'Sedang', 'Berat'];
+    const severities = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
     const randomIndex = Math.floor(Math.random() * severities.length);
     const severity = severities[randomIndex];
     
     // Atur tingkat kepercayaan berdasarkan keparahan
     let confidence;
     switch (severity) {
+      case 'Tidak ada':
+      case 'Normal':
+      case 'No DR':
+        confidence = 0.90 + Math.random() * 0.1; // 0.90-1.0
+        break;
       case 'Ringan':
         confidence = 0.75 + Math.random() * 0.2; // 0.75-0.95
         break;
@@ -164,18 +169,26 @@ export const getLatestAnalysis = async () => {
       case 'Berat':
         confidence = 0.85 + Math.random() * 0.15; // 0.85-1.0
         break;
+      case 'Sangat Berat':
+      case 'Proliferative DR':
+        confidence = 0.88 + Math.random() * 0.12; // 0.88-1.0
+        break;
       default:
         confidence = 0.8;
     }
     
     // Tambahkan tanda-tanda klinis yang terdeteksi berdasarkan tingkat keparahan
     let clinicalSigns = [];
-    if (severity === 'Ringan') {
+    if (severity === 'Tidak ada' || severity === 'Normal' || severity === 'No DR') {
+      clinicalSigns = ['Tidak ditemukan tanda-tanda retinopati'];
+    } else if (severity === 'Ringan') {
       clinicalSigns = ['Mikroaneurisma', 'Pendarahan intraretinal ringan'];
     } else if (severity === 'Sedang') {
       clinicalSigns = ['Mikroaneurisma multipel', 'Pendarahan intraretinal', 'Eksudat keras', 'Cotton wool spots'];
     } else if (severity === 'Berat') {
       clinicalSigns = ['Pendarahan intraretinal luas', 'Eksudat keras multipel', 'Cotton wool spots multipel', 'Anomali vaskular'];
+    } else if (severity === 'Sangat Berat' || severity === 'Proliferative DR') {
+      clinicalSigns = ['Neovaskularisasi', 'Perdarahan preretinal', 'Fibrosis epiretinal', 'Traksi retina'];
     }
     
     return {
@@ -234,6 +247,13 @@ function getDetailsFromSeverity(severity) {
       return 'Analisis menunjukkan tanda-tanda retinopati diabetik non-proliferatif sedang. Terdapat perdarahan intraretinal dan eksudat keras yang menunjukkan penurunan fungsi barrier darah-retina. Cotton wool spots juga terdeteksi, yang menandakan adanya iskemia retina. Perubahan ini dapat mulai memengaruhi ketajaman penglihatan dan memerlukan perhatian medis.';
     case 'Berat':
       return 'Analisis menunjukkan tanda-tanda retinopati diabetik non-proliferatif berat. Terdapat banyak perdarahan retina, eksudat keras, dan cotton wool spots yang menandakan iskemia retina yang signifikan. Anomali vaskular seperti kaliber vena yang tidak teratur dan abnormalitas mikrovaskuler intraretinal (IRMA) juga terdeteksi. Kondisi ini berisiko tinggi berkembang menjadi retinopati proliferatif dan membutuhkan penanganan segera.';
+    case 'Sangat Berat':
+    case 'Proliferative DR':
+      return 'Analisis menunjukkan tanda-tanda retinopati diabetik proliferatif. Terdapat pembentukan pembuluh darah baru (neovaskularisasi) yang abnormal pada retina dan/atau diskus optikus. Kondisi ini dapat menyebabkan perdarahan vitreus, ablasio retina traksi, dan glaukoma neovaskular yang dapat mengakibatkan kebutaan permanen jika tidak ditangani segera. Tindakan laser atau pembedahan mungkin diperlukan untuk mencegah kehilangan penglihatan yang lebih lanjut.';
+    case 'Tidak ada':
+    case 'Normal':
+    case 'No DR':
+      return 'Analisis tidak menunjukkan tanda-tanda retinopati diabetik yang signifikan. Retina tampak normal tanpa adanya anomali vaskular.';
     default:
       return 'Analisis tidak menunjukkan tanda-tanda retinopati diabetik yang signifikan. Retina tampak normal tanpa adanya anomali vaskular.';
   }
@@ -251,7 +271,8 @@ function getRecommendationsFromSeverity(severity) {
       return 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
     case 'Sangat Berat':
       return 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
-    default:
+    case 'Tidak ada':
+    case 'Normal':
       return 'Lakukan pemeriksaan rutin setiap tahun.';
     default:
       return 'Lakukan pemeriksaan rutin dengan dokter mata setiap tahun. Jaga gula darah tetap terkontrol. Lakukan gaya hidup sehat dengan diet seimbang dan olahraga teratur. Hindari merokok dan batasi konsumsi alkohol.';
@@ -285,6 +306,21 @@ function getClinicalSignsFromSeverity(severity) {
         'Vena kalikut',
         'Iskemia retina yang luas'
       ];
+    case 'Sangat Berat':
+    case 'Proliferative DR':
+      return [
+        'Neovaskularisasi pada diskus optikus (NVD)',
+        'Neovaskularisasi di tempat lain (NVE)',
+        'Perdarahan preretinal atau vitreus',
+        'Fibrosis epiretinal',
+        'Traksi retina',
+        'Risiko ablasio retina',
+        'Glaukoma neovaskular'
+      ];
+    case 'Tidak ada':
+    case 'Normal':
+    case 'No DR':
+      return ['Tidak ditemukan tanda-tanda retinopati'];
     default:
       return ['Tidak ditemukan tanda-tanda retinopati'];
   }
