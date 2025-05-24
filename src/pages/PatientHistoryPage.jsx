@@ -5,6 +5,7 @@ import { withPageTransition } from '../context/ThemeContext';
 import { getHistory, deleteAnalysis } from '../services/api';
 import { API_URL } from '../utils/api';
 import axios from 'axios';
+import jsPDF from 'jspdf';
 import { 
   FiArrowLeft, 
   FiUser, 
@@ -14,7 +15,8 @@ import {
   FiFileText,
   FiBarChart2,
   FiRefreshCcw,
-  FiTrash
+  FiTrash,
+  FiDownload
 } from 'react-icons/fi';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
@@ -104,6 +106,7 @@ function PatientHistoryPageComponent() {
   const [activeImageUrl, setActiveImageUrl] = useState('');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [idToDelete, setIdToDelete] = useState(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   useEffect(() => {
     const fetchPatientHistory = async () => {
@@ -345,6 +348,165 @@ function PatientHistoryPageComponent() {
     }
   };
 
+  // Fungsi untuk mengunduh PDF
+  const handleDownloadPdf = async () => {
+    try {
+      if (!patientData || !patientData.analyses[selectedAnalysisIndex]) {
+        return;
+      }
+      
+      setIsPdfLoading(true);
+      
+      const analysis = patientData.analyses[selectedAnalysisIndex];
+      const patient = patientData.patient;
+      
+      // Buat PDF langsung dengan jsPDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      
+      // Fungsi untuk menambahkan teks dengan wrapping
+      const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        pdf.text(lines, x, y);
+        return y + (lines.length * lineHeight);
+      };
+      
+      // Header
+      pdf.setFontSize(22);
+      pdf.setTextColor(0, 51, 153); // Warna biru untuk judul
+      pdf.text('Laporan Analisis Retina', pageWidth / 2, margin, { align: 'center' });
+      
+      // Tanggal
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Tanggal: ${formatDate(analysis.createdAt)}`, pageWidth / 2, margin + 10, { align: 'center' });
+      
+      let yPos = margin + 20;
+      
+      // Informasi pasien
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Informasi Pasien', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(11);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(`Nama: ${patient.fullName || patient.name}`, margin, yPos);
+      yPos += 6;
+      
+      pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}`, margin, yPos);
+      yPos += 6;
+      
+      pdf.text(`Umur: ${patient.age || '-'} tahun`, margin, yPos);
+      yPos += 10;
+      
+      // Garis pemisah
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+      
+      // Hasil analisis
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Hasil Analisis', margin, yPos);
+      yPos += 10;
+      
+      // Tingkat keparahan
+      pdf.setFontSize(12);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text('Tingkat Keparahan:', margin, yPos);
+      
+      // Set warna berdasarkan tingkat keparahan
+      const severityLevel = analysis.severity.toLowerCase();
+      if (severityLevel === 'ringan' || severityLevel === 'rendah') {
+        pdf.setTextColor(39, 174, 96); // Hijau
+      } else if (severityLevel === 'sedang') {
+        pdf.setTextColor(241, 196, 15); // Kuning
+      } else if (severityLevel === 'berat' || severityLevel === 'parah' || severityLevel === 'sangat berat') {
+        pdf.setTextColor(231, 76, 60); // Merah
+      } else {
+        pdf.setTextColor(52, 152, 219); // Biru
+      }
+      
+      pdf.setFontSize(16);
+      pdf.text(analysis.severity, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 10;
+      
+      // Tingkat kepercayaan
+      pdf.setFontSize(12);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin, yPos);
+      yPos += 15;
+      
+      // Gambar
+      if (analysis.imageData) {
+        try {
+          // Tambahkan gambar jika tersedia
+          const imgWidth = pageWidth - (margin * 2);
+          const imgHeight = 80;
+          pdf.addImage(analysis.imageData, 'JPEG', margin, yPos, imgWidth, imgHeight);
+          yPos += imgHeight + 10;
+        } catch (imgError) {
+          console.error('Error adding image to PDF:', imgError);
+          // Lanjutkan tanpa gambar jika gagal
+          yPos += 10;
+        }
+      }
+      
+      // Rekomendasi
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Rekomendasi', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(11);
+      pdf.setTextColor(60, 60, 60);
+      
+      let recommendation = '';
+      if (analysis.notes) {
+        recommendation = analysis.notes;
+      } else if (severityLevel === 'tidak ada' || severityLevel === 'normal') {
+        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
+      } else if (severityLevel === 'ringan' || severityLevel === 'rendah') {
+        recommendation = 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
+      } else if (severityLevel === 'sedang') {
+        recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
+      } else if (severityLevel === 'berat' || severityLevel === 'parah') {
+        recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
+      } else if (severityLevel === 'sangat berat' || severityLevel === 'proliferative dr') {
+        recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
+      } else {
+        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
+      }
+      
+      yPos = addWrappedText(recommendation, margin, yPos, pageWidth - (margin * 2), 6);
+      yPos += 15;
+      
+      // Disclaimer
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      yPos = addWrappedText(disclaimer, margin, yPos, pageWidth - (margin * 2), 5);
+      
+      // Footer
+      pdf.setFontSize(9);
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // Nama file
+      const fileName = `RetinaScan_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      
+      // Simpan PDF
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Gagal membuat PDF. Silakan coba lagi.');
+    } finally {
+      setIsPdfLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {isLoading ? (
@@ -549,11 +711,21 @@ function PatientHistoryPageComponent() {
             >
               {patientData.analyses.length > 0 && (
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                  <div className="p-4 bg-gray-50 border-b">
-                    <h2 className="text-lg font-semibold">Detail Analisis</h2>
-                    <p className="text-sm text-gray-500">
-                      {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
-                    </p>
+                  <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                    <div>
+                      <h2 className="text-lg font-semibold">Detail Analisis</h2>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleDownloadPdf}
+                      disabled={isPdfLoading}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                    >
+                      <FiDownload />
+                      {isPdfLoading ? 'Memproses...' : 'Unduh PDF'}
+                    </button>
                   </div>
                   
                   <div className="p-6 space-y-6">

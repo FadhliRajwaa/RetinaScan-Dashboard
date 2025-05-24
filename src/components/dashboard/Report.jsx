@@ -56,70 +56,142 @@ function Report({ result }) {
     try {
       setIsLoading(true);
       
-      // Simpan warna latar belakang asli
-      const originalBackgroundImage = reportRef.current.style.backgroundImage;
-      
-      // Hapus sementara warna gradien atau oklch yang tidak didukung
-      const elementsWithGradient = reportRef.current.querySelectorAll('[class*="bg-gradient"]');
-      const originalStyles = new Map();
-      
-      elementsWithGradient.forEach(el => {
-        originalStyles.set(el, {
-          background: el.style.background,
-          backgroundImage: el.style.backgroundImage
-        });
-        
-        // Ganti dengan warna solid yang didukung
-        el.style.background = '#3B82F6'; // Warna biru solid sebagai pengganti gradien
-        el.style.backgroundImage = 'none';
-      });
-      
-      // Tangkap elemen dengan html2canvas
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        // Tambahkan opsi untuk menghindari penggunaan warna oklch
-        onclone: (clonedDoc) => {
-          const clonedElements = clonedDoc.querySelectorAll('*');
-          clonedElements.forEach(el => {
-            // Ganti semua warna oklch dengan warna hex yang didukung
-            const computedStyle = window.getComputedStyle(el);
-            if (computedStyle.color.includes('oklch') || 
-                computedStyle.backgroundColor.includes('oklch')) {
-              el.style.color = '#000000'; // Hitam
-              el.style.backgroundColor = '#ffffff'; // Putih
-            }
-          });
-        }
-      });
-      
-      // Kembalikan style asli
-      elementsWithGradient.forEach(el => {
-        const originalStyle = originalStyles.get(el);
-        if (originalStyle) {
-          el.style.background = originalStyle.background;
-          el.style.backgroundImage = originalStyle.backgroundImage;
-        }
-      });
-      
-      // Buat PDF dari canvas
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      // Pendekatan baru: Buat PDF langsung dengan jsPDF tanpa html2canvas
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 30;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      
+      // Fungsi untuk menambahkan teks dengan wrapping
+      const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
+        const lines = pdf.splitTextToSize(text, maxWidth);
+        pdf.text(lines, x, y);
+        return y + (lines.length * lineHeight);
+      };
+      
+      // Header
+      pdf.setFontSize(22);
+      pdf.setTextColor(0, 51, 153); // Warna biru untuk judul
+      pdf.text('Laporan Analisis Retina', pageWidth / 2, margin, { align: 'center' });
+      
+      // Tanggal
+      pdf.setFontSize(12);
+      pdf.setTextColor(100, 100, 100);
+      const currentDate = formatDate(new Date());
+      pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, margin + 10, { align: 'center' });
+      
+      let yPos = margin + 20;
+      
+      // Informasi pasien jika tersedia
+      if (patient) {
+        pdf.setFontSize(14);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Informasi Pasien', margin, yPos);
+        yPos += 8;
+        
+        pdf.setFontSize(11);
+        pdf.setTextColor(60, 60, 60);
+        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin, yPos);
+        yPos += 6;
+        
+        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}`, margin, yPos);
+        yPos += 6;
+        
+        pdf.text(`Umur: ${patient.age} tahun`, margin, yPos);
+        yPos += 10;
+      }
+      
+      // Garis pemisah
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 10;
+      
+      // Hasil analisis
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Hasil Analisis', margin, yPos);
+      yPos += 10;
+      
+      // Tingkat keparahan
+      pdf.setFontSize(12);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text('Tingkat Keparahan:', margin, yPos);
+      
+      // Set warna berdasarkan tingkat keparahan
+      const severityLevel = severity.toLowerCase();
+      if (severityLevel === 'ringan') {
+        pdf.setTextColor(39, 174, 96); // Hijau
+      } else if (severityLevel === 'sedang') {
+        pdf.setTextColor(241, 196, 15); // Kuning
+      } else if (severityLevel === 'berat' || severityLevel === 'sangat berat') {
+        pdf.setTextColor(231, 76, 60); // Merah
+      } else {
+        pdf.setTextColor(52, 152, 219); // Biru
+      }
       
       pdf.setFontSize(16);
-      pdf.text('Laporan Analisis Retina', pdfWidth / 2, 15, { align: 'center' });
-      pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      pdf.text(severity, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 10;
       
+      // Tingkat kepercayaan
+      pdf.setFontSize(12);
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin, yPos);
+      yPos += 15;
+      
+      // Gambar
+      if (image && image.preview) {
+        try {
+          // Tambahkan gambar jika tersedia
+          const imgWidth = pageWidth - (margin * 2);
+          const imgHeight = 80;
+          pdf.addImage(image.preview, 'JPEG', margin, yPos, imgWidth, imgHeight);
+          yPos += imgHeight + 10;
+        } catch (imgError) {
+          console.error('Error adding image to PDF:', imgError);
+          // Lanjutkan tanpa gambar jika gagal
+          yPos += 10;
+        }
+      }
+      
+      // Rekomendasi
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Rekomendasi', margin, yPos);
+      yPos += 8;
+      
+      pdf.setFontSize(11);
+      pdf.setTextColor(60, 60, 60);
+      
+      let recommendation = '';
+      if (severity === 'Tidak ada') {
+        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
+      } else if (severity === 'Ringan') {
+        recommendation = 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
+      } else if (severity === 'Sedang') {
+        recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
+      } else if (severity === 'Berat') {
+        recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
+      } else if (severity === 'Sangat Berat') {
+        recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
+      } else {
+        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
+      }
+      
+      yPos = addWrappedText(recommendation, margin, yPos, pageWidth - (margin * 2), 6);
+      yPos += 15;
+      
+      // Disclaimer
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      yPos = addWrappedText(disclaimer, margin, yPos, pageWidth - (margin * 2), 5);
+      
+      // Footer
+      pdf.setFontSize(9);
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // Simpan PDF
       pdf.save('retina-analysis-report.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -204,7 +276,7 @@ function Report({ result }) {
 
       <motion.div
         ref={reportRef}
-        className="bg-white border rounded-xl overflow-hidden shadow-md"
+        className="bg-white border rounded-xl overflow-hidden shadow-md pdf-container"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
