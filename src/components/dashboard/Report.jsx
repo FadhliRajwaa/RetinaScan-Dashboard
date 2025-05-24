@@ -56,13 +56,56 @@ function Report({ result }) {
     try {
       setIsLoading(true);
       
+      // Simpan warna latar belakang asli
+      const originalBackgroundImage = reportRef.current.style.backgroundImage;
+      
+      // Hapus sementara warna gradien atau oklch yang tidak didukung
+      const elementsWithGradient = reportRef.current.querySelectorAll('[class*="bg-gradient"]');
+      const originalStyles = new Map();
+      
+      elementsWithGradient.forEach(el => {
+        originalStyles.set(el, {
+          background: el.style.background,
+          backgroundImage: el.style.backgroundImage
+        });
+        
+        // Ganti dengan warna solid yang didukung
+        el.style.background = '#3B82F6'; // Warna biru solid sebagai pengganti gradien
+        el.style.backgroundImage = 'none';
+      });
+      
+      // Tangkap elemen dengan html2canvas
       const canvas = await html2canvas(reportRef.current, {
         scale: 2,
         logging: false,
         useCORS: true,
-        allowTaint: true
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        // Tambahkan opsi untuk menghindari penggunaan warna oklch
+        onclone: (clonedDoc) => {
+          const clonedElements = clonedDoc.querySelectorAll('*');
+          clonedElements.forEach(el => {
+            // Ganti semua warna oklch dengan warna hex yang didukung
+            const computedStyle = window.getComputedStyle(el);
+            if (computedStyle.color.includes('oklch') || 
+                computedStyle.backgroundColor.includes('oklch')) {
+              el.style.color = '#000000'; // Hitam
+              el.style.backgroundColor = '#ffffff'; // Putih
+            }
+          });
+        }
       });
       
+      // Kembalikan style asli
+      elementsWithGradient.forEach(el => {
+        const originalStyle = originalStyles.get(el);
+        if (originalStyle) {
+          el.style.background = originalStyle.background;
+          el.style.backgroundImage = originalStyle.backgroundImage;
+        }
+      });
+      
+      // Buat PDF dari canvas
       const imgData = canvas.toDataURL('image/jpeg', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -80,6 +123,7 @@ function Report({ result }) {
       pdf.save('retina-analysis-report.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Gagal membuat PDF. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +210,7 @@ function Report({ result }) {
         animate="visible"
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+        <div className="bg-blue-600 text-white p-6">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-bold mb-1">Laporan Analisis Retina</h2>

@@ -39,8 +39,12 @@ const checkImageExistence = async (url) => {
 
 // Format image URL properly regardless of path separator
 const formatImageUrl = (imagePath) => {
-
   if (!imagePath) return DEFAULT_IMAGE;
+  
+  // Jika imagePath sudah berupa data base64, gunakan langsung
+  if (imagePath.startsWith('data:')) {
+    return imagePath;
+  }
   
   // Jika imagePath sudah lengkap (relatif maupun absolut), gunakan langsung
   if (imagePath.startsWith('http')) {
@@ -65,16 +69,6 @@ const formatImageUrl = (imagePath) => {
     filename = sanitizedPath; // Jika tidak ada slash, maka ini sudah filename
   }
   
-  // Metode 2: Jika path berisi 'uploads', ekstrak bagian setelahnya
-  if (sanitizedPath.includes('uploads')) {
-    const parts = sanitizedPath.split(/uploads[\/\\]?/);
-    if (parts.length > 1) {
-      const afterUploads = parts[parts.length - 1];
-      // Hapus slash awal jika ada
-      filename = afterUploads.replace(/^[\/\\]/, '');
-    }
-  }
-  
   // Pastikan tidak ada backslash di URL (ganti dengan forward slash)
   filename = filename.replace(/\\/g, '/');
   
@@ -88,7 +82,14 @@ const formatImageUrl = (imagePath) => {
   
   // Coba semua alternatif URL yang mungkin
   const timestamp = new Date().getTime(); // Tambahkan timestamp untuk mencegah cache
-  return `${API_URL}/uploads/${filename}?t=${timestamp}`;
+  
+  // Gunakan URL yang lebih konsisten dengan base URL API
+  if (API_URL) {
+    return `${API_URL}/uploads/${filename}?t=${timestamp}`;
+  }
+  
+  // Fallback jika API_URL tidak tersedia
+  return `/uploads/${filename}?t=${timestamp}`;
 };
 
 function PatientHistoryPageComponent() {
@@ -652,14 +653,6 @@ function PatientHistoryPageComponent() {
                             {imageStatus === 'error' && (
                               <div className="absolute bottom-0 left-0 right-0 bg-red-500/80 p-2 text-xs text-white text-center">
                                 Gagal memuat gambar. Silakan coba tombol Refresh atau API alternatif.
-                              </div>
-                            )}
-                            
-                            {/* Info debug URLs - hanya tampilkan di development */}
-                            {import.meta.env.DEV && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-2 text-xs text-white">
-                                <p>Original: {patientData.analyses[selectedAnalysisIndex].imagePath}</p>
-                                <p>URL: {formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}</p>
                               </div>
                             )}
                           </>
