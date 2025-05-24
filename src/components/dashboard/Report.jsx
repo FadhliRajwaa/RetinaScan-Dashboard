@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FiDownload, FiPrinter, FiExternalLink, FiCalendar, FiUser } from 'react-icons/fi';
-import html2canvas from 'html2canvas';
+import { FiDownload, FiPrinter, FiExternalLink, FiCalendar, FiUser, FiInfo, FiAlertTriangle, FiCheck } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 
 function Report({ result }) {
@@ -51,6 +50,20 @@ function Report({ result }) {
     return 'bg-red-50 border-red-200';
   };
 
+  // Get severity icon
+  const getSeverityIcon = (severity) => {
+    const level = severity.toLowerCase();
+    if (level === 'tidak ada' || level === 'normal') {
+      return <FiCheck className="text-blue-500" size={24} />;
+    } else if (level === 'ringan') {
+      return <FiInfo className="text-green-500" size={24} />;
+    } else if (level === 'sedang') {
+      return <FiInfo className="text-yellow-500" size={24} />;
+    } else {
+      return <FiAlertTriangle className="text-red-500" size={24} />;
+    }
+  };
+
   // Download PDF
   const handleDownload = async () => {
     try {
@@ -70,52 +83,59 @@ function Report({ result }) {
       };
       
       // Header
-      pdf.setFontSize(22);
-      pdf.setTextColor(0, 51, 153); // Warna biru untuk judul
-      pdf.text('Laporan Analisis Retina', pageWidth / 2, margin, { align: 'center' });
+      pdf.setFillColor(37, 99, 235); // Warna biru
+      pdf.rect(0, 0, pageWidth, 40, 'F');
       
-      // Tanggal
+      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
+      pdf.setFontSize(24);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Laporan Analisis Retina', pageWidth / 2, 20, { align: 'center' });
+      
       pdf.setFontSize(12);
-      pdf.setTextColor(100, 100, 100);
+      pdf.setFont(undefined, 'normal');
       const currentDate = formatDate(new Date());
-      pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, margin + 10, { align: 'center' });
+      pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, 30, { align: 'center' });
       
-      let yPos = margin + 20;
+      let yPos = 50;
+      
+      // Logo RetinaScan (opsional - ganti dengan path logo yang sesuai)
+      // pdf.addImage('path/to/logo.png', 'PNG', margin, yPos - 15, 40, 15);
       
       // Informasi pasien jika tersedia
       if (patient) {
-        pdf.setFontSize(14);
+        pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
+        pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
+        
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Informasi Pasien', margin, yPos);
-        yPos += 8;
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Informasi Pasien', margin + 5, yPos + 10);
         
         pdf.setFontSize(11);
+        pdf.setFont(undefined, 'normal');
         pdf.setTextColor(60, 60, 60);
-        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin, yPos);
-        yPos += 6;
+        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
+        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
         
-        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}`, margin, yPos);
-        yPos += 6;
-        
-        pdf.text(`Umur: ${patient.age} tahun`, margin, yPos);
+        yPos += 40;
+      } else {
         yPos += 10;
       }
       
-      // Garis pemisah
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 10;
-      
       // Hasil analisis
-      pdf.setFontSize(14);
+      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
+      
       pdf.setTextColor(0, 0, 0);
-      pdf.text('Hasil Analisis', margin, yPos);
-      yPos += 10;
+      pdf.setFontSize(14);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Hasil Analisis', margin + 5, yPos + 10);
       
       // Tingkat keparahan
       pdf.setFontSize(12);
+      pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin, yPos);
+      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
       
       // Set warna berdasarkan tingkat keparahan
       const severityLevel = severity.toLowerCase();
@@ -130,23 +150,39 @@ function Report({ result }) {
       }
       
       pdf.setFontSize(16);
-      pdf.text(severity, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
+      pdf.setFont(undefined, 'bold');
+      pdf.text(severity, margin + 50, yPos + 25);
       
       // Tingkat kepercayaan
       pdf.setFontSize(12);
+      pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin, yPos);
-      yPos += 15;
+      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 5, yPos + 40);
+      
+      // Gambar bar untuk confidence
+      const barWidth = 50;
+      const confidenceWidth = barWidth * confidence;
+      pdf.setFillColor(220, 220, 220); // Background bar
+      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
+      pdf.setFillColor(37, 99, 235); // Filled bar
+      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
+      
+      yPos += 60;
       
       // Gambar
       if (image && image.preview) {
         try {
           // Tambahkan gambar jika tersedia
-          const imgWidth = pageWidth - (margin * 2);
-          const imgHeight = 80;
-          pdf.addImage(image.preview, 'JPEG', margin, yPos, imgWidth, imgHeight);
+          const imgWidth = 100;
+          const imgHeight = 100;
+          pdf.addImage(image.preview, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
           yPos += imgHeight + 10;
+          
+          // Tambahkan label gambar
+          pdf.setFontSize(10);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
+          yPos += 15;
         } catch (imgError) {
           console.error('Error adding image to PDF:', imgError);
           // Lanjutkan tanpa gambar jika gagal
@@ -155,12 +191,16 @@ function Report({ result }) {
       }
       
       // Rekomendasi
-      pdf.setFontSize(14);
+      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
+      
       pdf.setTextColor(0, 0, 0);
-      pdf.text('Rekomendasi', margin, yPos);
-      yPos += 8;
+      pdf.setFontSize(14);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Rekomendasi', margin + 5, yPos + 10);
       
       pdf.setFontSize(11);
+      pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
       
       let recommendation = '';
@@ -178,17 +218,24 @@ function Report({ result }) {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin, yPos, pageWidth - (margin * 2), 6);
+      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
       yPos += 15;
       
       // Disclaimer
+      pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
+      
       pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
       const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      yPos = addWrappedText(disclaimer, margin, yPos, pageWidth - (margin * 2), 5);
+      yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
       
       // Footer
-      pdf.setFontSize(9);
+      pdf.setFillColor(37, 99, 235); // Warna biru
+      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+      
+      pdf.setFontSize(10);
+      pdf.setTextColor(255, 255, 255);
       pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       
       // Simpan PDF
@@ -232,14 +279,14 @@ function Report({ result }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h3 className="text-xl font-bold">Hasil Analisis Retina</h3>
+        <h3 className="text-xl font-bold text-gray-800">Hasil Analisis Retina</h3>
         <div className="flex gap-2">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleDownload}
             disabled={isLoading}
-            className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+            className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
           >
             <FiDownload />
             {isLoading ? 'Memproses...' : 'Unduh PDF'}
@@ -248,7 +295,7 @@ function Report({ result }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handlePrint}
-            className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+            className="flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium shadow-sm"
           >
             <FiPrinter />
             Cetak
@@ -262,7 +309,7 @@ function Report({ result }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-amber-700 bg-amber-50 p-4 rounded-lg mb-4 text-sm flex items-start border border-amber-200"
+          className="text-amber-700 bg-amber-50 p-4 rounded-lg mb-4 text-sm flex items-start border border-amber-200 shadow-sm"
         >
           <svg className="w-6 h-6 mr-3 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -276,29 +323,29 @@ function Report({ result }) {
 
       <motion.div
         ref={reportRef}
-        className="bg-white border rounded-xl overflow-hidden shadow-md pdf-container"
+        className="bg-white border rounded-xl overflow-hidden shadow-lg pdf-container"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header */}
-        <div className="bg-blue-600 text-white p-6">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-8">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Laporan Analisis Retina</h2>
+              <h2 className="text-3xl font-bold mb-2">Laporan Analisis Retina</h2>
               <div className="flex items-center text-blue-100">
-                <FiCalendar className="mr-1" />
+                <FiCalendar className="mr-2" />
                 <span className="text-sm">{formatDate(new Date())}</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-blue-100">RetinaScan AI</div>
-              <div className="text-xs text-blue-200">Deteksi Retinopati Diabetik</div>
+              <div className="text-lg font-semibold text-white">RetinaScan AI</div>
+              <div className="text-sm text-blue-100">Deteksi Retinopati Diabetik</div>
               {/* Tambahkan label simulasi jika dalam mode simulasi */}
               {result && (result.isSimulation || result.simulation_mode || 
                 (result.raw_prediction && result.raw_prediction.is_simulation)) && (
-                <div className="mt-2">
-                  <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                <div className="mt-3">
+                  <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                     MODE SIMULASI
                   </span>
                 </div>
@@ -310,34 +357,34 @@ function Report({ result }) {
         {/* Patient Information */}
         {patient && (
           <motion.div 
-            className="p-6 border-b"
+            className="p-6 border-b bg-blue-50"
             variants={itemVariants}
           >
-            <h3 className="font-medium mb-3 text-gray-700 flex items-center">
+            <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
               <FiUser className="mr-2 text-blue-500" />
               Informasi Pasien
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-4 rounded-lg shadow-sm">
               <div>
-                <p className="text-sm text-gray-500">Nama Lengkap</p>
-                <p className="font-medium">{patient.fullName || patient.name}</p>
+                <p className="text-sm text-gray-500 mb-1">Nama Lengkap</p>
+                <p className="font-medium text-gray-800">{patient.fullName || patient.name}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Jenis Kelamin / Umur</p>
-                <p className="font-medium">
+                <p className="text-sm text-gray-500 mb-1">Jenis Kelamin / Umur</p>
+                <p className="font-medium text-gray-800">
                   {patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {patient.age} tahun
                 </p>
               </div>
               {patient.dateOfBirth && (
                 <div>
-                  <p className="text-sm text-gray-500">Tanggal Lahir</p>
-                  <p className="font-medium">{new Date(patient.dateOfBirth).toLocaleDateString('id-ID')}</p>
+                  <p className="text-sm text-gray-500 mb-1">Tanggal Lahir</p>
+                  <p className="font-medium text-gray-800">{new Date(patient.dateOfBirth).toLocaleDateString('id-ID')}</p>
                 </div>
               )}
               {patient.bloodType && (
                 <div>
-                  <p className="text-sm text-gray-500">Golongan Darah</p>
-                  <p className="font-medium">{patient.bloodType}</p>
+                  <p className="text-sm text-gray-500 mb-1">Golongan Darah</p>
+                  <p className="font-medium text-gray-800">{patient.bloodType}</p>
                 </div>
               )}
             </div>
@@ -345,12 +392,12 @@ function Report({ result }) {
         )}
 
         {/* Content */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Left Column - Image */}
             <motion.div variants={itemVariants}>
-              <h3 className="font-medium mb-3 text-gray-700">Gambar yang Dianalisis</h3>
-              <div className="bg-gray-100 p-3 rounded-lg overflow-hidden">
+              <h3 className="font-semibold mb-4 text-gray-700 text-lg">Gambar yang Dianalisis</h3>
+              <div className="bg-gray-50 p-4 rounded-lg overflow-hidden shadow-sm border">
                 {image && image.preview && (
                   <img 
                     src={image.preview} 
@@ -369,34 +416,42 @@ function Report({ result }) {
               className="flex flex-col h-full"
               variants={itemVariants}
             >
-              <h3 className="font-medium mb-3 text-gray-700">Hasil Analisis</h3>
+              <h3 className="font-semibold mb-4 text-gray-700 text-lg">Hasil Analisis</h3>
               
               {/* Severity */}
-              <div className={`p-4 rounded-lg border mb-4 ${getSeverityCardColor(severity)}`}>
-                <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
-                <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
-                  {severity}
-                </p>
+              <div className={`p-6 rounded-lg border mb-6 shadow-sm ${getSeverityCardColor(severity)}`}>
+                <div className="flex items-center">
+                  {getSeverityIcon(severity)}
+                  <div className="ml-4">
+                    <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
+                    <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
+                      {severity}
+                    </p>
+                  </div>
+                </div>
               </div>
               
               {/* Confidence */}
-              <div className="mb-4">
-                <div className="flex justify-between mb-1">
-                  <p className="text-sm text-gray-700">Tingkat Kepercayaan</p>
-                  <p className="text-sm font-medium">{formatPercentage(confidence)}</p>
+              <div className="mb-6 bg-white p-5 rounded-lg border shadow-sm">
+                <div className="flex justify-between mb-2">
+                  <p className="text-sm text-gray-700 font-medium">Tingkat Kepercayaan</p>
+                  <p className="text-sm font-bold text-blue-600">{formatPercentage(confidence)}</p>
                 </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-blue-600" 
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600" 
                     style={{ width: formatPercentage(confidence) }}
                   ></div>
                 </div>
               </div>
               
               {/* Recommendation */}
-              <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg mt-auto">
-                <h4 className="font-medium text-blue-800 mb-2">Rekomendasi</h4>
-                <p className="text-blue-700 text-sm">
+              <div className="bg-blue-50 border border-blue-100 p-6 rounded-lg mt-auto shadow-sm">
+                <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                  <FiInfo className="mr-2" />
+                  Rekomendasi
+                </h4>
+                <p className="text-blue-700">
                   {severity === 'Tidak ada' 
                     ? 'Lakukan pemeriksaan rutin setiap tahun.' 
                     : severity === 'Ringan'
@@ -415,7 +470,7 @@ function Report({ result }) {
           
           {/* Disclaimer */}
           <motion.div 
-            className="mt-6 bg-gray-50 p-4 rounded-lg text-xs text-gray-500"
+            className="mt-8 bg-gray-50 p-5 rounded-lg text-sm text-gray-500 border shadow-sm"
             variants={itemVariants}
           >
             <p className="mb-1"><strong>Disclaimer:</strong> Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.</p>
@@ -425,14 +480,15 @@ function Report({ result }) {
         
         {/* Footer */}
         <motion.div 
-          className="bg-gray-50 p-4 border-t text-center text-xs text-gray-500"
+          className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white"
           variants={itemVariants}
         >
-          <p>RetinaScan &copy; {new Date().getFullYear()} | AI-Powered Retinopathy Detection</p>
-          <p className="mt-1">
-            <a href="https://retinascan.example.com" className="text-blue-500 flex items-center justify-center gap-1 hover:underline">
+          <p className="font-semibold">RetinaScan &copy; {new Date().getFullYear()}</p>
+          <p className="text-sm text-blue-100 mt-1">AI-Powered Retinopathy Detection</p>
+          <p className="mt-2">
+            <a href="https://retinascan.example.com" className="text-white flex items-center justify-center gap-1 hover:underline">
               <span>www.retinascan.example.com</span>
-              <FiExternalLink size={12} />
+              <FiExternalLink size={14} />
             </a>
           </p>
         </motion.div>

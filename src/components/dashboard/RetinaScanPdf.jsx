@@ -13,41 +13,50 @@ Font.register({
 // Membuat stylesheet untuk PDF
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
     fontFamily: 'Open Sans',
     backgroundColor: '#FFFFFF',
   },
   header: {
+    backgroundColor: '#2563EB',
+    padding: 30,
+    paddingBottom: 20,
     marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-    paddingBottom: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2563EB',
+    color: '#FFFFFF',
     marginBottom: 5,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#DBEAFE',
+    textAlign: 'center',
   },
   section: {
     marginBottom: 15,
+    padding: '0 30px',
+  },
+  sectionWithBackground: {
+    marginBottom: 15,
+    padding: 15,
+    margin: '0 30px',
+    backgroundColor: '#F0F9FF',
+    borderRadius: 5,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 5,
+    marginBottom: 10,
     paddingBottom: 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#E5E7EB',
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   label: {
     width: '40%',
@@ -58,23 +67,27 @@ const styles = StyleSheet.create({
     width: '60%',
     fontSize: 12,
     color: '#1F2937',
+    fontWeight: 'bold',
   },
   paragraph: {
     fontSize: 12,
     color: '#4B5563',
-    marginBottom: 5,
+    marginBottom: 8,
     lineHeight: 1.5,
   },
   image: {
-    width: 250,
-    height: 250,
+    width: 200,
+    height: 200,
     objectFit: 'contain',
     marginBottom: 10,
     alignSelf: 'center',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   listItem: {
     flexDirection: 'row',
-    marginBottom: 3,
+    marginBottom: 5,
   },
   bullet: {
     fontSize: 12,
@@ -86,35 +99,102 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   severityBox: {
-    padding: 8,
-    borderRadius: 4,
-    marginBottom: 10,
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    marginHorizontal: 30,
+  },
+  severityContent: {
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  severityIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  severityTextContainer: {
+    flex: 1,
+  },
+  severityLabel: {
+    fontSize: 10,
+    color: '#4B5563',
+    marginBottom: 2,
   },
   severityText: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
   },
   mild: {
     backgroundColor: '#D1FAE5',
   },
+  mildText: {
+    color: '#065F46',
+  },
   moderate: {
     backgroundColor: '#FEF3C7',
+  },
+  moderateText: {
+    color: '#92400E',
   },
   severe: {
     backgroundColor: '#FEE2E2',
   },
+  severeText: {
+    color: '#991B1B',
+  },
+  normal: {
+    backgroundColor: '#DBEAFE',
+  },
+  normalText: {
+    color: '#1E40AF',
+  },
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#2563EB',
+    padding: 20,
     fontSize: 10,
-    color: '#9CA3AF',
+    color: '#FFFFFF',
     textAlign: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingTop: 10,
+  },
+  confidenceBar: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    marginVertical: 5,
+    width: '100%',
+  },
+  confidenceFill: {
+    height: 6,
+    backgroundColor: '#2563EB',
+    borderRadius: 3,
+  },
+  disclaimer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 5,
+    margin: '0 30px',
+  },
+  disclaimerText: {
+    fontSize: 9,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  patientInfoContainer: {
+    backgroundColor: '#F0F9FF',
+    padding: 15,
+    margin: '0 30px 20px 30px',
+    borderRadius: 5,
+  },
+  patientInfoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
   },
 });
 
@@ -122,15 +202,15 @@ const styles = StyleSheet.create({
 const RetinaScanPdf = ({ report }) => {
   // Helper untuk mendapatkan warna berdasarkan severity
   const getSeverityStyles = (severity) => {
-    switch (severity) {
-      case 'Ringan':
-        return { ...styles.severityBox, ...styles.mild };
-      case 'Sedang':
-        return { ...styles.severityBox, ...styles.moderate };
-      case 'Berat':
-        return { ...styles.severityBox, ...styles.severe };
-      default:
-        return styles.severityBox;
+    const severityLower = severity.toLowerCase();
+    if (severityLower === 'ringan') {
+      return { box: styles.mild, text: styles.mildText };
+    } else if (severityLower === 'sedang') {
+      return { box: styles.moderate, text: styles.moderateText };
+    } else if (severityLower === 'berat' || severityLower === 'sangat berat') {
+      return { box: styles.severe, text: styles.severeText };
+    } else {
+      return { box: styles.normal, text: styles.normalText };
     }
   };
 
@@ -146,6 +226,20 @@ const RetinaScanPdf = ({ report }) => {
     });
   };
 
+  // Mendapatkan icon untuk severity
+  const getSeverityIcon = (severity) => {
+    const severityLower = severity.toLowerCase();
+    if (severityLower === 'ringan') {
+      return 'https://img.icons8.com/ios-filled/100/065F46/info.png';
+    } else if (severityLower === 'sedang') {
+      return 'https://img.icons8.com/ios-filled/100/92400E/warning-shield.png';
+    } else if (severityLower === 'berat' || severityLower === 'sangat berat') {
+      return 'https://img.icons8.com/ios-filled/100/991B1B/high-priority.png';
+    } else {
+      return 'https://img.icons8.com/ios-filled/100/1E40AF/checkmark--v1.png';
+    }
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -155,17 +249,55 @@ const RetinaScanPdf = ({ report }) => {
           <Text style={styles.subtitle}>Tanggal: {formatDate(report.date)}</Text>
         </View>
 
+        {/* Informasi Pasien */}
+        {report.patient && (
+          <View style={styles.patientInfoContainer}>
+            <Text style={styles.patientInfoTitle}>Informasi Pasien</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Nama:</Text>
+              <Text style={styles.value}>{report.patient.fullName || report.patient.name}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Jenis Kelamin:</Text>
+              <Text style={styles.value}>{report.patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Umur:</Text>
+              <Text style={styles.value}>{report.patient.age} tahun</Text>
+            </View>
+          </View>
+        )}
+
         {/* Severity */}
-        <View style={getSeverityStyles(report.severity)}>
-          <Text style={styles.severityText}>
-            Tingkat Keparahan: {report.severity}
-            {report.confidence ? ` (Tingkat Kepastian: ${Math.round(report.confidence * 100)}%)` : ''}
-          </Text>
+        <View style={{...styles.severityBox, ...getSeverityStyles(report.severity).box}}>
+          <View style={styles.severityContent}>
+            <Image 
+              src={getSeverityIcon(report.severity)} 
+              style={styles.severityIcon}
+              cache={false}
+            />
+            <View style={styles.severityTextContainer}>
+              <Text style={styles.severityLabel}>Tingkat Keparahan:</Text>
+              <Text style={{...styles.severityText, ...getSeverityStyles(report.severity).text}}>
+                {report.severity}
+                {report.confidence ? ` (${Math.round(report.confidence * 100)}%)` : ''}
+              </Text>
+            </View>
+          </View>
+          
+          {report.confidence && (
+            <View style={{marginTop: 8}}>
+              <View style={styles.confidenceBar}>
+                <View style={{...styles.confidenceFill, width: `${report.confidence * 100}%`}} />
+              </View>
+              <Text style={{fontSize: 9, color: '#6B7280', textAlign: 'right'}}>{Math.round(report.confidence * 100)}% kepercayaan</Text>
+            </View>
+          )}
         </View>
 
         {/* Gambar Retina */}
         {report.image && (
-          <View style={styles.section}>
+          <View style={styles.sectionWithBackground}>
             <Text style={styles.sectionTitle}>Gambar Retina</Text>
             <Image 
               src={report.image} 
@@ -176,45 +308,76 @@ const RetinaScanPdf = ({ report }) => {
         )}
 
         {/* Tanda Klinis */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tanda Klinis</Text>
-          {report.clinicalSigns && report.clinicalSigns.map((sign, index) => (
-            <View style={styles.listItem} key={`sign-${index}`}>
-              <Text style={styles.bullet}>•</Text>
-              <Text style={styles.listItemText}>{sign}</Text>
-            </View>
-          ))}
-        </View>
+        {report.clinicalSigns && report.clinicalSigns.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tanda Klinis</Text>
+            {report.clinicalSigns.map((sign, index) => (
+              <View style={styles.listItem} key={`sign-${index}`}>
+                <Text style={styles.bullet}>•</Text>
+                <Text style={styles.listItemText}>{sign}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Detail */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detail Kondisi</Text>
-          <Text style={styles.paragraph}>{report.details}</Text>
-        </View>
+        {report.details && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Detail Kondisi</Text>
+            <Text style={styles.paragraph}>{report.details}</Text>
+          </View>
+        )}
 
         {/* Rekomendasi */}
-        <View style={styles.section}>
+        <View style={styles.sectionWithBackground}>
           <Text style={styles.sectionTitle}>Rekomendasi</Text>
-          <Text style={styles.paragraph}>{report.recommendations}</Text>
+          <Text style={styles.paragraph}>
+            {report.recommendations || (
+              report.severity.toLowerCase() === 'tidak ada' || report.severity.toLowerCase() === 'normal'
+                ? 'Lakukan pemeriksaan rutin setiap tahun.'
+                : report.severity.toLowerCase() === 'ringan'
+                ? 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
+                : report.severity.toLowerCase() === 'sedang'
+                ? 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+                : report.severity.toLowerCase() === 'berat'
+                ? 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+                : 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+            )}
+          </Text>
         </View>
 
         {/* Informasi Tambahan */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informasi Tambahan</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Risiko Pasien:</Text>
-            <Text style={styles.value}>{report.patientRisk}</Text>
+        {(report.patientRisk || report.followUpTime) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Informasi Tambahan</Text>
+            {report.patientRisk && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Risiko Pasien:</Text>
+                <Text style={styles.value}>{report.patientRisk}</Text>
+              </View>
+            )}
+            {report.followUpTime && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Kunjungan Berikutnya:</Text>
+                <Text style={styles.value}>{report.followUpTime}</Text>
+              </View>
+            )}
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Kunjungan Berikutnya:</Text>
-            <Text style={styles.value}>{report.followUpTime}</Text>
-          </View>
+        )}
+
+        {/* Disclaimer */}
+        <View style={styles.disclaimer}>
+          <Text style={styles.disclaimerText}>
+            Dokumen ini dibuat secara otomatis oleh sistem RetinaScan. Hasil pemeriksaan perlu dikonfirmasi oleh dokter mata.
+          </Text>
+          <Text style={styles.disclaimerText}>
+            © {new Date().getFullYear()} RetinaScan AI System
+          </Text>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Dokumen ini dibuat secara otomatis oleh sistem RetinaScan. Hasil pemeriksaan perlu dikonfirmasi oleh dokter mata.</Text>
-          <Text>© {new Date().getFullYear()} RetinaScan AI System</Text>
+          <Text>RetinaScan © {new Date().getFullYear()} | AI-Powered Retinopathy Detection</Text>
         </View>
       </Page>
     </Document>
@@ -226,7 +389,7 @@ export const RetinaScanPdfDownload = ({ report, fileName }) => (
   <PDFDownloadLink 
     document={<RetinaScanPdf report={report} />} 
     fileName={fileName || `RetinaScan_Report.pdf`}
-    className="flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
+    className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
     style={{ textDecoration: 'none' }}
   >
     {({ blob, url, loading, error }) => 
