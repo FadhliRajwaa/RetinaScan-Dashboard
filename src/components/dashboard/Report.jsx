@@ -140,6 +140,24 @@ function Report({ result }) {
         </div>
       </motion.div>
 
+      {/* Tambahkan indikator mode simulasi */}
+      {result && (result.isSimulation || result.simulation_mode || 
+        (result.raw_prediction && result.raw_prediction.is_simulation)) && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-amber-700 bg-amber-50 p-4 rounded-lg mb-4 text-sm flex items-start border border-amber-200"
+        >
+          <svg className="w-6 h-6 mr-3 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <p className="font-bold mb-1">Laporan dalam Mode Simulasi</p>
+            <p>Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia saat ini. Hasil ini hanya untuk tujuan demonstrasi dan tidak boleh digunakan untuk diagnosis klinis. Silakan konsultasikan dengan dokter mata untuk evaluasi yang akurat.</p>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         ref={reportRef}
         className="bg-white border rounded-xl overflow-hidden shadow-md"
@@ -160,6 +178,15 @@ function Report({ result }) {
             <div className="text-right">
               <div className="text-sm text-blue-100">RetinaScan AI</div>
               <div className="text-xs text-blue-200">Deteksi Retinopati Diabetik</div>
+              {/* Tambahkan label simulasi jika dalam mode simulasi */}
+              {result && (result.isSimulation || result.simulation_mode || 
+                (result.raw_prediction && result.raw_prediction.is_simulation)) && (
+                <div className="mt-2">
+                  <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    MODE SIMULASI
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -163,6 +163,25 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
             <span>{error}</span>
           </motion.div>
         )}
+        
+        {/* Tambahkan indikator mode simulasi */}
+        {analysis && (analysis.isSimulation || analysis.simulation_mode || 
+          (analysis.raw_prediction && analysis.raw_prediction.is_simulation)) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-amber-700 bg-amber-50 p-3 rounded-lg mb-4 text-sm sm:text-base flex items-start"
+          >
+            <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <span className="font-medium">Mode Simulasi Aktif:</span> 
+              <span className="ml-1">Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia. Silakan konsultasikan dengan dokter mata untuk diagnosis yang akurat.</span>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
       
       <div className="flex flex-col md:flex-row gap-6">
@@ -188,6 +207,16 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                 >
                   <LoadingIndicator />
                 </motion.div>
+              )}
+              
+              {/* Tambahkan watermark simulasi jika dalam mode simulasi */}
+              {analysis && (analysis.isSimulation || analysis.simulation_mode || 
+                (analysis.raw_prediction && analysis.raw_prediction.is_simulation)) && !isLoading && (
+                <div className="absolute top-2 right-2">
+                  <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                    SIMULASI
+                  </span>
+                </div>
               )}
             </div>
             
