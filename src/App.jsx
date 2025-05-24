@@ -143,7 +143,6 @@ function App() {
 
   const checkAuth = async () => {
     console.log('Checking authentication...');
-    console.log('API URL:', API_URL);
     
     const token = localStorage.getItem('token');
     
@@ -153,16 +152,12 @@ function App() {
       return false;
     }
     
-    console.log('Token found in localStorage:', token.substring(0, 10) + '...');
-    
     try {
       // Pertama verifikasi token di sisi klien
       try {
         const decodedToken = jwtDecode(token);
-        console.log('Token decoded successfully:', { id: decodedToken.id, exp: decodedToken.exp });
         
         const currentTime = Date.now() / 1000;
-        console.log('Current time:', currentTime);
         
         if (decodedToken.exp < currentTime) {
           console.log('Token expired');
@@ -171,65 +166,44 @@ function App() {
           toast.error('Token Anda telah kadaluarsa. Silakan login kembali.');
           return false;
         }
-        
-        console.log('Token not expired, validating with server...');
       } catch (decodeError) {
-        console.error('Failed to decode token:', decodeError);
-        // Token tidak valid, hapus dari localStorage
-        localStorage.removeItem('token');
-        setLoading(false);
-        return false;
+        console.error('Failed to decode token');
       }
       
-      // Gunakan timeout yang lebih panjang untuk mengakomodasi cold start
-      const axiosConfig = {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        timeout: 30000 // 30 detik timeout
-      };
-      
-      // Coba validasi dengan server, tapi jangan tunggu terlalu lama
+      // Validasi dengan server dengan timeout yang lebih panjang untuk cold start
       try {
-        console.log('Sending request to:', `${API_URL}/api/user/profile`);
+        const response = await axios.get(`${API_URL}/api/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          timeout: 30000 // 30 detik timeout
+        });
         
-        // Gunakan Promise.race untuk membatasi waktu tunggu
-        const serverValidation = await Promise.race([
-          axios.get(`${API_URL}/api/user/profile`, axiosConfig),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Client-side validation passed, proceeding with token')), 3000)
-          )
-        ]);
-        
-        console.log('Server validation successful:', serverValidation.status);
         setLoading(false);
         return true;
       } catch (apiError) {
-        // Jika error karena timeout dari Promise.race, anggap token valid
-        if (apiError.message === 'Client-side validation passed, proceeding with token') {
-          console.log('Using client-side validation only due to server timeout');
-          setLoading(false);
-          return true;
-        }
-        
-        console.error('Server validation failed:', apiError);
-        // Token tidak valid atau server error, coba dengan endpoint lain
+        // Jika endpoint profile gagal, coba endpoint verify
         try {
-          const verifyResponse = await axios.get(`${API_URL}/api/auth/verify`, axiosConfig);
-          console.log('Alternative endpoint validation successful:', verifyResponse.status);
+          const altResponse = await axios.get(`${API_URL}/api/auth/verify`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            timeout: 30000 // 30 detik timeout
+          });
+          
           setLoading(false);
           return true;
-        } catch (verifyError) {
-          console.error('All validation methods failed');
+        } catch (altError) {
           localStorage.removeItem('token');
           setLoading(false);
+          toast.error('Sesi Anda telah berakhir. Silakan login kembali.');
           return false;
         }
       }
     } catch (error) {
-      console.error('Authentication check failed:', error);
       localStorage.removeItem('token');
       setLoading(false);
+      toast.error('Token tidak valid. Silakan login kembali.');
       return false;
     }
   };
