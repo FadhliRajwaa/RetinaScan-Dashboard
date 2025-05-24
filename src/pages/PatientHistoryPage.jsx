@@ -86,8 +86,9 @@ const formatImageUrl = (imagePath) => {
     return DEFAULT_IMAGE;
   }
   
-  // Coba semua alternatif URL yang mungkin (tanpa timestamp)
-  return `${API_URL}/uploads/${filename}`;
+  // Coba semua alternatif URL yang mungkin
+  const timestamp = new Date().getTime(); // Tambahkan timestamp untuk mencegah cache
+  return `${API_URL}/uploads/${filename}?t=${timestamp}`;
 };
 
 function PatientHistoryPageComponent() {
@@ -185,11 +186,9 @@ function PatientHistoryPageComponent() {
       } 
       // Jika tidak ada imageData, coba gunakan path sebagai fallback
       else if (patientData.analyses[selectedAnalysisIndex].imagePath) {
-        const baseUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
-        const timestamp = new Date().getTime();
-        const urlWithTimestamp = `${baseUrl}?nocache=${timestamp}`;
-        setActiveImageUrl(urlWithTimestamp);
-        console.log('Menggunakan URL gambar sebagai fallback:', urlWithTimestamp);
+        const imageUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+        setActiveImageUrl(imageUrl);
+        console.log('Menggunakan URL gambar sebagai fallback:', imageUrl);
       } else {
         // Tidak ada imageData atau imagePath, gunakan gambar default
         setActiveImageUrl(DEFAULT_IMAGE);
@@ -572,7 +571,11 @@ function PatientHistoryPageComponent() {
                                 
                                 // Enforce re-rendering with a small delay
                                 setTimeout(() => {
-                                  imgEl.src = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+                                  if (patientData.analyses[selectedAnalysisIndex].imagePath) {
+                                    imgEl.src = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+                                  } else if (patientData.analyses[selectedAnalysisIndex].imageData) {
+                                    imgEl.src = patientData.analyses[selectedAnalysisIndex].imageData;
+                                  }
                                 }, 50);
                               }
                             }}
@@ -581,50 +584,16 @@ function PatientHistoryPageComponent() {
                           >
                             <FiRefreshCcw className="mr-1" /> Refresh
                           </button>
-                          <button 
-                            onClick={() => {
-                              const el = document.getElementById('debug-image-info');
-                              if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-                            }}
-                            className="px-2 py-1 bg-blue-500 text-white rounded text-xs"
-                          >
-                            Debug Info
-                          </button>
                         </div>
                       </div>
                       
-                      {/* Debug controls */}
-                      <div className="mb-2 text-xs flex gap-1 flex-wrap">
-                        {FALLBACK_API_URLS.map((url, i) => (
-                          <button 
-                            key={i}
-                            onClick={() => {
-                              const imgEl = document.getElementById('retina-image');
-                              if (imgEl && patientData.analyses[selectedAnalysisIndex].imagePath) {
-                                const filename = patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop();
-                                const cleanFilename = filename.replace(/[\/\\:*?"<>|]/g, '');
-                                imgEl.src = `${url}/uploads/${cleanFilename}`;
-                                imgEl.dataset.fallbackAttempted = "true"; // Set the flag
-                              }
-                            }}
-                            className="px-2 py-1 bg-gray-500 text-white rounded"
-                          >
-                            Try API {i+1}
-                          </button>
-                        ))}
-                      </div>
-                      
-                      {/* Debug info panel */}
+                      {/* Debug info panel (tersembunyi) */}
                       <div id="debug-image-info" className="mb-2 p-2 bg-gray-700 text-white text-xs rounded hidden">
                         {patientData.analyses[selectedAnalysisIndex].imagePath && (
                           <>
                             <p><strong>Original:</strong> {patientData.analyses[selectedAnalysisIndex].imagePath}</p>
                             <p><strong>Filename:</strong> {patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop()}</p>
                             <p><strong>URL:</strong> {formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}</p>
-                            <p className="mt-1 text-yellow-300">
-                              <strong>Tip:</strong> Jika gambar tidak muncul, coba klik tombol "Refresh" 
-                              atau tombol "Try API" untuk mencoba server alternatif
-                            </p>
                           </>
                         )}
                       </div>
