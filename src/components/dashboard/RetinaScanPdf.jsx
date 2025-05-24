@@ -281,7 +281,7 @@ const RetinaScanPdf = ({ report }) => {
               <Text style={{...styles.severityText, ...getSeverityStyles(report.severity).text}}>
                 {report.severity}
                 {report.confidence ? ` (${Math.round(report.confidence * 100)}%)` : ''}
-              </Text>
+          </Text>
             </View>
           </View>
           
@@ -309,23 +309,23 @@ const RetinaScanPdf = ({ report }) => {
 
         {/* Tanda Klinis */}
         {report.clinicalSigns && report.clinicalSigns.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Tanda Klinis</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tanda Klinis</Text>
             {report.clinicalSigns.map((sign, index) => (
-              <View style={styles.listItem} key={`sign-${index}`}>
-                <Text style={styles.bullet}>•</Text>
-                <Text style={styles.listItemText}>{sign}</Text>
-              </View>
-            ))}
-          </View>
+            <View style={styles.listItem} key={`sign-${index}`}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.listItemText}>{sign}</Text>
+            </View>
+          ))}
+        </View>
         )}
 
         {/* Detail */}
         {report.details && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Detail Kondisi</Text>
-            <Text style={styles.paragraph}>{report.details}</Text>
-          </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Detail Kondisi</Text>
+          <Text style={styles.paragraph}>{report.details}</Text>
+        </View>
         )}
 
         {/* Rekomendasi */}
@@ -348,19 +348,19 @@ const RetinaScanPdf = ({ report }) => {
 
         {/* Informasi Tambahan */}
         {(report.patientRisk || report.followUpTime) && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informasi Tambahan</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Informasi Tambahan</Text>
             {report.patientRisk && (
-              <View style={styles.row}>
-                <Text style={styles.label}>Risiko Pasien:</Text>
-                <Text style={styles.value}>{report.patientRisk}</Text>
-              </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Risiko Pasien:</Text>
+            <Text style={styles.value}>{report.patientRisk}</Text>
+          </View>
             )}
             {report.followUpTime && (
-              <View style={styles.row}>
-                <Text style={styles.label}>Kunjungan Berikutnya:</Text>
-                <Text style={styles.value}>{report.followUpTime}</Text>
-              </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Kunjungan Berikutnya:</Text>
+            <Text style={styles.value}>{report.followUpTime}</Text>
+          </View>
             )}
           </View>
         )}

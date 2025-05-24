@@ -742,10 +742,10 @@ function PatientHistoryPageComponent() {
                 <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
                     <div>
-                      <h2 className="text-lg font-semibold">Detail Analisis</h2>
-                      <p className="text-sm text-gray-500">
-                        {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
-                      </p>
+                    <h2 className="text-lg font-semibold">Detail Analisis</h2>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
+                    </p>
                     </div>
                     <button
                       onClick={handleDownloadPdf}
@@ -774,7 +774,7 @@ function PatientHistoryPageComponent() {
                                 // Enforce re-rendering with a small delay
                                 setTimeout(() => {
                                   if (patientData.analyses[selectedAnalysisIndex].imagePath) {
-                                    imgEl.src = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+                                  imgEl.src = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
                                   } else if (patientData.analyses[selectedAnalysisIndex].imageData) {
                                     imgEl.src = patientData.analyses[selectedAnalysisIndex].imageData;
                                   }

@@ -423,10 +423,10 @@ function Report({ result }) {
                 <div className="flex items-center">
                   {getSeverityIcon(severity)}
                   <div className="ml-4">
-                    <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
-                    <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
-                      {severity}
-                    </p>
+                <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
+                <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
+                  {severity}
+                </p>
                   </div>
                 </div>
               </div>
