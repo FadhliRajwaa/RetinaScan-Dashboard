@@ -175,51 +175,61 @@ function App() {
         console.log('Token not expired, validating with server...');
       } catch (decodeError) {
         console.error('Failed to decode token:', decodeError);
-        // Lanjutkan ke validasi server meskipun decode gagal
+        // Token tidak valid, hapus dari localStorage
+        localStorage.removeItem('token');
+        setLoading(false);
+        return false;
       }
       
-      // Kemudian validasi dengan server untuk memastikan token masih valid
+      // Gunakan timeout yang lebih panjang untuk mengakomodasi cold start
+      const axiosConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        timeout: 30000 // 30 detik timeout
+      };
+      
+      // Coba validasi dengan server, tapi jangan tunggu terlalu lama
       try {
         console.log('Sending request to:', `${API_URL}/api/user/profile`);
-        console.log('With headers:', { Authorization: `Bearer ${token.substring(0, 10)}...` });
         
-        const response = await axios.get(`${API_URL}/api/user/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        // Gunakan Promise.race untuk membatasi waktu tunggu
+        const serverValidation = await Promise.race([
+          axios.get(`${API_URL}/api/user/profile`, axiosConfig),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Client-side validation passed, proceeding with token')), 3000)
+          )
+        ]);
         
-        console.log('Server validation successful:', response.status);
+        console.log('Server validation successful:', serverValidation.status);
         setLoading(false);
         return true;
       } catch (apiError) {
-        console.error('Token tidak valid atau sesi telah berakhir:', apiError);
-        
-        // Coba dengan endpoint lain jika tersedia
-        try {
-          console.log('Trying alternative endpoint for validation...');
-          const altResponse = await axios.get(`${API_URL}/api/auth/verify`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          
-          console.log('Alternative validation successful:', altResponse.status);
+        // Jika error karena timeout dari Promise.race, anggap token valid
+        if (apiError.message === 'Client-side validation passed, proceeding with token') {
+          console.log('Using client-side validation only due to server timeout');
           setLoading(false);
           return true;
-        } catch (altError) {
-          console.error('Alternative validation failed:', altError);
+        }
+        
+        console.error('Server validation failed:', apiError);
+        // Token tidak valid atau server error, coba dengan endpoint lain
+        try {
+          const verifyResponse = await axios.get(`${API_URL}/api/auth/verify`, axiosConfig);
+          console.log('Alternative endpoint validation successful:', verifyResponse.status);
+          setLoading(false);
+          return true;
+        } catch (verifyError) {
+          console.error('All validation methods failed');
           localStorage.removeItem('token');
           setLoading(false);
-          toast.error('Sesi Anda telah berakhir. Silakan login kembali.');
           return false;
         }
       }
     } catch (error) {
-      console.error('Invalid token format or network error:', error);
+      console.error('Authentication check failed:', error);
       localStorage.removeItem('token');
       setLoading(false);
-      toast.error('Token tidak valid. Silakan login kembali.');
       return false;
     }
   };
