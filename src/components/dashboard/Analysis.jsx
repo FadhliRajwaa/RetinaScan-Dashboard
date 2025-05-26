@@ -81,6 +81,8 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     try {
       setIsLoading(true);
       setAnimateProgress(false);
+      setError(''); // Reset error message
+      
       // Menambahkan delay sedikit untuk animasi loading
       const data = await getLatestAnalysis();
       
@@ -94,13 +96,12 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
       };
       
       setAnalysis(analysisWithImage);
-      setError('');
       setAnimateProgress(true);
       
       // Menghapus pemanggilan otomatis onAnalysisComplete
       // User harus mengklik tombol untuk melihat hasil
     } catch (err) {
-      setError('Gagal mendapatkan hasil analisis.');
+      setError(err.message || 'Gagal mendapatkan hasil analisis. Pastikan Flask API dengan model ML tersedia.');
     } finally {
       setIsLoading(false);
     }
@@ -171,14 +172,17 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0 }}
-            className="text-amber-700 bg-amber-50 p-3 rounded-lg mb-4 text-sm sm:text-base flex items-start"
+            className="text-amber-700 bg-amber-50 border border-amber-200 p-4 rounded-lg mb-4 text-sm sm:text-base flex items-start"
           >
-            <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <span className="font-medium">Mode Simulasi Aktif:</span> 
-              <span className="ml-1">Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia. Silakan konsultasikan dengan dokter mata untuk diagnosis yang akurat.</span>
+              <span className="font-bold block mb-1">PERHATIAN: Mode Simulasi Aktif</span> 
+              <span>Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia. Hasil ini TIDAK BOLEH digunakan untuk diagnosis. Silakan konsultasikan dengan dokter mata untuk diagnosis yang akurat.</span>
+              <div className="mt-2 text-xs">
+                <span className="font-semibold">Gunakan script "npm run test:flask" untuk menguji koneksi ke Flask API dan memastikan mode simulasi dinonaktifkan.</span>
+              </div>
             </div>
           </motion.div>
         )}
@@ -213,7 +217,7 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
               {analysis && (analysis.isSimulation || analysis.simulation_mode || 
                 (analysis.raw_prediction && analysis.raw_prediction.is_simulation)) && !isLoading && (
                 <div className="absolute top-2 right-2">
-                  <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                  <span className="bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
                     SIMULASI
                   </span>
                 </div>

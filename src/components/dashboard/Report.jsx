@@ -309,14 +309,19 @@ function Report({ result }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-amber-700 bg-amber-50 p-4 rounded-lg mb-4 text-sm flex items-start border border-amber-200 shadow-sm"
+          className="text-amber-700 bg-amber-50 p-4 rounded-lg mb-6 text-sm flex items-start border-2 border-amber-300 shadow-md"
         >
-          <svg className="w-6 h-6 mr-3 flex-shrink-0 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg className="w-6 h-6 mr-3 flex-shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            <p className="font-bold mb-1">Laporan dalam Mode Simulasi</p>
-            <p>Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia saat ini. Hasil ini hanya untuk tujuan demonstrasi dan tidak boleh digunakan untuk diagnosis klinis. Silakan konsultasikan dengan dokter mata untuk evaluasi yang akurat.</p>
+            <p className="font-bold mb-2 text-base">PERHATIAN: Laporan dalam Mode Simulasi</p>
+            <p className="mb-2">Hasil analisis ini menggunakan <span className="font-bold underline">data simulasi</span> karena layanan AI tidak tersedia saat ini.</p>
+            <p className="text-amber-800 font-bold">Hasil ini TIDAK BOLEH digunakan untuk diagnosis klinis. Silakan konsultasikan dengan dokter mata untuk evaluasi yang akurat.</p>
+            <div className="mt-3 p-2 bg-amber-100 rounded-md border border-amber-200">
+              <p className="text-xs font-semibold">Untuk menggunakan model AI sebenarnya, jalankan script pengujian koneksi:</p>
+              <code className="text-xs bg-gray-100 p-1 rounded mt-1 block">npm run test:flask</code>
+            </div>
           </div>
         </motion.div>
       )}
@@ -344,9 +349,9 @@ function Report({ result }) {
               {/* Tambahkan label simulasi jika dalam mode simulasi */}
               {result && (result.isSimulation || result.simulation_mode || 
                 (result.raw_prediction && result.raw_prediction.is_simulation)) && (
-                <div className="mt-3">
-                  <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                    MODE SIMULASI
+                <div className="mt-2">
+                  <span className="bg-amber-600 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md animate-pulse">
+                    SIMULASI - BUKAN HASIL SEBENARNYA
                   </span>
                 </div>
               )}

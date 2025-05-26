@@ -144,84 +144,27 @@ export const getLatestAnalysis = async () => {
   } catch (error) {
     console.error('Error fetching latest analysis:', error);
     
-    // Fallback ke data mock jika endpoint belum tersedia atau error
-    console.warn('Menggunakan data mock untuk getLatestAnalysis');
+    // Tidak lagi menyediakan data simulasi sebagai fallback
+    console.error('Flask API tidak tersedia. Pastikan Flask API berjalan dan dapat diakses.');
     
-    // Pilih secara acak salah satu tingkat keparahan untuk simulasi
-    const severities = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
-    const randomIndex = Math.floor(Math.random() * severities.length);
-    const severity = severities[randomIndex];
-    
-    // Atur tingkat kepercayaan berdasarkan keparahan
-    let confidence;
-    switch (severity) {
-      case 'Tidak ada':
-      case 'Normal':
-      case 'No DR':
-        confidence = 0.90 + Math.random() * 0.1; // 0.90-1.0
-        break;
-      case 'Ringan':
-        confidence = 0.75 + Math.random() * 0.2; // 0.75-0.95
-        break;
-      case 'Sedang':
-        confidence = 0.70 + Math.random() * 0.15; // 0.70-0.85
-        break;
-      case 'Berat':
-        confidence = 0.85 + Math.random() * 0.15; // 0.85-1.0
-        break;
-      case 'Sangat Berat':
-      case 'Proliferative DR':
-        confidence = 0.88 + Math.random() * 0.12; // 0.88-1.0
-        break;
-      default:
-        confidence = 0.8;
-    }
-    
-    // Tambahkan tanda-tanda klinis yang terdeteksi berdasarkan tingkat keparahan
-    let clinicalSigns = [];
-    if (severity === 'Tidak ada' || severity === 'Normal' || severity === 'No DR') {
-      clinicalSigns = ['Tidak ditemukan tanda-tanda retinopati'];
-    } else if (severity === 'Ringan') {
-      clinicalSigns = ['Mikroaneurisma', 'Pendarahan intraretinal ringan'];
-    } else if (severity === 'Sedang') {
-      clinicalSigns = ['Mikroaneurisma multipel', 'Pendarahan intraretinal', 'Eksudat keras', 'Cotton wool spots'];
-    } else if (severity === 'Berat') {
-      clinicalSigns = ['Pendarahan intraretinal luas', 'Eksudat keras multipel', 'Cotton wool spots multipel', 'Anomali vaskular'];
-    } else if (severity === 'Sangat Berat' || severity === 'Proliferative DR') {
-      clinicalSigns = ['Neovaskularisasi', 'Perdarahan preretinal', 'Fibrosis epiretinal', 'Traksi retina'];
-    }
-    
-    return {
-      severity,
-      severityLevel: severity === 'Ringan' ? 1 : severity === 'Sedang' ? 2 : 3,
-      confidence: parseFloat(confidence.toFixed(2)),
-      clinicalSigns,
-      analysisDate: new Date().toISOString(),
-      riskFactor: severity === 'Ringan' ? 'Rendah' : severity === 'Sedang' ? 'Menengah' : 'Tinggi',
-      recommendation: severity === 'Ringan' ? 
-        'Lakukan pemeriksaan rutin setiap 12 bulan.' : 
-        severity === 'Sedang' ?
-        'Konsultasi dengan dokter mata dalam 3-6 bulan.' :
-        'Segera konsultasikan ke dokter mata spesialis.',
-      isSimulation: true
-    };
+    // Lempar error untuk ditangani di komponen, bukan menggunakan data simulasi
+    throw new Error('Flask API tidak tersedia. Pastikan Flask API berjalan dengan benar dan model ML dimuat. Jalankan "npm run test:flask" di terminal untuk menguji koneksi.');
   }
 };
 
 export const getReport = async () => {
-  // Endpoint ini belum ada, gunakan mock yang lebih detail
-  const severity = ['Ringan', 'Sedang', 'Berat'][Math.floor(Math.random() * 3)];
-  
-  return {
-    date: new Date().toISOString(),
-    severity,
-    confidence: parseFloat((0.7 + Math.random() * 0.25).toFixed(2)),
-    details: getDetailsFromSeverity(severity),
-    recommendations: getRecommendationsFromSeverity(severity),
-    clinicalSigns: getClinicalSignsFromSeverity(severity),
-    patientRisk: severity === 'Ringan' ? 'Rendah' : severity === 'Sedang' ? 'Menengah' : 'Tinggi',
-    followUpTime: severity === 'Ringan' ? '12 bulan' : severity === 'Sedang' ? '6 bulan' : '1 bulan',
-  };
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_URL}/api/analysis/report`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    throw new Error('Gagal mendapatkan laporan. Pastikan Flask API berjalan dengan benar.');
+  }
 };
 
 export const deleteAnalysis = async (analysisId) => {

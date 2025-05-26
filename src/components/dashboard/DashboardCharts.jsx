@@ -503,12 +503,27 @@ const DashboardCharts = () => {
             <div className="p-4 bg-white rounded-xl shadow-md">
               <h3 className="font-medium text-gray-800">Flask API Status</h3>
               <div className="mt-2">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
-                  <span className="text-sm text-green-700">Online</span>
-                </div>
+                {socketStatus === 'connected' ? (
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
+                    <span className="text-sm text-green-700">Online</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 rounded-full mr-2 bg-red-500"></div>
+                    <span className="text-sm text-red-700">Offline</span>
+                  </div>
+                )}
                 <div className="mt-2 text-xs text-gray-500">
-                  <p>Model berhasil dimuat dan siap digunakan</p>
+                  {socketStatus === 'connected' ? (
+                    <p>Model berhasil dimuat dan siap digunakan</p>
+                  ) : (
+                    <p className="text-red-500 font-medium">
+                      Flask API tidak tersedia. Pastikan Flask API berjalan dan model ML dimuat.
+                      <br />
+                      <span className="block mt-1">Jalankan: <code className="bg-gray-100 px-1 py-0.5 rounded">npm run test:flask</code></span>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -516,8 +531,10 @@ const DashboardCharts = () => {
               <h3 className="font-medium text-gray-800">Backend API Status</h3>
               <div className="mt-2">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
-                  <span className="text-sm text-green-700">Online</span>
+                  <div className={`w-3 h-3 rounded-full mr-2 ${socketStatus === 'connected' ? 'bg-green-500' : socketStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
+                  <span className={`text-sm ${socketStatus === 'connected' ? 'text-green-700' : socketStatus === 'connecting' ? 'text-yellow-700' : 'text-red-700'}`}>
+                    {socketStatus === 'connected' ? 'Online' : socketStatus === 'connecting' ? 'Connecting...' : 'Offline'}
+                  </span>
                 </div>
                 <div className="mt-2 text-xs text-gray-600">
                   <p>URL: {import.meta.env.VITE_API_URL || 'http://localhost:5000'}</p>
