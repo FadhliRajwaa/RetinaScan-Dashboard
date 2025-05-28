@@ -456,19 +456,23 @@ const AgeDistributionChart = ({ ageDistribution }) => {
   );
 };
 
-const GenderDistributionChart = ({ genderDistribution }) => {
+const GenderDistributionChart = ({ genderDistribution, patientCounts }) => {
   const { theme } = useTheme();
   
   console.log('GenderDistribution data received:', genderDistribution);
+  console.log('Patient counts received:', patientCounts);
   
   // Memastikan genderDistribution adalah array dengan dua nilai
   const safeGenderDistribution = Array.isArray(genderDistribution) && genderDistribution.length === 2 
     ? genderDistribution 
     : [50, 50]; // Default fallback jika data tidak valid
   
+  // Memastikan patientCounts valid
+  const safeCounts = patientCounts || { male: 0, female: 0, total: 0 };
+  
   const options = {
     chart: {
-      type: 'pie',
+      type: 'donut',
       fontFamily: 'Inter, sans-serif',
       animations: {
         enabled: true,
@@ -497,7 +501,7 @@ const GenderDistributionChart = ({ genderDistribution }) => {
       position: 'bottom',
       fontFamily: 'Inter, sans-serif',
       fontSize: '14px',
-      fontWeight: 500,
+      fontWeight: 600,
       markers: {
         width: 12,
         height: 12,
@@ -510,10 +514,37 @@ const GenderDistributionChart = ({ genderDistribution }) => {
     },
     plotOptions: {
       pie: {
+        donut: {
+          size: '60%',
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              fontSize: '16px',
+              fontWeight: 600,
+              offsetY: -10,
+            },
+            value: {
+              show: true,
+              fontSize: '20px',
+              fontWeight: 700,
+              color: theme.primary,
+              formatter: function (val) {
+                return val + '%';
+              },
+            },
+            total: {
+              show: true,
+              label: 'Total',
+              color: theme.primary,
+              fontWeight: 700,
+              formatter: function() {
+                return '100%';
+              },
+            },
+          },
+        },
         expandOnClick: true,
-        dataLabels: {
-          offset: -10,
-        }
       },
     },
     dataLabels: {
@@ -575,9 +606,43 @@ const GenderDistributionChart = ({ genderDistribution }) => {
       <ReactApexChart 
         options={options}
         series={series}
-        type="pie"
+        type="donut"
         height={320}
       />
+      
+      <div className="mt-6 grid grid-cols-2 gap-4">
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex flex-col items-center"
+        >
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-600 font-medium">Laki-laki</p>
+          <p className="text-2xl font-bold text-blue-600">{safeGenderDistribution[0]}%</p>
+          <p className="text-xs text-gray-500">{safeCounts.male} pasien</p>
+        </motion.div>
+        
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="p-3 rounded-lg bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 flex flex-col items-center"
+        >
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-pink-100 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-600 font-medium">Perempuan</p>
+          <p className="text-2xl font-bold text-pink-600">{safeGenderDistribution[1]}%</p>
+          <p className="text-xs text-gray-500">{safeCounts.female} pasien</p>
+        </motion.div>
+      </div>
+      
+      <div className="mt-4 text-center">
+        <p className="text-sm text-gray-500">Total: {safeCounts.total} pasien</p>
+      </div>
     </motion.div>
   );
 };
@@ -725,6 +790,7 @@ const DashboardCharts = () => {
     lowest: 72
   });
   const [genderDistribution, setGenderDistribution] = useState([60, 40]);
+  const [patientCounts, setPatientCounts] = useState({ male: 0, female: 0, total: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const { theme } = useTheme();
@@ -736,6 +802,25 @@ const DashboardCharts = () => {
     profileStatus: 'Aktif'
   });
 
+  // Fungsi untuk menghitung jumlah pasien berdasarkan gender
+  const calculatePatientCounts = useCallback((patientList) => {
+    if (!patientList || patientList.length === 0) return { male: 0, female: 0, total: 0 };
+    
+    let maleCount = 0;
+    let femaleCount = 0;
+    
+    patientList.forEach(patient => {
+      if (patient.gender === 'Laki-laki') maleCount++;
+      else if (patient.gender === 'Perempuan') femaleCount++;
+    });
+    
+    return { 
+      male: maleCount, 
+      female: femaleCount, 
+      total: patientList.length 
+    };
+  }, []);
+  
   // Refresh data function
   const refreshData = useCallback(async () => {
     setIsLoading(true);
@@ -776,6 +861,11 @@ const DashboardCharts = () => {
           console.log('Setting patients:', dashboardData.patients.length);
           setPatients(dashboardData.patients);
           
+          // Hitung jumlah pasien berdasarkan gender
+          const counts = calculatePatientCounts(dashboardData.patients);
+          console.log('Calculated patient counts:', counts);
+          setPatientCounts(counts);
+          
           // Update user stats
           const totalAnalyses = dashboardData.patients.length;
           let lastActivity = '-';
@@ -800,7 +890,7 @@ const DashboardCharts = () => {
       setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
       setIsLoading(false);
     }
-  }, []);
+  }, [calculatePatientCounts]);
 
   // Fetch data from API
   useEffect(() => {
@@ -845,6 +935,11 @@ const DashboardCharts = () => {
             console.log('Setting patients:', dashboardData.patients.length);
             setPatients(dashboardData.patients);
             
+            // Hitung jumlah pasien berdasarkan gender
+            const counts = calculatePatientCounts(dashboardData.patients);
+            console.log('Calculated patient counts:', counts);
+            setPatientCounts(counts);
+            
             // Update user stats
             const totalAnalyses = dashboardData.patients.length;
             let lastActivity = '-';
@@ -875,7 +970,7 @@ const DashboardCharts = () => {
     };
     
     fetchDashboardData();
-  }, []);
+  }, [calculatePatientCounts]);
 
   const chartContainerStyle = {
     ...glassEffect,
@@ -979,7 +1074,7 @@ const DashboardCharts = () => {
                 }}
                 className="rounded-xl overflow-hidden transition-all duration-300"
               >
-                <GenderDistributionChart genderDistribution={genderDistribution} />
+                <GenderDistributionChart genderDistribution={genderDistribution} patientCounts={patientCounts} />
               </motion.div>
               
               <motion.div
