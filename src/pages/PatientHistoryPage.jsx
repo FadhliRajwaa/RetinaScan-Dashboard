@@ -975,5 +975,5 @@ function PatientHistoryPageComponent() {
   );
 }
 
-const PatientHistoryPage = withPageTransition(PatientHistoryPageComponent, "blur");
+const PatientHistoryPage = withPageTransition(PatientHistoryPageComponent);
 export default PatientHistoryPage; 

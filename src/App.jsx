@@ -17,7 +17,6 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
-import { useTheme } from './context/ThemeContext';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -26,23 +25,15 @@ function App() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [currentTitle, setCurrentTitle] = useState('Dashboard');
-  const [previousPath, setPreviousPath] = useState('/');
-  const { triggerPageTransition } = useTheme();
   
   // API URL from environment variables
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 
-  // Update title based on current path and track navigation direction
+  // Update title based on current path
   useEffect(() => {
     const path = location.pathname;
     console.log('Current path:', path);
-    
-    // Determine navigation direction for transition
-    const isForward = path.length > previousPath.length || 
-                      (path !== '/' && !previousPath.includes(path));
-    triggerPageTransition(isForward ? 1 : -1);
-    setPreviousPath(path);
     
     if (path === '/' || path === '/dashboard') setCurrentTitle('Dashboard');
     else if (path === '/patient-data') setCurrentTitle('Data Pasien');
@@ -272,7 +263,7 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
       <Sidebar toggleMobileMenu={toggleMobileMenu} isMobileMenuOpen={isMobileMenuOpen} />
       
       <main className="flex-1 p-0 lg:p-4 overflow-hidden transition-all duration-200" style={{ 

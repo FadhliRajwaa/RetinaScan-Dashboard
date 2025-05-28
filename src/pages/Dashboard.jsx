@@ -279,6 +279,6 @@ function DashboardComponent() {
   );
 }
 
-// Menggunakan efek scale untuk halaman dashboard
-const Dashboard = withPageTransition(DashboardComponent, "scale");
+// Menggunakan HOC untuk menambahkan animasi page transition
+const Dashboard = withPageTransition(DashboardComponent);
 export default Dashboard;
