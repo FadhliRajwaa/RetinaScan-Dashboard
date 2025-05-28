@@ -1,10 +1,9 @@
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { useTheme } from './context/ThemeContext';
 import Dashboard from './pages/Dashboard';
 import PatientDataPage from './pages/PatientDataPage';
 import HistoryPage from './pages/HistoryPage';
@@ -18,8 +17,6 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
-import { Particles } from "react-tsparticles";
-import { loadSlim } from "tsparticles-slim";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -28,16 +25,10 @@ function App() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [currentTitle, setCurrentTitle] = useState('Dashboard');
-  const { theme } = useTheme();
   
   // API URL from environment variables
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
-
-  // Particles initialization
-  const particlesInit = useCallback(async engine => {
-    await loadSlim(engine);
-  }, []);
 
   // Update title based on current path
   useEffect(() => {
@@ -150,97 +141,6 @@ function App() {
     }
   }, [searchParams, API_URL, FRONTEND_URL]);
 
-  // Particle options
-  const particlesOptions = {
-    fpsLimit: 60,
-    particles: {
-      number: {
-        value: 30,
-        density: {
-          enable: true,
-          value_area: 800
-        }
-      },
-      color: {
-        value: theme.primary
-      },
-      shape: {
-        type: "circle",
-        stroke: {
-          width: 0,
-          color: "#000000"
-        },
-      },
-      opacity: {
-        value: 0.3,
-        random: true,
-        animation: {
-          enable: true,
-          speed: 0.5,
-          minimumValue: 0.1,
-          sync: false
-        }
-      },
-      size: {
-        value: 3,
-        random: true,
-        animation: {
-          enable: true,
-          speed: 2,
-          minimumValue: 0.5,
-          sync: false
-        }
-      },
-      links: {
-        enable: true,
-        distance: 150,
-        color: theme.primary,
-        opacity: 0.2,
-        width: 1
-      },
-      move: {
-        enable: true,
-        speed: 0.8,
-        direction: "none",
-        random: true,
-        straight: false,
-        outMode: "bounce",
-        bounce: false,
-        attract: {
-          enable: false,
-          rotateX: 600,
-          rotateY: 1200
-        }
-      }
-    },
-    interactivity: {
-      detectsOn: "canvas",
-      events: {
-        onHover: {
-          enable: true,
-          mode: "grab"
-        },
-        onClick: {
-          enable: true,
-          mode: "push"
-        },
-        resize: true
-      },
-      modes: {
-        grab: {
-          distance: 140,
-          lineLinked: {
-            opacity: 0.5
-          }
-        },
-        push: {
-          quantity: 4
-        }
-      }
-    },
-    detectRetina: true
-  };
-
   const checkAuth = async () => {
     console.log('Checking authentication...');
     
@@ -301,112 +201,99 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('Error checking auth:', error);
       localStorage.removeItem('token');
       setLoading(false);
-      toast.error('Terjadi kesalahan saat verifikasi. Silakan login kembali.');
+      toast.error('Token tidak valid. Silakan login kembali.');
       return false;
     }
   };
-  
-  // Handle logout button click
-  const handleLogout = () => {
-    safeLogout(FRONTEND_URL);
-  };
-  
-  // Handle mobile menu toggle
+
+  // Simpan userId dalam state untuk digunakan di seluruh aplikasi
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const verifyAuth = async () => {
+      const authResult = await checkAuth();
+      setIsAuthenticated(authResult);
+      
+      if (authResult) {
+        // Ambil dan simpan ID pengguna dari token
+        try {
+          const token = localStorage.getItem('token');
+          const decodedToken = jwtDecode(token);
+          console.log('Token decoded:', decodedToken);
+          
+          if (decodedToken && decodedToken.id) {
+            setUserId(decodedToken.id);
+            console.log('User ID set:', decodedToken.id);
+          }
+        } catch (error) {
+          console.error('Failed to extract user ID from token:', error);
+        }
+        
+        setLoading(false);
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    verifyAuth();
+  }, []);
+
   const toggleMobileMenu = () => {
+    console.log('Toggling mobile menu, current state:', isMobileMenuOpen);
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  // Early return for loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-        >
-          <motion.div 
-            className="w-16 h-16 mb-4 mx-auto border-4 border-t-blue-500 border-blue-200 rounded-full"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-          <p className="text-gray-600">Memuat dashboard...</p>
-        </motion.div>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center p-8 bg-white rounded-xl shadow-lg"
-        >
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Akses Ditolak</h1>
-          <p className="text-gray-600 mb-6">Anda harus login terlebih dahulu untuk mengakses dashboard.</p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => window.location.href = FRONTEND_URL}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors"
-          >
-            Kembali ke Halaman Utama
-          </motion.button>
-        </motion.div>
-      </div>
-    );
+    console.log('User not authenticated, redirecting to frontend');
+    // Arahkan ke halaman landing page dengan parameter untuk menandai asal redirect
+    // Pastikan URL menggunakan format yang benar untuk HashRouter di frontend
+    window.location.href = `${FRONTEND_URL}/#/?from=dashboard&auth=failed`;
+    return null;
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Background Particles */}
-      <div className="fixed inset-0 -z-10 opacity-40">
-        <Particles
-          id="tsparticles"
-          init={particlesInit}
-          options={particlesOptions}
-          className="absolute inset-0"
-        />
-      </div>
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+      <Sidebar toggleMobileMenu={toggleMobileMenu} isMobileMenuOpen={isMobileMenuOpen} />
       
-      {/* Sidebar */}
-      <Sidebar 
-        toggleMobileMenu={toggleMobileMenu}
-        isMobileMenuOpen={isMobileMenuOpen}
-      />
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-[260px]">
+      <main className="flex-1 p-0 lg:p-4 overflow-hidden transition-all duration-200" style={{ 
+        marginLeft: isMobileMenuOpen ? '0' : '0',
+        willChange: 'margin, padding',
+      }}>
+        {/* Global Header used in all pages */}
         <Header 
           title={currentTitle} 
-          toggleMobileMenu={toggleMobileMenu}
+          toggleMobileMenu={toggleMobileMenu} 
           isMobileMenuOpen={isMobileMenuOpen}
         />
         
-        <main className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/patient-data" element={<PatientDataPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/patient-history/:id" element={<PatientHistoryPage />} />
-              <Route path="/edit-patient/:id" element={<EditPatientPage />} />
-              <Route path="/scan-retina" element={<ScanRetinaPage />} />
-              <Route path="/analysis" element={<AnalysisPage />} />
-              <Route path="/report" element={<ReportPage />} />
-              <Route path="/add-patient" element={<AddPatientPage />} />
-              <Route path="/patient-profile/:id" element={<PatientProfilePage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AnimatePresence>
-        </main>
-      </div>
+        <AnimatePresence mode="wait" initial={false}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Dashboard userId={userId} />} />
+            <Route path="/dashboard" element={<Dashboard userId={userId} />} />
+            <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
+            <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
+            <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
+            <Route path="/patient-profile/:patientId" element={<PatientProfilePage userId={userId} />} />
+            <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
+            <Route path="/history" element={<HistoryPage userId={userId} />} />
+            <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
+            <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
+            <Route path="/report" element={<ReportPage userId={userId} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
     </div>
   );
 }

@@ -4,6 +4,7 @@ export const globalTheme = {
   secondary: '#10B981', // Green-500
   accent: '#8B5CF6', // Violet-500
   background: '#F9FAFB', // gray-50
+  backgroundAlt: '#F3F4F6', // gray-100
   text: '#1F2937', // gray-800
   
   // Gradients

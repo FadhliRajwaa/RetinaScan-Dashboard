@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReactApexChart from 'react-apexcharts';
 import { useTheme } from '../../context/ThemeContext';
 import axios from 'axios';
@@ -9,6 +9,31 @@ import io from 'socket.io-client';
 // karena masalah dengan endpoint /flask-info
 // Comment out untuk sementara sampai endpoint diperbaiki
 
+// Animasi untuk chart containers
+const chartContainerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30,
+      duration: 0.5
+    }
+  }
+};
+
+// Glassmorphism style
+const glassEffect = {
+  background: 'rgba(255, 255, 255, 0.95)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+  borderRadius: '16px',
+  border: '1px solid rgba(255, 255, 255, 0.18)',
+};
+
 const SeverityDistributionChart = ({ severityDistribution }) => {
   const { theme } = useTheme();
   
@@ -16,26 +41,61 @@ const SeverityDistributionChart = ({ severityDistribution }) => {
     chart: {
       type: 'donut',
       fontFamily: 'Inter, sans-serif',
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      },
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 3,
+        blur: 4,
+        opacity: 0.12
+      },
     },
-    colors: ['#34D399', '#10B981', '#FBBF24', '#F59E0B', '#EF4444'],
+    colors: ['#10B981', '#06D6A0', '#FBBF24', '#F59E0B', '#EF4444'],
     labels: ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'],
     legend: {
       position: 'bottom',
       fontFamily: 'Inter, sans-serif',
+      fontSize: '14px',
+      fontWeight: 500,
+      markers: {
+        width: 12,
+        height: 12,
+        radius: 6,
+      },
+      itemMargin: {
+        horizontal: 10,
+        vertical: 5
+      }
     },
     plotOptions: {
       pie: {
         donut: {
-          size: '60%',
+          size: '65%',
           labels: {
             show: true,
             name: {
               show: true,
               fontSize: '16px',
+              fontWeight: 600,
+              offsetY: -10,
             },
             value: {
               show: true,
-              fontSize: '16px',
+              fontSize: '18px',
+              fontWeight: 700,
+              color: theme.primary,
               formatter: function (val) {
                 return val + '%';
               },
@@ -43,6 +103,8 @@ const SeverityDistributionChart = ({ severityDistribution }) => {
             total: {
               show: true,
               label: 'Total',
+              color: theme.primary,
+              fontWeight: 700,
               formatter: function() {
                 return '100%';
               },
@@ -58,10 +120,11 @@ const SeverityDistributionChart = ({ severityDistribution }) => {
       breakpoint: 480,
       options: {
         chart: {
-          height: 250,
+          height: 280,
         },
         legend: {
           position: 'bottom',
+          fontSize: '12px',
         },
       },
     }],
@@ -75,21 +138,33 @@ const SeverityDistributionChart = ({ severityDistribution }) => {
           return val + '%';
         },
       },
+      theme: 'light',
+      style: {
+        fontFamily: 'Inter, sans-serif',
+      }
     },
   };
 
   const series = severityDistribution;
 
   return (
-    <div className="chart-container">
-      <h3 className="text-lg font-semibold mb-3">Distribusi Tingkat Keparahan</h3>
+    <motion.div 
+      variants={chartContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className="chart-container p-5"
+    >
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-6 bg-gradient-to-b from-purple-500 to-blue-500 rounded-full mr-3"></span>
+        Distribusi Tingkat Keparahan
+      </h3>
       <ReactApexChart 
         options={options}
         series={series}
         type="donut"
-        height={300}
+        height={320}
       />
-    </div>
+    </motion.div>
   );
 };
 
@@ -106,8 +181,28 @@ const AnalysisTrendChart = ({ monthlyTrend }) => {
       zoom: {
         enabled: false,
       },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      },
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 3,
+        blur: 5,
+        opacity: 0.1
+      },
     },
-    colors: ['#3B82F6'],
+    colors: [theme.primary],
     dataLabels: {
       enabled: false,
     },
@@ -122,14 +217,36 @@ const AnalysisTrendChart = ({ monthlyTrend }) => {
         opacityFrom: 0.7,
         opacityTo: 0.2,
         stops: [0, 90, 100],
+        colorStops: [
+          {
+            offset: 0,
+            color: theme.primary,
+            opacity: 0.8
+          },
+          {
+            offset: 100,
+            color: theme.accent,
+            opacity: 0.2
+          }
+        ]
       },
+    },
+    markers: {
+      size: 4,
+      colors: ['#fff'],
+      strokeColors: theme.primary,
+      strokeWidth: 2,
+      hover: {
+        size: 7,
+      }
     },
     xaxis: {
       categories: monthlyTrend.categories,
       labels: {
         style: {
           colors: '#64748b',
-          fontSize: '12px',
+          fontSize: '13px',
+          fontWeight: 500,
         },
       },
       axisBorder: {
@@ -143,8 +260,12 @@ const AnalysisTrendChart = ({ monthlyTrend }) => {
       labels: {
         style: {
           colors: '#64748b',
-          fontSize: '12px',
+          fontSize: '13px',
+          fontWeight: 500,
         },
+        formatter: function(val) {
+          return val.toFixed(0);
+        }
       },
     },
     grid: {
@@ -154,6 +275,11 @@ const AnalysisTrendChart = ({ monthlyTrend }) => {
         left: 0,
         right: 0,
       },
+      xaxis: {
+        lines: {
+          show: true
+        }
+      }
     },
     tooltip: {
       y: {
@@ -161,6 +287,10 @@ const AnalysisTrendChart = ({ monthlyTrend }) => {
           return val + ' analisis';
         },
       },
+      theme: 'light',
+      style: {
+        fontFamily: 'Inter, sans-serif',
+      }
     },
   };
 
@@ -170,19 +300,27 @@ const AnalysisTrendChart = ({ monthlyTrend }) => {
   }];
 
   return (
-    <div className="chart-container">
-      <h3 className="text-lg font-semibold mb-3">Tren Analisis Bulanan</h3>
+    <motion.div 
+      variants={chartContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className="chart-container p-5"
+    >
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-6 bg-gradient-to-b from-blue-500 to-cyan-400 rounded-full mr-3"></span>
+        Tren Analisis Bulanan
+      </h3>
       <ReactApexChart 
         options={options}
         series={series}
         type="area"
-        height={300}
+        height={320}
       />
-    </div>
+    </motion.div>
   );
 };
 
-const PatientDemographicsChart = ({ ageGroups }) => {
+const AgeDistributionChart = ({ ageDistribution }) => {
   const { theme } = useTheme();
   
   const options = {
@@ -192,27 +330,71 @@ const PatientDemographicsChart = ({ ageGroups }) => {
       toolbar: {
         show: false,
       },
-    },
-    colors: ['#8B5CF6'],
-    plotOptions: {
-      bar: {
-        borderRadius: 5,
-        columnWidth: '60%',
-        distributed: true,
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      },
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 3,
+        blur: 4,
+        opacity: 0.1
       },
     },
+    plotOptions: {
+      bar: {
+        borderRadius: 8,
+        columnWidth: '70%',
+        distributed: true,
+        dataLabels: {
+          position: 'top',
+        },
+      },
+    },
+    colors: [
+      '#0ea5e9', '#0284c7', '#0369a1', '#075985', '#0c4a6e', '#082f49'
+    ],
     dataLabels: {
-      enabled: false,
+      enabled: true,
+      formatter: function (val) {
+        return val + '%';
+      },
+      offsetY: -20,
+      style: {
+        fontSize: '12px',
+        fontWeight: '600',
+        colors: ["#64748b"]
+      }
     },
     legend: {
       show: false,
     },
+    grid: {
+      borderColor: '#f1f5f9',
+      strokeDashArray: 4,
+      padding: {
+        top: 20,
+        right: 0,
+        left: 0,
+      },
+    },
     xaxis: {
-      categories: ageGroups.categories,
+      categories: ageDistribution.categories,
       labels: {
         style: {
           colors: '#64748b',
-          fontSize: '12px',
+          fontSize: '13px',
+          fontWeight: 500,
         },
       },
       axisBorder: {
@@ -223,51 +405,172 @@ const PatientDemographicsChart = ({ ageGroups }) => {
       },
     },
     yaxis: {
-      title: {
-        text: 'Jumlah Pasien',
-        style: {
-          color: '#64748b',
-        },
-      },
       labels: {
         style: {
           colors: '#64748b',
-          fontSize: '12px',
+          fontSize: '13px',
+          fontWeight: 500,
         },
-      },
-    },
-    grid: {
-      borderColor: '#f1f5f9',
-      strokeDashArray: 4,
-      padding: {
-        left: 0,
-        right: 0,
+        formatter: function(val) {
+          return val + '%';
+        }
       },
     },
     tooltip: {
       y: {
         formatter: function(val) {
-          return val + ' pasien';
+          return val + '%';
         },
       },
+      theme: 'light',
+      style: {
+        fontFamily: 'Inter, sans-serif',
+      }
     },
   };
 
   const series = [{
-    name: 'Pasien',
-    data: ageGroups.data,
+    name: 'Persentase',
+    data: ageDistribution.data,
   }];
 
   return (
-    <div className="chart-container">
-      <h3 className="text-lg font-semibold mb-3">Demografi Pasien (Usia)</h3>
+    <motion.div 
+      variants={chartContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className="chart-container p-5"
+    >
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-6 bg-gradient-to-b from-blue-600 to-blue-400 rounded-full mr-3"></span>
+        Distribusi Umur Pasien
+      </h3>
       <ReactApexChart 
         options={options}
         series={series}
         type="bar"
-        height={300}
+        height={320}
       />
-    </div>
+    </motion.div>
+  );
+};
+
+const GenderDistributionChart = ({ genderDistribution }) => {
+  const { theme } = useTheme();
+  
+  const options = {
+    chart: {
+      type: 'pie',
+      fontFamily: 'Inter, sans-serif',
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      },
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 3,
+        blur: 4,
+        opacity: 0.12
+      },
+    },
+    colors: ['#3b82f6', '#ec4899'],
+    labels: ['Laki-laki', 'Perempuan'],
+    legend: {
+      position: 'bottom',
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '14px',
+      fontWeight: 500,
+      markers: {
+        width: 12,
+        height: 12,
+        radius: 6,
+      },
+      itemMargin: {
+        horizontal: 10,
+        vertical: 5
+      }
+    },
+    plotOptions: {
+      pie: {
+        expandOnClick: true,
+        dataLabels: {
+          offset: -10,
+        }
+      },
+    },
+    dataLabels: {
+      enabled: true,
+      formatter: function (val) {
+        return val.toFixed(1) + '%';
+      },
+      style: {
+        fontSize: '14px',
+        fontWeight: '600',
+        fontFamily: 'Inter, sans-serif',
+      },
+      dropShadow: {
+        enabled: false,
+      }
+    },
+    responsive: [{
+      breakpoint: 480,
+      options: {
+        chart: {
+          height: 280,
+        },
+        legend: {
+          position: 'bottom',
+          fontSize: '12px',
+        },
+      },
+    }],
+    stroke: {
+      width: 2,
+      colors: ['#fff']
+    },
+    tooltip: {
+      y: {
+        formatter: function(val) {
+          return val + '%';
+        },
+      },
+      theme: 'light',
+      style: {
+        fontFamily: 'Inter, sans-serif',
+      }
+    },
+  };
+
+  const series = genderDistribution;
+
+  return (
+    <motion.div 
+      variants={chartContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className="chart-container p-5"
+    >
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-6 bg-gradient-to-b from-blue-500 to-pink-500 rounded-full mr-3"></span>
+        Distribusi Gender
+      </h3>
+      <ReactApexChart 
+        options={options}
+        series={series}
+        type="pie"
+        height={320}
+      />
+    </motion.div>
   );
 };
 
@@ -278,416 +581,305 @@ const AIConfidenceChart = ({ confidenceLevels }) => {
     chart: {
       type: 'radialBar',
       fontFamily: 'Inter, sans-serif',
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 350
+        }
+      },
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 3,
+        blur: 4,
+        opacity: 0.12
+      },
     },
-    colors: ['#10B981', '#6366F1', '#F59E0B', '#EC4899', '#3B82F6'],
     plotOptions: {
       radialBar: {
+        startAngle: -135,
+        endAngle: 135,
         dataLabels: {
           name: {
-            fontSize: '14px',
+            fontSize: '16px',
             color: '#64748b',
+            offsetY: 80,
           },
           value: {
-            fontSize: '16px',
-            fontWeight: 500,
+            offsetY: 40,
+            fontSize: '22px',
+            fontWeight: 700,
+            color: theme.primary,
             formatter: function (val) {
               return val + '%';
-            },
-          },
-          total: {
-            show: true,
-            label: 'Total',
-            formatter: function (w) {
-              return '100%';
-            },
+            }
           }
+        },
+        hollow: {
+          margin: 15,
+          size: '65%',
         },
         track: {
           background: '#f1f5f9',
+          strokeWidth: '100%',
+          margin: 0,
         },
-      },
+      }
     },
-    labels: confidenceLevels.categories,
-    legend: {
-      show: true,
-      position: 'bottom',
-      fontSize: '12px',
-      fontFamily: 'Inter, sans-serif',
-      offsetY: 5,
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'dark',
+        type: 'horizontal',
+        shadeIntensity: 0.5,
+        gradientToColors: [theme.accent],
+        inverseColors: true,
+        opacityFrom: 1,
+        opacityTo: 1,
+        stops: [0, 100]
+      }
     },
+    colors: [theme.primary],
+    stroke: {
+      dashArray: 4,
+      lineCap: 'round'
+    },
+    labels: ['Tingkat Kepercayaan AI'],
   };
 
-  // Konversi data ke persentase relatif untuk chart radial
-  const total = confidenceLevels.data.reduce((acc, item) => acc + item, 0);
-  const series = confidenceLevels.data.map(item => 
-    Math.round((item / total) * 100)
-  );
+  const series = [confidenceLevels.average];
 
   return (
-    <div className="chart-container">
-      <h3 className="text-lg font-semibold mb-3">Tingkat Kepercayaan AI</h3>
+    <motion.div 
+      variants={chartContainerVariants}
+      initial="hidden"
+      animate="visible"
+      className="chart-container p-5"
+    >
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
+        Tingkat Kepercayaan AI
+      </h3>
       <ReactApexChart 
         options={options}
         series={series}
         type="radialBar"
-        height={300}
+        height={320}
       />
-    </div>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100"
+        >
+          <p className="text-xs text-gray-500">Tertinggi</p>
+          <p className="text-lg font-bold text-green-600">{confidenceLevels.highest}%</p>
+        </motion.div>
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+        >
+          <p className="text-xs text-gray-500">Rata-rata</p>
+          <p className="text-lg font-bold text-blue-600">{confidenceLevels.average}%</p>
+        </motion.div>
+        <motion.div 
+          whileHover={{ scale: 1.05 }}
+          className="p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100"
+        >
+          <p className="text-xs text-gray-500">Terendah</p>
+          <p className="text-lg font-bold text-amber-600">{confidenceLevels.lowest}%</p>
+        </motion.div>
+      </div>
+    </motion.div>
   );
 };
 
 const DashboardCharts = () => {
-  const [analyses, setAnalyses] = useState([]);
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
-  const [socketStatus, setSocketStatus] = useState('connecting');
+  const [severityDistribution, setSeverityDistribution] = useState([20, 25, 30, 15, 10]);
+  const [monthlyTrend, setMonthlyTrend] = useState({
+    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    data: [30, 40, 35, 50, 49, 60, 70, 91, 125, 150, 180, 220]
+  });
+  const [ageGroups, setAgeGroups] = useState({
+    categories: ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61+'],
+    data: [5, 10, 15, 25, 20, 15, 10]
+  });
+  const [confidenceLevels, setConfidenceLevels] = useState({
+    average: 87,
+    highest: 98,
+    lowest: 72
+  });
+  const [genderDistribution, setGenderDistribution] = useState([60, 40]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { theme } = useTheme();
-  const [isVisible, setIsVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState('weekly');
 
-  const fetchData = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      console.log('Fetching data from API:', API_URL);
-      
-      const [analysesRes, patientsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/analysis/history`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API_URL}/api/patients`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      setAnalyses(analysesRes.data);
-      setPatients(patientsRes.data);
-      console.log('Data fetched successfully:', { analyses: analysesRes.data.length, patients: patientsRes.data.length });
-    } catch (err) {
-      console.error('Gagal mengambil data dashboard:', err);
-    } finally {
-      setLoading(false);
-    }
+  // Fetch data from API
+  useEffect(() => {
+    // Simulate API call with setTimeout
+    setIsLoading(true);
+    setTimeout(() => {
+      // Dummy data
+      const dummyPatients = Array(100).fill().map((_, i) => ({
+        id: i + 1,
+        name: `Patient ${i + 1}`,
+        age: Math.floor(Math.random() * 80) + 1,
+        gender: Math.random() > 0.5 ? 'Laki-laki' : 'Perempuan',
+        severity: ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'][Math.floor(Math.random() * 5)]
+      }));
+      setPatients(dummyPatients);
+      setIsLoading(false);
+    }, 1000);
   }, []);
 
-  useEffect(() => {
-    fetchData();
-
-    // Setup Socket.IO connection with retry logic
-    const setupSocket = () => {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      console.log('Connecting to Socket.IO server at:', API_URL);
-      
-      const newSocket = io(API_URL, {
-        auth: {
-          token: localStorage.getItem('token')
-        },
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        transports: ['websocket', 'polling']
-      });
-
-      newSocket.on('connect', () => {
-        console.log('Connected to WebSocket server');
-        setSocketStatus('connected');
-      });
-
-      newSocket.on('connect_error', (error) => {
-        console.log('Socket connection error:', error);
-        setSocketStatus('error');
-      });
-
-      newSocket.on('disconnect', (reason) => {
-        console.log('Disconnected from WebSocket server:', reason);
-        setSocketStatus('disconnected');
-      });
-
-      newSocket.on('analysisUpdated', () => {
-        console.log('Analysis data updated, refreshing...');
-        fetchData();
-      });
-
-      newSocket.on('patientUpdated', () => {
-        console.log('Patient data updated, refreshing...');
-        fetchData();
-      });
-
-      setSocket(newSocket);
-
-      return newSocket;
-    };
-
-    const socket = setupSocket();
-
-    // Cleanup on unmount
-    return () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    };
-  }, [fetchData]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(true);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  const tabVariants = {
-    inactive: { 
-      color: '#6B7280',
-      backgroundColor: 'transparent',
-      scale: 0.95,
-      boxShadow: 'none'
-    },
-    active: { 
-      color: 'white',
-      backgroundColor: theme.primary,
-      scale: 1,
-      boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)'
-    },
-    hover: { 
-      scale: 1.05,
-      boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.2)'
-    },
-    tap: { scale: 0.98 }
+  const chartContainerStyle = {
+    ...glassEffect,
+    transform: 'translateZ(0)',
+    willChange: 'transform, opacity'
   };
-
-  const chartContainerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: {
-        type: 'spring',
-        stiffness: 100,
-        damping: 15,
-        duration: 0.5,
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const chartItemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        type: 'spring',
-        stiffness: 100,
-        damping: 15,
-        duration: 0.5
-      }
-    }
-  };
-
-  // Agregasi data untuk chart
-  const severityDistribution = useMemo(() => {
-    const dist = { 'Tidak ada': 0, Ringan: 0, Sedang: 0, Berat: 0, 'Sangat Berat': 0 };
-    analyses.forEach(a => {
-      const sev = a.severity?.toLowerCase();
-      if (sev === 'tidak ada' || sev === 'normal') dist['Tidak ada']++;
-      else if (sev === 'ringan' || sev === 'rendah') dist.Ringan++;
-      else if (sev === 'sedang') dist.Sedang++;
-      else if (sev === 'berat' || sev === 'parah') dist.Berat++;
-      else if (sev === 'sangat berat' || sev === 'proliferative dr') dist['Sangat Berat']++;
-      else {
-        // Fallback berdasarkan severityLevel jika ada
-        const level = a.severityLevel || 0;
-        if (level === 0) dist['Tidak ada']++;
-        else if (level === 1) dist.Ringan++;
-        else if (level === 2) dist.Sedang++;
-        else if (level === 3) dist.Berat++;
-        else if (level === 4) dist['Sangat Berat']++;
-      }
-    });
-    return [dist['Tidak ada'], dist.Ringan, dist.Sedang, dist.Berat, dist['Sangat Berat']];
-  }, [analyses]);
-
-  const monthlyTrend = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    const trend = Array(12).fill(0);
-    analyses.forEach(a => {
-      const d = new Date(a.createdAt);
-      trend[d.getMonth()]++;
-    });
-    return { categories: months, data: trend };
-  }, [analyses]);
-
-  const ageGroups = useMemo(() => {
-    const groups = { '< 30': 0, '30-40': 0, '41-50': 0, '51-60': 0, '61-70': 0, '> 70': 0 };
-    patients.forEach(p => {
-      const age = p.age || 0;
-      if (age < 30) groups['< 30']++;
-      else if (age <= 40) groups['30-40']++;
-      else if (age <= 50) groups['41-50']++;
-      else if (age <= 60) groups['51-60']++;
-      else if (age <= 70) groups['61-70']++;
-      else groups['> 70']++;
-    });
-    return { categories: Object.keys(groups), data: Object.values(groups) };
-  }, [patients]);
-
-  const confidenceLevels = useMemo(() => {
-    const levels = { '< 70%': 0, '70-80%': 0, '81-90%': 0, '91-95%': 0, '96-100%': 0 };
-    analyses.forEach(a => {
-      const conf = (a.confidence || 0) * 100;
-      if (conf < 70) levels['< 70%']++;
-      else if (conf <= 80) levels['70-80%']++;
-      else if (conf <= 90) levels['81-90%']++;
-      else if (conf <= 95) levels['91-95%']++;
-      else levels['96-100%']++;
-    });
-    return { categories: Object.keys(levels), data: Object.values(levels) };
-  }, [analyses]);
-
-  if (loading) return <div className="text-center py-12">Memuat data statistik...</div>;
 
   return (
-    <motion.div
-      variants={chartContainerVariants}
-      initial="hidden"
-      animate={isVisible ? "visible" : "hidden"}
-      className="mt-8"
-    >
-      <motion.div 
-        className="bg-white p-5 rounded-2xl mb-8"
-        variants={chartItemVariants}
-        style={{ 
-          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.06)',
-          border: '1px solid rgba(255, 255, 255, 0.8)'
-        }}
-        whileHover={{ 
-          boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
-          y: -5,
-          transition: { duration: 0.3 }
-        }}
-      >
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <div>
-            <h3 className="text-lg sm:text-xl font-bold mb-1 text-gray-800">Statistik Analisis</h3>
-            <p className="text-sm text-gray-500">Tren analisis dan pasien baru</p>
-          </div>
-          
-          <div className="flex mt-4 sm:mt-0 p-1 bg-gray-100 rounded-lg">
-            {['weekly', 'monthly', 'yearly'].map((tab) => (
-              <motion.button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className="px-4 py-2 rounded-md text-sm font-medium"
-                variants={tabVariants}
-                initial="inactive"
-                animate={activeTab === tab ? "active" : "inactive"}
-                whileHover={activeTab !== tab ? "hover" : undefined}
-                whileTap="tap"
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              >
-                {tab === 'weekly' ? 'Mingguan' : tab === 'monthly' ? 'Bulanan' : 'Tahunan'}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-        
-        <motion.div 
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.4 }}
-        >
-          <ReactApexChart 
-            options={lineChartOptions} 
-            series={lineChartSeries} 
-            type="line" 
-            height={350} 
-          />
-        </motion.div>
-      </motion.div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <motion.div 
-          className="bg-white p-5 rounded-2xl"
-          variants={chartItemVariants}
-          style={{ 
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.8)'
-          }}
-          whileHover={{ 
-            boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
-            y: -5,
-            transition: { duration: 0.3 }
-          }}
-        >
-          <h3 className="text-lg sm:text-xl font-bold mb-1 text-gray-800">Distribusi Tingkat Keparahan</h3>
-          <p className="text-sm text-gray-500 mb-6">Proporsi tingkat keparahan retinopati diabetik</p>
-          <ReactApexChart 
-            options={donutChartOptions} 
-            series={donutChartSeries} 
-            type="donut" 
-            height={350} 
-          />
-        </motion.div>
-        
-        <motion.div 
-          className="bg-white p-5 rounded-2xl"
-          variants={chartItemVariants}
-          style={{ 
-            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.06)',
-            border: '1px solid rgba(255, 255, 255, 0.8)'
-          }}
-          whileHover={{ 
-            boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
-            y: -5,
-            transition: { duration: 0.3 }
-          }}
-        >
-          <h3 className="text-lg sm:text-xl font-bold mb-1 text-gray-800">Statistik Pengguna</h3>
-          <p className="text-sm text-gray-500 mb-6">Informasi aktivitas pengguna terkini</p>
-          
-          <div className="space-y-5">
-            {[
-              { label: 'Total Analisis', value: 124, color: theme.primary, growth: '+12%', icon: '📊' },
-              { label: 'Pasien Aktif', value: 87, color: theme.secondary, growth: '+5%', icon: '👥' },
-              { label: 'Rata-rata Waktu Analisis', value: '2.5 detik', color: theme.accent, growth: '-8%', icon: '⏱️' },
-              { label: 'Tingkat Akurasi', value: '98%', color: '#F59E0B', growth: '+2%', icon: '🎯' }
-            ].map((stat, index) => (
+    <div className="dashboard-charts">
+      <AnimatePresence>
+        {isLoading ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex justify-center items-center h-64"
+          >
+            <div className="loader">
               <motion.div 
-                key={stat.label}
-                className="flex items-center justify-between p-4 rounded-xl bg-gray-50"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
-                whileHover={{ 
-                  backgroundColor: `${stat.color}10`,
-                  x: 5,
-                  transition: { duration: 0.2 }
+                animate={{ 
+                  rotate: 360,
+                  transition: { 
+                    repeat: Infinity, 
+                    duration: 1.5, 
+                    ease: "linear" 
+                  }
                 }}
+                className="w-12 h-12 border-4 border-t-4 rounded-full"
+                style={{
+                  borderColor: `${theme.accent}30`,
+                  borderTopColor: theme.primary
+                }}
+              />
+              <p className="mt-4 text-gray-600">Memuat data...</p>
+            </div>
+          </motion.div>
+        ) : error ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-red-50 p-4 rounded-lg border border-red-200 text-red-700"
+          >
+            <p className="font-medium">Error: {error}</p>
+            <p className="text-sm mt-1">Gagal memuat data. Silakan coba lagi nanti.</p>
+          </motion.div>
+        ) : (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                style={chartContainerStyle}
+                whileHover={{ 
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  translateY: -4
+                }}
+                className="rounded-xl overflow-hidden transition-all duration-300"
               >
-                <div className="flex items-center">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 text-lg"
-                    style={{ backgroundColor: `${stat.color}20` }}
-                  >
-                    {stat.icon}
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.label}</p>
-                    <p className="text-lg font-bold text-gray-800">{stat.value}</p>
-                  </div>
-                </div>
-                <div 
-                  className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    stat.growth.startsWith('+') ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'
-                  }`}
-                >
-                  {stat.growth}
-                </div>
+                <SeverityDistributionChart severityDistribution={severityDistribution} />
               </motion.div>
-            ))}
+              
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                style={chartContainerStyle}
+                whileHover={{ 
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  translateY: -4
+                }}
+                className="rounded-xl overflow-hidden transition-all duration-300"
+              >
+                <AnalysisTrendChart monthlyTrend={monthlyTrend} />
+              </motion.div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                style={chartContainerStyle}
+                whileHover={{ 
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  translateY: -4
+                }}
+                className="rounded-xl overflow-hidden transition-all duration-300"
+              >
+                <AgeDistributionChart ageDistribution={ageGroups} />
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                style={chartContainerStyle}
+                whileHover={{ 
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  translateY: -4
+                }}
+                className="rounded-xl overflow-hidden transition-all duration-300"
+              >
+                <GenderDistributionChart genderDistribution={genderDistribution} />
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                style={chartContainerStyle}
+                whileHover={{ 
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  translateY: -4
+                }}
+                className="rounded-xl overflow-hidden transition-all duration-300"
+              >
+                <AIConfidenceChart confidenceLevels={confidenceLevels} />
+              </motion.div>
+            </div>
+            
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-4 flex items-center justify-end"
+            >
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Refresh Data</span>
+              </motion.button>
+            </motion.div>
           </div>
-        </motion.div>
-      </div>
-    </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

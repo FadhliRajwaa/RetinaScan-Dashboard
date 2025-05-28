@@ -1,5 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   const { theme, isMobile } = useTheme();
@@ -11,10 +12,10 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       opacity: 1,
       transition: { 
         type: 'spring',
-        damping: 20,
-        stiffness: 100,
-        duration: 0.4,
-        staggerChildren: 0.07,
+        stiffness: 300,
+        damping: 30,
+        duration: 0.3,
+        staggerChildren: 0.05,
         delayChildren: 0.1
       }
     }
@@ -27,8 +28,8 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       y: 0,
       transition: { 
         type: 'spring',
-        damping: 20,
-        stiffness: 100,
+        stiffness: 300,
+        damping: 30,
         duration: 0.3
       }
     }
@@ -46,18 +47,24 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       console.error('toggleMobileMenu is not a function!');
     }
   };
+
+  // Glassmorphism style
+  const glassEffect = {
+    background: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
+  };
   
   return (
     <motion.header 
       variants={headerVariants}
       initial="hidden"
       animate="visible"
-      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-3 sm:p-4 md:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
+      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
       style={{
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        border: '1px solid rgba(255, 255, 255, 0.6)',
+        ...glassEffect,
         willChange: 'transform, opacity',
         transform: 'translateZ(0)'
       }}
@@ -66,12 +73,12 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         <motion.div
           variants={itemVariants}
           whileHover={{ 
-            scale: 1.08,
-            rotate: 5,
-            boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.15)'
+            scale: 1.05,
+            rotate: 3,
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)'
           }}
-          whileTap={{ scale: 0.92, rotate: -5 }}
-          className="w-12 h-12 rounded-xl mr-4 flex items-center justify-center"
+          whileTap={{ scale: 0.95, rotate: -3 }}
+          className="w-12 h-12 rounded-xl mr-4 flex items-center justify-center shadow-lg"
           style={{ 
             background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
             boxShadow: `0 10px 15px -3px ${theme.primary}40`,
@@ -101,104 +108,87 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         <div>
           <motion.h2 
             variants={itemVariants}
-            className="text-lg sm:text-xl md:text-2xl font-bold"
-            style={{
-              background: `linear-gradient(135deg, ${theme.text}, ${theme.primary})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
+            className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800"
           >
             {title}
           </motion.h2>
           <motion.div
             initial={{ opacity: 0, width: 0 }}
             animate={{ opacity: 1, width: '100%' }}
-            transition={{ delay: 0.3, duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
+            transition={{ 
+              delay: 0.2, 
+              duration: 0.5,
+              type: 'spring',
+              stiffness: 300,
+              damping: 30
+            }}
             className="h-1 rounded-full mt-1 max-w-[120px]"
             style={{ 
               background: `linear-gradient(to right, ${theme.primary}, ${theme.accent})`,
-              boxShadow: `0 2px 6px ${theme.primary}40`,
               willChange: 'width, opacity'
             }}
           />
         </div>
       </div>
 
-      {/* Animated decorative elements */}
-      <motion.div
-        className="absolute top-0 right-0 w-32 h-32 -z-10 opacity-20"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 0.2, scale: 1 }}
-        transition={{ delay: 0.5, duration: 1 }}
-        style={{
-          background: `radial-gradient(circle, ${theme.accent}80, transparent 70%)`,
-          filter: 'blur(20px)',
-          borderRadius: '50%',
-          transform: 'translate(30%, -30%)',
-        }}
-      />
-      
-      <motion.div
-        className="absolute bottom-0 left-0 w-24 h-24 -z-10 opacity-20"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 0.2, scale: 1 }}
-        transition={{ delay: 0.6, duration: 1 }}
-        style={{
-          background: `radial-gradient(circle, ${theme.primary}80, transparent 70%)`,
-          filter: 'blur(20px)',
-          borderRadius: '50%',
-          transform: 'translate(-30%, 30%)',
-        }}
-      />
+      {/* Header Actions */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.3 }}
+        className="hidden md:flex items-center space-x-3"
+      >
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+        >
+          <BellIcon className="h-5 w-5 text-gray-600" />
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+        >
+          <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
+        </motion.button>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+        >
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+            A
+          </div>
+        </motion.div>
+      </motion.div>
 
       {/* Hamburger button in the header for mobile */}
       {isMobile && (
         <motion.button
           variants={itemVariants}
-          whileHover={{ scale: 1.05, boxShadow: '0 8px 15px rgba(0, 0, 0, 0.1)' }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleMenuClick}
-          className="p-3 rounded-lg text-white shadow-md z-50"
+          className="p-3 rounded-lg text-white shadow-lg z-50"
           style={{ 
             background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
             willChange: 'transform',
             transform: 'translateZ(0)',
             position: 'relative' // Ensure it's above other elements
           }}
           aria-label="Toggle menu"
         >
-          <AnimatePresence mode="wait">
-            {isMobileMenuOpen ? (
-              <motion.svg 
-                key="close"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="h-6 w-6" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </motion.svg>
-            ) : (
-              <motion.svg 
-                key="menu"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="h-6 w-6" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </motion.svg>
-            )}
-          </AnimatePresence>
+          {isMobileMenuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
         </motion.button>
       )}
     </motion.header>
