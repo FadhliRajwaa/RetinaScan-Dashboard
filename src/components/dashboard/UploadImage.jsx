@@ -133,12 +133,14 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
       // Pastikan semua data tersedia
       if (result && result.analysis && result.analysis.id) {
         // Simpan data hasil analisis ke localStorage sementara untuk diakses di halaman hasil
-        localStorage.setItem('currentAnalysis', JSON.stringify({
+        const analysisData = {
           id: result.analysis.id,
           patientId: selectedPatient._id,
           patientName: selectedPatient.fullName || selectedPatient.name,
+          patient: selectedPatient, // Simpan semua data pasien
           timestamp: result.analysis.timestamp,
           imageUrl: result.analysis.imageUrl,
+          imageData: result.analysis.imageData, // Tambahkan imageData jika ada
           severity: result.analysis.results.severity,
           severityLevel: result.analysis.results.severityLevel,
           classification: result.analysis.results.classification,
@@ -146,7 +148,9 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
           recommendation: result.analysis.recommendation,
           notes: result.analysis.notes,
           isSimulation: result.analysis.results.isSimulation || false
-        }));
+        };
+        
+        localStorage.setItem('currentAnalysis', JSON.stringify(analysisData));
         
         // Reset form setelah berhasil
         setFile(null);
@@ -169,6 +173,9 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
               isSimulation: result.analysis.results.isSimulation || false
             },
             preview: preview,
+            file: file,
+            patient: selectedPatient,
+            imageData: result.analysis.imageData, // Tambahkan imageData
             response: result
           };
           onUploadSuccess(formattedResult);
