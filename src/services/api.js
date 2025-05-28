@@ -273,7 +273,7 @@ function getClinicalSignsFromSeverity(severity) {
 export const getDashboardData = async () => {
   try {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/api/dashboard/stats`, {
+    const response = await axios.get(`${API_URL}/api/analysis/dashboard/stats`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
