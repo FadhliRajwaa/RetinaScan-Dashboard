@@ -1,63 +1,14 @@
 @import "tailwindcss";
-@import "./utils/animation.css";
-
-:root {
-  --primary-color: #4F46E5;
-  --secondary-color: #0EA5E9;
-  --accent-color: #8B5CF6;
-  --success-color: #10B981;
-  --warning-color: #F59E0B;
-  --danger-color: #EF4444;
-  --info-color: #06B6D4;
-  --background-color: #F9FAFB;
-  --dark-background: #1E293B;
-  --text-color: #1F2937;
-  --light-text: #F3F4F6;
-}
 
 body {
   font-family: 'Inter', sans-serif;
   margin: 0;
-  background-color: var(--background-color);
-  color: var(--text-color);
-}
-
-::selection {
-  background-color: rgba(79, 70, 229, 0.2);
-  color: var(--primary-color);
+  background-color: #f9fafb;
 }
 
 @layer components {
   .fade-in {
     animation: fadeIn 0.5s ease-in;
-  }
-  
-  .card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200;
-  }
-  
-  .glass-card {
-    @apply rounded-xl transition-all duration-200;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(12px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  }
-  
-  .btn-primary {
-    @apply px-4 py-2 rounded-lg text-white transition-all duration-200;
-    background: linear-gradient(135deg, #4F46E5, #818CF8);
-    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);
-  }
-  
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 10px rgba(79, 70, 229, 0.3);
-  }
-  
-  .btn-primary:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
   }
 }
 
@@ -82,24 +33,4 @@ body {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(243, 244, 246, 0.5);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(79, 70, 229, 0.3);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(79, 70, 229, 0.5);
 }
