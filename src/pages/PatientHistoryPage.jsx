@@ -97,6 +97,31 @@ const formatImageUrl = (imagePath) => {
   return `/uploads/${filename}?t=${timestamp}`;
 };
 
+// Gunakan fungsi ini untuk mendapatkan sumber gambar dengan prioritas yang tepat
+const getImageSource = (analysis) => {
+  // Prioritaskan imageData (base64) jika tersedia
+  if (analysis && analysis.imageData) {
+    console.log('Using base64 image data');
+    return analysis.imageData;
+  }
+  
+  // Coba imageUrl jika tersedia
+  if (analysis && analysis.imageUrl) {
+    console.log('Using image URL:', analysis.imageUrl);
+    return formatImageUrl(analysis.imageUrl);
+  }
+  
+  // Coba imagePath jika tersedia (format lama)
+  if (analysis && analysis.imagePath) {
+    console.log('Using image path:', analysis.imagePath);
+    return formatImageUrl(analysis.imagePath);
+  }
+  
+  // Fallback ke gambar default jika tidak ada data gambar
+  console.log('No image data available, using default image');
+  return DEFAULT_IMAGE;
+};
+
 function PatientHistoryPageComponent() {
   const { patientId } = useParams();
   const navigate = useNavigate();
@@ -117,6 +142,7 @@ function PatientHistoryPageComponent() {
         setIsLoading(true);
         // Ambil semua riwayat analisis
         const data = await getHistory();
+        console.log('Fetched history data:', data.length);
         
         // Fungsi untuk mengelompokkan analisis berdasarkan pasien
         const groupAnalysesByPatient = (analyses) => {
@@ -168,6 +194,25 @@ function PatientHistoryPageComponent() {
           setError('Data pasien tidak ditemukan');
         } else {
           setPatientData(patientHistory);
+          console.log('Patient analyses:', patientHistory.analyses.length);
+          
+          // Persiapkan gambar dari analisis pertama
+          if (patientHistory.analyses.length > 0) {
+            const firstAnalysis = patientHistory.analyses[0];
+            setImageStatus('loading');
+            
+            // Periksa prioritas sumber gambar
+            if (firstAnalysis.imageData) {
+              console.log('Found imageData in first analysis');
+              setImageStatus('success');
+            } else if (firstAnalysis.imageUrl) {
+              console.log('Using imageUrl from first analysis');
+              setActiveImageUrl(formatImageUrl(firstAnalysis.imageUrl));
+            } else {
+              console.log('No image source found in first analysis');
+              setImageStatus('error');
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching patient history:', err);
@@ -185,24 +230,45 @@ function PatientHistoryPageComponent() {
     if (patientData && patientData.analyses.length > 0) {
       setImageStatus('loading');
       
-      // Prioritaskan penggunaan imageData (base64) jika tersedia
-      if (patientData.analyses[selectedAnalysisIndex].imageData) {
-        // Jika ada imageData, tidak perlu URL tambahan
+      const currentAnalysis = patientData.analyses[selectedAnalysisIndex];
+      
+      // Get image source with proper priority
+      const imgSrc = getImageSource(currentAnalysis);
+      
+      if (imgSrc.startsWith('data:')) {
+        // Base64 data is already available, set status to success
         setActiveImageUrl('');
-        console.log('Menggunakan data base64 dari database untuk analisis');
-      } 
-      // Jika tidak ada imageData, coba gunakan path sebagai fallback
-      else if (patientData.analyses[selectedAnalysisIndex].imagePath) {
-        const imageUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
-        setActiveImageUrl(imageUrl);
-        console.log('Menggunakan URL gambar sebagai fallback:', imageUrl);
+        setImageStatus('success');
       } else {
-        // Tidak ada imageData atau imagePath, gunakan gambar default
-        setActiveImageUrl(DEFAULT_IMAGE);
-        console.log('Tidak ada data gambar tersedia, menggunakan gambar default');
+        // Using URL, need to set active URL and check if it can be loaded
+        setActiveImageUrl(imgSrc);
+        // Status will be updated by the img onLoad/onError handler
       }
     }
   }, [selectedAnalysisIndex, patientData]);
+
+  // Handle image load errors
+  const handleImageError = () => {
+    console.error('Failed to load image from URL:', activeImageUrl);
+    setImageStatus('error');
+    
+    // If we've tried less than 3 times and have a URL, try a different format
+    if (imageLoadAttempt < 3 && activeImageUrl) {
+      setImageLoadAttempt(prev => prev + 1);
+      
+      // Try alternative URL format
+      const urlWithoutQuery = activeImageUrl.split('?')[0];
+      const newUrl = `${urlWithoutQuery}?attempt=${imageLoadAttempt + 1}`;
+      console.log('Trying alternative URL:', newUrl);
+      setActiveImageUrl(newUrl);
+    }
+  };
+
+  // Handle image load success
+  const handleImageLoaded = () => {
+    console.log('Image loaded successfully from URL:', activeImageUrl);
+    setImageStatus('success');
+  };
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -791,39 +857,8 @@ function PatientHistoryPageComponent() {
                               src={patientData.analyses[selectedAnalysisIndex].imageData || activeImageUrl || DEFAULT_IMAGE}
                               alt="Retina scan"
                               className="object-cover w-full h-full"
-                              onLoad={() => setImageStatus('success')}
-                              onError={(e) => {
-                                console.error('Error loading image:', e.target.src.substring(0, 50) + '...');
-                                
-                                // Stop onError dari berjalan lagi untuk mencegah infinite loop
-                                e.target.onerror = null;
-                                
-                                // Tandai error dan gunakan gambar default
-                                setImageStatus('error');
-                                
-                                // Prioritaskan imageData (base64) jika tersedia
-                                if (patientData.analyses[selectedAnalysisIndex].imageData) {
-                                  console.log('Menggunakan data base64 dari database');
-                                  
-                                  // Pastikan imageData adalah string base64 yang valid
-                                  const imageData = patientData.analyses[selectedAnalysisIndex].imageData;
-                                  if (imageData && imageData.startsWith('data:')) {
-                                    e.target.src = imageData;
-                                    return;
-                                  }
-                                }
-                                
-                                // Coba file path sebagai alternatif jika yang gagal adalah base64
-                                if (activeImageUrl) {
-                                  console.log('Mencoba menggunakan URL file sebagai fallback');
-                                  e.target.src = activeImageUrl;
-                                  return;
-                                }
-                                
-                                // Gunakan gambar not-found.jpg sebagai fallback terakhir
-                                e.target.src = DEFAULT_IMAGE;
-                                console.log('Menggunakan gambar tidak ditemukan:', DEFAULT_IMAGE);
-                              }}
+                              onLoad={handleImageLoaded}
+                              onError={handleImageError}
                             />
                             
                             {imageStatus === 'error' && (

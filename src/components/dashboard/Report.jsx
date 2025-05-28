@@ -18,6 +18,7 @@ function Report({ result }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isShareLoading, setIsShareLoading] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const reportRef = useRef(null);
 
   if (!result) {
@@ -39,7 +40,44 @@ function Report({ result }) {
     );
   }
 
-  const { severity, confidence, image, patient } = result;
+  const { severity, confidence, patient } = result;
+
+  // Helper function untuk menampilkan gambar, prioritaskan imageData jika ada
+  const getImageSource = () => {
+    // Jika ada imageData (base64), gunakan itu
+    if (result.imageData) {
+      return result.imageData;
+    }
+    
+    // Jika ada preview (biasanya dari component UploadImage), gunakan itu
+    if (result.preview) {
+      return result.preview;
+    }
+    
+    // Jika ada image yang berisi URL
+    if (result.image && typeof result.image === 'string') {
+      return result.image;
+    }
+    
+    // Jika ada imageUrl
+    if (result.imageUrl) {
+      // Jika imageUrl adalah path relatif, tambahkan base URL API
+      if (result.imageUrl.startsWith('/')) {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        return `${API_URL}${result.imageUrl}`;
+      }
+      return result.imageUrl;
+    }
+    
+    // Fallback ke default image jika tidak ada source yang valid
+    return '/images/default-retina.jpg';
+  };
+
+  // Handler untuk error gambar
+  const handleImageError = () => {
+    console.error('Gagal memuat gambar retina');
+    setImageError(true);
+  };
 
   // Format date
   const formatDate = (date) => {
@@ -204,12 +242,12 @@ function Report({ result }) {
       yPos += 60;
       
       // Gambar
-      if (image && image.preview) {
+      if (result.image && typeof result.image === 'string') {
         try {
           // Tambahkan gambar jika tersedia
           const imgWidth = 100;
           const imgHeight = 100;
-          pdf.addImage(image.preview, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
+          pdf.addImage(result.image, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
           yPos += imgHeight + 10;
           
           // Tambahkan label gambar
@@ -594,54 +632,65 @@ function Report({ result }) {
 
         {/* Content */}
         <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column - Image */}
-            <motion.div variants={itemVariants}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Gambar Retina */}
+            <motion.div 
+              className="flex flex-col space-y-6"
+              variants={itemVariants}
+            >
               <h3 className="font-semibold mb-4 text-gray-700 text-lg flex items-center">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center mr-3 shadow-md">
+                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 shadow-md">
                   <FiEye className="text-white" />
                 </div>
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                  Gambar yang Dianalisis
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                  Citra Fundus Retina
                 </span>
               </h3>
+              
               <motion.div 
-                className="rounded-xl overflow-hidden shadow-md"
-                whileHover={{ 
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  scale: 1.02
-                }}
-                transition={{ duration: 0.3 }}
+                className="w-full h-64 sm:h-80 relative rounded-xl overflow-hidden shadow-lg"
+                whileHover={{ scale: 1.02, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
               >
-                {image && image.preview && (
-                  <div className="relative">
-                    <motion.div 
-                      className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 pointer-events-none"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                    />
-                    <img 
-                      src={image.preview} 
-                      alt="Retina scan" 
-                      className="w-full object-contain rounded h-64"
-                    />
-                    <motion.div 
-                      className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 text-white opacity-0 hover:opacity-100 transition-opacity duration-300"
-                      initial={{ opacity: 0, y: 10 }}
-                      whileHover={{ opacity: 1, y: 0 }}
-                    >
-                      <p className="text-sm font-medium">Citra Retina</p>
-                      {image.file && (
-                        <p className="text-xs opacity-80 mt-1">{image.file.name}</p>
-                      )}
-                    </motion.div>
+                {imageError ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 p-4 text-center">
+                    <FiAlertTriangle className="w-12 h-12 text-red-400 mb-2" />
+                    <p className="text-gray-500 text-sm">Gambar tidak tersedia atau gagal dimuat</p>
                   </div>
+                ) : (
+                  <img 
+                    src={getImageSource()}
+                    alt="Citra Fundus Retina" 
+                    className="w-full h-full object-cover object-center"
+                    onError={handleImageError}
+                  />
                 )}
               </motion.div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                {image && image.file && image.file.name}
-              </p>
+              
+              {/* Informasi pasien */}
+              <motion.div 
+                className="p-6 rounded-xl shadow-md relative overflow-hidden"
+                style={{ ...glassEffect }}
+                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+              >
+                <motion.div 
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    background: getSeverityGradient(severity),
+                    zIndex: -1
+                  }}
+                />
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full" style={{ background: getSeverityBgColor(severity) }}>
+                    {getSeverityIcon(severity)}
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
+                    <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
+                      {severity}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
             
             {/* Right Column - Analysis Results */}

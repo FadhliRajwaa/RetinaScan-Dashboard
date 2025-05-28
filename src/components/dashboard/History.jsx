@@ -30,6 +30,7 @@ function History() {
       try {
         setIsLoading(true);
         const data = await getHistory();
+        console.log('Fetched history data:', data.length);
         setAnalyses(data);
         
         // Kelompokkan analisis berdasarkan pasien
@@ -168,6 +169,27 @@ function History() {
   const canLoadImage = (src) => {
     return src && (src.startsWith('data:image') || src.startsWith('http'));
   };
+  
+  // Helper untuk mendapatkan sumber gambar dengan prioritas imageData
+  const getImageSource = (analysis) => {
+    // Jika ada imageData (base64), gunakan itu
+    if (analysis.imageData) {
+      return analysis.imageData;
+    }
+    
+    // Jika ada imageUrl
+    if (analysis.imageUrl) {
+      // Jika imageUrl adalah path relatif, tambahkan base URL API
+      if (analysis.imageUrl.startsWith('/')) {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        return `${API_URL}${analysis.imageUrl}`;
+      }
+      return analysis.imageUrl;
+    }
+    
+    // Fallback ke default image jika tidak ada source yang valid
+    return '/images/default-retina.jpg';
+  };
 
   // Fungsi untuk mengelompokkan analisis berdasarkan pasien
   const groupAnalysesByPatient = (analyses) => {
@@ -209,223 +231,239 @@ function History() {
     return Object.values(groupedByPatient);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+        <p className="text-gray-600">Memuat riwayat analisis...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-center">
+        <FiAlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+        <p className="text-red-600">{error}</p>
+        <button 
+          className="mt-4 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition"
+          onClick={() => window.location.reload()}
+        >
+          Coba Lagi
+        </button>
+      </div>
+    );
+  }
+
+  if (groupedAnalyses.length === 0) {
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-md text-center">
+        <img src="/images/empty-data.svg" alt="Empty Data" className="h-40 mx-auto mb-6" />
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">Belum ada riwayat analisis</h3>
+        <p className="text-gray-600 mb-6">Mulai dengan mengunggah gambar retina untuk dianalisis.</p>
+        <button 
+          onClick={() => navigate('/scan-retina')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+        >
+          Mulai Analisis Baru
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-4 sm:p-6 lg:p-8 rounded-lg shadow-lg mx-2 sm:mx-0 w-full"
-      >
-        <div className="flex flex-col h-full">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold">
-              Riwayat Analisis
-            </h3>
-            <div className="mt-3 md:mt-0 flex flex-col sm:flex-row gap-2">
-              {/* Search Input */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Cari..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm w-full"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+    <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
+        <h2 className="text-xl font-bold text-white">Riwayat Analisis Pasien</h2>
+        <p className="text-blue-100 mt-1 text-sm">Klik pada baris untuk melihat detail riwayat pasien</p>
+      </div>
+      
+      {/* Filters */}
+      <div className="p-4 border-b border-gray-200 bg-gray-50">
+        <div className="flex flex-wrap gap-3 items-center justify-between">
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Cari nama pasien..."
+                className="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            
+            <div className="relative">
+              <select
+                className="pl-10 pr-8 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none"
+                value={severityFilter}
+                onChange={(e) => setSeverityFilter(e.target.value)}
+              >
+                <option value="all">Semua Tingkat</option>
+                <option value="tidak ada">Tidak Ada</option>
+                <option value="ringan">Ringan</option>
+                <option value="sedang">Sedang</option>
+                <option value="berat">Berat</option>
+                <option value="sangat berat">Sangat Berat</option>
+              </select>
+              <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <FiChevronRight className="transform rotate-90 text-gray-400" />
               </div>
-              
-              {/* Severity Filter Dropdown */}
-              <div className="relative">
-                <select
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none cursor-pointer w-full"
-                  value={severityFilter}
-                  onChange={(e) => setSeverityFilter(e.target.value)}
-                >
-                  <option value="all">Semua Tingkat</option>
-                  <option value="ringan">Ringan</option>
-                  <option value="sedang">Sedang</option>
-                  <option value="berat">Berat</option>
-                </select>
-                <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-              
-              {/* Patient Filter Dropdown */}
-              <div className="relative">
-                <select
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none cursor-pointer w-full"
-                  value={patientFilter}
-                  onChange={(e) => setPatientFilter(e.target.value)}
-                >
-                  <option value="all">Semua Pasien</option>
-                  {patients.map(patient => (
-                    <option key={patient._id} value={patient._id}>
-                      {patient.fullName || patient.name}
-                    </option>
-                  ))}
-                </select>
-                <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+            
+            <div className="relative">
+              <select
+                className="pl-10 pr-8 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none"
+                value={patientFilter}
+                onChange={(e) => setPatientFilter(e.target.value)}
+              >
+                <option value="all">Semua Pasien</option>
+                {patients.map(patient => (
+                  <option key={patient._id} value={patient._id}>
+                    {patient.fullName || patient.name}
+                  </option>
+                ))}
+              </select>
+              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <FiChevronRight className="transform rotate-90 text-gray-400" />
               </div>
             </div>
           </div>
           
-          {error && (
+          <div className="text-sm text-gray-500">
+            Total: <span className="font-semibold">{filteredGroupedAnalyses.length} pasien</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* History List - Grouped by Patient */}
+      <div className="divide-y divide-gray-200">
+        <AnimatePresence>
+          {currentItems.map((patientGroup, index) => (
             <motion.div 
-              initial={{ opacity: 0, y: -10 }} 
+              key={patientGroup.patient._id}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-red-500 bg-red-50 p-3 rounded-lg mb-4"
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ delay: index * 0.05 }}
+              className="p-4 hover:bg-blue-50 transition-colors cursor-pointer relative"
+              onClick={() => navigateToPatientDetail(patientGroup)}
             >
-              <p className="text-sm">{error}</p>
-            </motion.div>
-          )}
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="flex flex-col items-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
-                <p className="text-gray-500">Memuat data...</p>
-              </div>
-            </div>
-          ) : filteredGroupedAnalyses.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }}
-              className="bg-gray-50 rounded-lg p-8 text-center"
-            >
-              <div className="flex flex-col items-center">
-                <FiFileText className="text-gray-400 text-5xl mb-4" />
-                <h4 className="text-xl font-medium text-gray-700 mb-2">Belum Ada Data</h4>
-                <p className="text-gray-500 max-w-sm mx-auto">
-                  {search || severityFilter !== 'all' || patientFilter !== 'all'
-                    ? 'Tidak ada riwayat analisis yang sesuai dengan kriteria pencarian.'
-                    : 'Belum ada riwayat analisis retina. Mulai dengan unggah gambar untuk analisis.'}
-                </p>
-              </div>
-            </motion.div>
-          ) : (
-            <>
-              {/* Analysis Items - dikelompokkan berdasarkan pasien */}
-              <div className="space-y-4 mb-6">
-                <AnimatePresence>
-                  {currentItems.map((item, index) => (
-                    <motion.div
-                      key={item.patient._id || index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.01 }}
-                      className="border border-gray-200 p-4 rounded-lg hover:shadow-md transition-all bg-white"
-                    >
-                      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4">
-                        {/* Patient Name */}
-                        <div className="flex items-start space-x-3">
-                          <FiUser className="text-blue-500 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-500">Pasien</p>
-                            <p className="text-sm font-medium">{item.patient.fullName || item.patient.name || 'Pasien Tidak Diketahui'}</p>
-                            <p className="text-xs text-gray-500">
-                              {item.patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {item.patient.age || '-'} tahun
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Latest Analysis Date */}
-                        <div className="flex items-start space-x-3">
-                          <FiCalendar className="text-blue-500 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-500">Analisis Terakhir</p>
-                            <p className="text-sm font-medium">{formatDate(item.latestAnalysis.createdAt)}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Latest Analysis Severity */}
-                        <div className="flex items-start space-x-3">
-                          <FiAlertTriangle className="text-blue-500 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-500">Tingkat Keparahan Terakhir</p>
-                            <span className={`px-2 py-1 rounded-full text-xs inline-block mt-1 ${getSeverityBadge(item.latestAnalysis.severity)}`}>
-                              {item.latestAnalysis.severity || 'Tidak ada'}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Total Analyses Count */}
-                        <div className="flex items-start space-x-3">
-                          <FiList className="text-blue-500 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-500">Total Pemindaian</p>
-                            <p className="text-sm font-medium">{item.totalAnalyses} kali</p>
-                          </div>
-                        </div>
-                        
-                        {/* First Analysis Date */}
-                        <div className="flex items-start space-x-3">
-                          <FiClock className="text-blue-500 mt-0.5" />
-                          <div>
-                            <p className="text-xs font-medium text-gray-500">Pertama Kali Pemindaian</p>
-                            <p className="text-sm font-medium">{formatDate(item.analyses[item.analyses.length - 1].createdAt)}</p>
-                          </div>
-                        </div>
-                        
-                        {/* Actions */}
-                        <div className="flex justify-end items-center h-full">
-                          <button
-                            onClick={() => navigateToPatientDetail(item)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                          >
-                            <FiEye className="mr-1" />
-                            Detail
-                          </button>
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                {/* Thumbnail dan badge severity */}
+                <div className="md:col-span-2 relative">
+                  <div className="relative h-16 w-16 md:h-20 md:w-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    {/* Gambar thumbnail */}
+                    <img 
+                      src={getImageSource(patientGroup.latestAnalysis)} 
+                      alt="Retina scan" 
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/images/default-retina.jpg';
+                      }}
+                    />
+                    
+                    {/* Badge overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 py-1 px-2 bg-black bg-opacity-60">
+                      <div className="flex items-center justify-center">
+                        {getSeverityBadge(patientGroup.latestAnalysis.severity, 'sm')}
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Info pasien */}
+                <div className="md:col-span-4">
+                  <h3 className="font-semibold text-gray-800">{patientGroup.patient.fullName || patientGroup.patient.name}</h3>
+                  <div className="flex items-center mt-1 text-sm text-gray-600">
+                    <FiUser className="mr-1 text-blue-500" />
+                    <span>{patientGroup.patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {patientGroup.patient.age || '-'} tahun</span>
+                  </div>
+                  <div className="flex items-center mt-1 text-sm text-gray-600">
+                    <FiList className="mr-1 text-blue-500" />
+                    <span>{patientGroup.totalAnalyses} analisis</span>
+                  </div>
+                </div>
+                
+                {/* Latest analysis info */}
+                <div className="md:col-span-4">
+                  <div className="flex flex-col">
+                    <div className="flex items-center mb-1">
+                      <FiCalendar className="mr-1 text-blue-500" />
+                      <span className="text-sm text-gray-600">Terbaru: {formatDate(patientGroup.latestAnalysis.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center mb-1">
+                      <FiPercent className="mr-1 text-blue-500" />
+                      <span className="text-sm text-gray-600">Confidence: {(patientGroup.latestAnalysis.confidence * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex items-center">
+                      <FiFileText className="mr-1 text-blue-500" />
+                      <span className="text-sm text-gray-600 truncate max-w-xs">
+                        {patientGroup.latestAnalysis.notes || patientGroup.latestAnalysis.recommendation || 'Tidak ada catatan'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Action button */}
+                <div className="md:col-span-2 flex justify-end">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
+                    <FiEye className="text-blue-600" />
+                  </div>
+                </div>
               </div>
               
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center mt-6 space-x-1">
-                  <button
-                    onClick={() => paginate(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className={`flex items-center justify-center w-8 h-8 rounded-md ${
-                      currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <FiChevronLeft />
-                  </button>
-                  
-                  {[...Array(totalPages).keys()].map(number => (
-                    <button
-                      key={number + 1}
-                      onClick={() => paginate(number + 1)}
-                      className={`flex items-center justify-center w-8 h-8 rounded-md ${
-                        currentPage === number + 1
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {number + 1}
-                    </button>
-                  ))}
-                  
-                  <button
-                    onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className={`flex items-center justify-center w-8 h-8 rounded-md ${
-                      currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <FiChevronRight />
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+              {/* Latest analysis time */}
+              <div className="absolute top-2 right-2 flex items-center text-xs text-gray-500">
+                <FiClock className="mr-1" />
+                <span>{new Date(patientGroup.latestAnalysis.createdAt).toLocaleDateString('id-ID')}</span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+      
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="p-4 border-t border-gray-200 flex justify-center">
+          <div className="flex items-center space-x-2">
+            <button
+              className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <FiChevronLeft />
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`w-8 h-8 rounded-md flex items-center justify-center ${
+                  currentPage === i + 1
+                    ? 'bg-blue-600 text-white'
+                    : 'border border-gray-300 hover:bg-gray-100'
+                }`}
+                onClick={() => paginate(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            
+            <button
+              className="p-2 rounded-md border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <FiChevronRight />
+            </button>
+          </div>
         </div>
-      </motion.div>
-    </>
+      )}
+    </div>
   );
 }
 
