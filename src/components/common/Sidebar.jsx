@@ -10,8 +10,6 @@ import {
   ClockIcon,
   ArrowLeftOnRectangleIcon,
   ArrowLeftCircleIcon,
-  ChartBarIcon,
-  DocumentTextIcon,
   Cog6ToothIcon,
   BellIcon
 } from '@heroicons/react/24/outline';
@@ -24,8 +22,6 @@ const menuItems = [
   { name: 'Data Pasien', path: '/patient-data', icon: UserIcon },
   { name: 'Scan Retina', path: '/scan-retina', icon: EyeIcon },
   { name: 'History', path: '/history', icon: ClockIcon },
-  { name: 'Analysis', path: '/analysis', icon: ChartBarIcon },
-  { name: 'Report', path: '/report', icon: DocumentTextIcon },
   { 
     name: 'Kembali ke Beranda', 
     path: FRONTEND_URL,

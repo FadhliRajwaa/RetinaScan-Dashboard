@@ -30,20 +30,12 @@ const features = [
     gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
   },
   {
-    title: 'Analisis AI',
-    description: 'Dapatkan prediksi tingkat keparahan secara instan.',
+    title: 'Scan Retina',
+    description: 'Analisis citra retina dan dapatkan laporan hasil deteksi secara instan.',
     icon: ChartBarIcon,
     path: '/scan-retina',
     color: '#10B981',
     gradient: 'linear-gradient(135deg, #10B981, #059669)',
-  },
-  {
-    title: 'Laporan Hasil',
-    description: 'Lihat laporan deteksi dalam format yang jelas.',
-    icon: DocumentChartBarIcon,
-    path: '/scan-retina',
-    color: '#8B5CF6',
-    gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
   },
   {
     title: 'Riwayat Analisis',
