@@ -5,13 +5,47 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const getToken = () => localStorage.getItem('token');
 
 export const uploadImage = async (formData) => {
+  // Ambil file gambar dari formData
+  const imageFile = formData.get('image');
+  
+  // Tambahkan flag untuk menandai bahwa kita ingin menyimpan gambar dalam format base64
+  formData.append('saveAsBase64', 'true');
+  
+  // Jika file gambar ada, konversi ke base64 dan tambahkan ke formData
+  if (imageFile) {
+    try {
+      const base64Image = await fileToBase64(imageFile);
+      // Tambahkan base64 image ke formData
+      formData.append('imageData', base64Image);
+      console.log('Image berhasil dikonversi ke base64');
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+    }
+  }
+  
   const response = await axios.post(`${API_URL}/api/analysis/upload`, formData, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
       'Content-Type': 'multipart/form-data',
     },
   });
+  
+  // Pastikan respons berisi semua data yang diperlukan
+  if (response.data && response.data.analysis) {
+    console.log('Berhasil upload dan mendapatkan data analisis lengkap');
+  }
+  
   return response.data;
+};
+
+// Helper function untuk mengkonversi file ke base64
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
 };
 
 export const getHistory = async () => {

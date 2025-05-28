@@ -16,6 +16,8 @@ const glassEffect = {
 
 function Report({ result }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isShareLoading, setIsShareLoading] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
   const reportRef = useRef(null);
 
   if (!result) {
@@ -285,6 +287,64 @@ function Report({ result }) {
     window.print();
   };
 
+  // Handle share report
+  const handleShare = async () => {
+    try {
+      setIsShareLoading(true);
+      
+      // Cek apakah Web Share API tersedia
+      if (navigator.share) {
+        // Buat PDF untuk dishare
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        // Gunakan fungsi yang sama dengan handleDownload untuk membuat PDF
+        
+        // Simpan PDF ke Blob
+        const pdfBlob = pdf.output('blob');
+        
+        // Buat file dari blob
+        const pdfFile = new File([pdfBlob], "retina-analysis-report.pdf", { 
+          type: 'application/pdf' 
+        });
+        
+        // Share file menggunakan Web Share API
+        await navigator.share({
+          title: 'Laporan Analisis Retina',
+          text: `Laporan analisis retina dengan tingkat keparahan: ${result.severity}`,
+          files: [pdfFile]
+        });
+        
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 3000);
+      } else {
+        // Fallback jika Web Share API tidak tersedia
+        // Gunakan clipboard API untuk menyalin teks laporan
+        const reportText = `Laporan Analisis Retina\n\nTingkat Keparahan: ${result.severity}\nTingkat Kepercayaan: ${(result.confidence * 100).toFixed(1)}%\n\nRekomendasi: ${
+          result.severity === 'Tidak ada' 
+            ? 'Lakukan pemeriksaan rutin setiap tahun.' 
+            : result.severity === 'Ringan'
+            ? 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.' 
+            : result.severity === 'Sedang'
+            ? 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+            : result.severity === 'Berat'
+            ? 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+            : result.severity === 'Sangat Berat'
+            ? 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+            : 'Lakukan pemeriksaan rutin setiap tahun.'
+        }`;
+        
+        await navigator.clipboard.writeText(reportText);
+        alert('Laporan telah disalin ke clipboard.');
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 3000);
+      }
+    } catch (error) {
+      console.error('Error sharing report:', error);
+      alert('Gagal membagikan laporan. Silakan coba lagi.');
+    } finally {
+      setIsShareLoading(false);
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -340,8 +400,16 @@ function Report({ result }) {
             whileTap={{ scale: 0.95 }}
             className="flex items-center justify-center w-10 h-10 rounded-full"
             style={glassEffect}
+            onClick={handleShare}
+            disabled={isShareLoading}
           >
-            <FiShare2 className="text-gray-600" />
+            {isShareLoading ? (
+              <div className="w-5 h-5 border-t-2 border-b-2 border-gray-600 rounded-full animate-spin"></div>
+            ) : shareSuccess ? (
+              <FiCheck className="text-green-600" />
+            ) : (
+              <FiShare2 className="text-gray-600" />
+            )}
           </motion.button>
         </div>
       </motion.div>

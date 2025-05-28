@@ -217,7 +217,16 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
   // Fungsi baru untuk menangani tombol "Lihat Hasil"
   const handleViewResults = () => {
     if (analysis && onAnalysisComplete) {
-      onAnalysisComplete(analysis);
+      // Pastikan data gambar disertakan saat memanggil callback
+      const analysisWithImage = {
+        ...analysis,
+        image: image, // Tambahkan gambar yang diupload
+        preview: image?.preview, // Tambahkan preview gambar
+        patient: image?.patient // Tambahkan data pasien dari gambar
+      };
+      
+      console.log('Meneruskan hasil analisis dengan gambar ke callback:', analysisWithImage);
+      onAnalysisComplete(analysisWithImage);
     }
   };
 
