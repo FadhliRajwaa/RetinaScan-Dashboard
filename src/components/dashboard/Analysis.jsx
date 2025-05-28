@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye } from 'react-icons/fi';
 import { getLatestAnalysis } from '../../services/api';
+import { getSeverityTextColor, getSeverityBgColor, getSeverityLabel } from '../../utils/severityUtils';
 
 // Glassmorphism style
 const glassEffect = {
@@ -670,42 +671,6 @@ const LoadingIndicator = ({ stage, stages }) => {
 
 const getMessage = (stage, stages) => {
   return stages[stage]?.label || 'Menganalisis...';
-};
-
-const getSeverityTextColor = (severity) => {
-  // Periksa apakah severity ada dan bukan undefined
-  if (!severity) return 'text-gray-600';
-  
-  const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'text-blue-600';
-  if (level === 'ringan' || level === 'mild') return 'text-green-600';
-  if (level === 'sedang' || level === 'moderate') return 'text-yellow-600';
-  if (level === 'berat' || level === 'severe') return 'text-orange-600';
-  return 'text-red-600';
-};
-
-const getSeverityBgColor = (severity) => {
-  // Periksa apakah severity ada dan bukan undefined
-  if (!severity) return 'bg-gray-100 text-gray-800';
-  
-  const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'bg-blue-100 text-blue-800';
-  if (level === 'ringan' || level === 'mild') return 'bg-green-100 text-green-800';
-  if (level === 'sedang' || level === 'moderate') return 'bg-yellow-100 text-yellow-800';
-  if (level === 'berat' || level === 'severe') return 'bg-orange-100 text-orange-800';
-  return 'bg-red-100 text-red-800';
-};
-
-const getSeverityLabel = (severity) => {
-  // Periksa apakah severity ada dan bukan undefined
-  if (!severity) return 'Tidak Diketahui';
-  
-  const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'Normal';
-  if (level === 'ringan' || level === 'mild') return 'Perlu Perhatian';
-  if (level === 'sedang' || level === 'moderate') return 'Perlu Konsultasi';
-  if (level === 'berat' || level === 'severe') return 'Perlu Penanganan';
-  return 'Darurat';
 };
 
 export default Analysis;

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getHistory } from '../../services/api';
 import { FiCalendar, FiAlertTriangle, FiPercent, FiFileText, FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiEye, FiUser, FiList, FiClock } from 'react-icons/fi';
 import axios from 'axios';
+import { getSeverityBadge } from '../../utils/severityUtils';
 
 function History() {
   // State management
@@ -143,54 +144,6 @@ function History() {
   const formatDate = (dateString) => {
     const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('id-ID', options);
-  };
-
-  // Get severity badge style
-  const getSeverityBadge = (severity) => {
-    if (!severity) {
-      return 'bg-gray-100 text-gray-800';
-    }
-    
-    const severityLower = severity.toLowerCase();
-    
-    // Mapping untuk warna badge berdasarkan severity
-    const badgeStyles = {
-      'tidak ada': 'bg-blue-100 text-blue-800',
-      'no dr': 'bg-blue-100 text-blue-800',
-      'normal': 'bg-blue-100 text-blue-800',
-      'ringan': 'bg-green-100 text-green-800',
-      'mild': 'bg-green-100 text-green-800',
-      'rendah': 'bg-green-100 text-green-800',
-      'sedang': 'bg-yellow-100 text-yellow-800',
-      'moderate': 'bg-yellow-100 text-yellow-800',
-      'berat': 'bg-orange-100 text-orange-800',
-      'severe': 'bg-orange-100 text-orange-800',
-      'parah': 'bg-orange-100 text-orange-800',
-      'sangat berat': 'bg-red-100 text-red-800',
-      'proliferative dr': 'bg-red-100 text-red-800'
-    };
-    
-    // Cek apakah severity ada di mapping
-    if (badgeStyles[severityLower]) {
-      return badgeStyles[severityLower];
-    }
-    
-    // Fallback berdasarkan severityLevel jika ada
-    if (typeof severity === 'number' || !isNaN(parseInt(severity))) {
-      const level = typeof severity === 'number' ? severity : parseInt(severity);
-      const levelBadges = [
-        'bg-blue-100 text-blue-800',   // Level 0 - Tidak ada
-        'bg-green-100 text-green-800', // Level 1 - Ringan
-        'bg-yellow-100 text-yellow-800', // Level 2 - Sedang
-        'bg-orange-100 text-orange-800', // Level 3 - Berat
-        'bg-red-100 text-red-800'      // Level 4 - Sangat Berat
-      ];
-      
-      return levelBadges[level] || 'bg-gray-100 text-gray-800';
-    }
-    
-    // Default fallback
-    return 'bg-gray-100 text-gray-800';
   };
 
   // Get patient name

@@ -18,6 +18,9 @@ import {
   FiTrash,
   FiDownload
 } from 'react-icons/fi';
+import { getSeverityBadge } from '../utils/severityUtils';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
 const FALLBACK_API_URLS = [
@@ -203,35 +206,7 @@ function PatientHistoryPageComponent() {
 
   // Format date helper
   const formatDate = (dateString) => {
-    const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
-  };
-
-  // Get severity badge style
-  const getSeverityBadge = (severity) => {
-    const severityLower = severity.toLowerCase();
-    if (severityLower === 'tidak ada' || severityLower === 'normal') {
-      return 'bg-blue-100 text-blue-800';
-    } else if (severityLower === 'ringan' || severityLower === 'rendah') {
-      return 'bg-green-100 text-green-800';
-    } else if (severityLower === 'sedang') {
-      return 'bg-yellow-100 text-yellow-800';
-    } else if (severityLower === 'berat' || severityLower === 'parah') {
-      return 'bg-orange-100 text-orange-800';
-    } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
-      return 'bg-red-100 text-red-800';
-    } else {
-      // Fallback berdasarkan severityLevel jika ada
-      const level = parseInt(severity);
-      if (!isNaN(level)) {
-        if (level === 0) return 'bg-blue-100 text-blue-800';
-        if (level === 1) return 'bg-green-100 text-green-800';
-        if (level === 2) return 'bg-yellow-100 text-yellow-800';
-        if (level === 3) return 'bg-orange-100 text-orange-800';
-        if (level === 4) return 'bg-red-100 text-red-800';
-      }
-      return 'bg-gray-100 text-gray-800';
-    }
+    return format(new Date(dateString), 'dd MMMM yyyy, HH:mm', { locale: id });
   };
 
   // Handle back to history page
