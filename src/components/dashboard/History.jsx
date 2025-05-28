@@ -127,74 +127,6 @@ function History() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Fungsi untuk navigasi ke halaman detail pasien
-  const navigateToPatientDetail = (patientGroup) => {
-    // Pastikan patientGroup.patient dan patientGroup.patient._id ada sebelum navigasi
-    if (patientGroup && patientGroup.patient && patientGroup.patient._id) {
-      navigate(`/patient-history/${patientGroup.patient._id}`);
-    } else {
-      // Tampilkan pesan error dan tetap di halaman yang sama
-      console.error('Data pasien tidak valid atau tidak memiliki ID');
-      // Gunakan toast jika tersedia, jika tidak gunakan alert
-      if (typeof toast !== 'undefined') {
-        toast.error('Data pasien tidak valid. Silakan pilih pasien lain.');
-      } else {
-        alert('Data pasien tidak valid. Silakan pilih pasien lain.');
-      }
-    }
-  };
-
-  // Handle sort direction change
-  const handleSortChange = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
-
-  // Format date helper dengan validasi
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Tanggal tidak tersedia';
-    
-    try {
-      const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-      return new Date(dateString).toLocaleDateString('id-ID', options);
-    } catch (error) {
-      console.error('Format date error:', error);
-      return 'Format tanggal tidak valid';
-    }
-  };
-
-  // Format short date helper
-  const formatShortDate = (dateString) => {
-    if (!dateString) return '-';
-    
-    try {
-      return new Date(dateString).toLocaleDateString('id-ID');
-    } catch (error) {
-      return '-';
-    }
-  };
-
-  // Format percentage dengan validasi
-  const formatPercentage = (value) => {
-    if (value === undefined || value === null) return '-';
-    try {
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) return '0%';
-      
-      // Jika nilai sudah dalam persentase (misal 78 bukan 0.78)
-      if (numValue > 1) {
-        return numValue.toFixed(1) + '%';
-      }
-      return (numValue * 100).toFixed(1) + '%';
-    } catch (error) {
-      return '0%';
-    }
-  };
-
   // Get patient name
   const getPatientName = (item) => {
     if (item.patientId) {
@@ -270,11 +202,12 @@ function History() {
       // Validasi data analisis
       const validAnalysis = {
         ...analysis,
+        _id: analysis._id || analysis.id, // Pastikan ada _id untuk identifikasi
         severity: analysis.severity || 'Tidak diketahui',
         confidence: analysis.confidence !== undefined ? analysis.confidence : 0,
         createdAt: analysis.createdAt || new Date().toISOString(),
         notes: analysis.notes || analysis.recommendation || '',
-        originalFilename: analysis.originalFilename || 'Unnamed File'
+        originalFilename: analysis.originalFilename || analysis.imageDetails?.originalname || 'Unnamed File'
       };
       
       const patientId = analysis.patientId._id;
@@ -314,6 +247,80 @@ function History() {
     
     // Konversi objek menjadi array
     return Object.values(groupedByPatient);
+  };
+
+  // Fungsi untuk navigasi ke halaman detail pasien
+  const navigateToPatientDetail = (patientGroup) => {
+    // Pastikan patientGroup ada dan patientGroup.patient ada
+    if (!patientGroup || !patientGroup.patient) {
+      console.error('Data pasien tidak valid');
+      toast.error('Data pasien tidak valid. Silakan pilih pasien lain.');
+      return;
+    }
+    
+    // Pastikan patientGroup.patient._id ada sebelum navigasi
+    if (!patientGroup.patient._id) {
+      console.error('Data pasien tidak memiliki ID yang valid');
+      toast.error('Data pasien tidak lengkap. Silakan pilih pasien lain.');
+      return;
+    }
+    
+    // Log untuk debugging
+    console.log('Navigasi ke detail pasien dengan ID:', patientGroup.patient._id);
+    
+    // Navigasi ke halaman detail pasien
+    navigate(`/patient-history/${patientGroup.patient._id}`);
+  };
+
+  // Handle sort direction change
+  const handleSortChange = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Format date helper dengan validasi
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Tanggal tidak tersedia';
+    
+    try {
+      const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    } catch (error) {
+      console.error('Format date error:', error);
+      return 'Format tanggal tidak valid';
+    }
+  };
+
+  // Format short date helper
+  const formatShortDate = (dateString) => {
+    if (!dateString) return '-';
+    
+    try {
+      return new Date(dateString).toLocaleDateString('id-ID');
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  // Format percentage dengan validasi
+  const formatPercentage = (value) => {
+    if (value === undefined || value === null) return '-';
+    try {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return '0%';
+      
+      // Jika nilai sudah dalam persentase (misal 78 bukan 0.78)
+      if (numValue > 1) {
+        return numValue.toFixed(1) + '%';
+      }
+      return (numValue * 100).toFixed(1) + '%';
+    } catch (error) {
+      return '0%';
+    }
   };
 
   if (isLoading) {

@@ -834,14 +834,14 @@ function PatientHistoryPageComponent() {
               {/* Image and details */}
               <div className="p-6">
                 {patientData.analyses.length > 0 ? (
-                  <div>
+                    <div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       {/* Image container */}
                       <div className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden p-4">
                         <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
                           <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center mr-3 shadow-md">
                             <FiEye className="text-white" />
-                          </div>
+                    </div>
                           <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
                             Citra Retina
                           </span>
@@ -852,7 +852,7 @@ function PatientHistoryPageComponent() {
                           {imageStatus === 'loading' && (
                             <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10">
                               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-                            </div>
+                  </div>
                           )}
                           
                           {/* Image */}
@@ -870,9 +870,9 @@ function PatientHistoryPageComponent() {
                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20">
                               <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
                               <p className="text-white text-center">Gambar tidak dapat ditampilkan</p>
-                              <button 
-                                onClick={() => {
-                                  setImageStatus('loading');
+                          <button 
+                            onClick={() => {
+                                setImageStatus('loading');
                                   setImageLoadAttempt(0);
                                   // Force reload image with different URL
                                   const analysis = patientData.analyses[selectedAnalysisIndex];
@@ -882,17 +882,17 @@ function PatientHistoryPageComponent() {
                                 className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
                               >
                                 Coba Lagi
-                              </button>
-                            </div>
-                          )}
+                          </button>
                         </div>
-                        
+                        )}
+                      </div>
+                      
                         <div className="mt-4 text-center">
                           <p className="text-sm text-gray-500">
                             {extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'originalFilename', 'Nama file tidak tersedia')}
                           </p>
-                        </div>
-                      </div>
+                                </div>
+                              </div>
                       
                       {/* Analysis details */}
                       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden p-4">
@@ -914,9 +914,9 @@ function PatientHistoryPageComponent() {
                               <p className="font-medium">
                                 {formatDate(extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'createdAt', ''))}
                               </p>
-                            </div>
-                          </div>
-                          
+                      </div>
+                    </div>
+                    
                           {/* Severity */}
                           <div className="flex items-center p-3 rounded-lg" 
                             style={{ 
@@ -934,10 +934,10 @@ function PatientHistoryPageComponent() {
                               <p className="text-xs text-gray-500">Tingkat Keparahan</p>
                               <p className="font-medium">
                                 {extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'severity', 'Tidak diketahui')}
-                              </p>
-                            </div>
-                          </div>
-                          
+                        </p>
+                      </div>
+                      </div>
+                      
                           {/* Confidence */}
                           <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                             <FiPercent className="text-blue-500 mr-3" />
@@ -956,11 +956,11 @@ function PatientHistoryPageComponent() {
                                       extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'confidence', 0)
                                     ) 
                                   }}
-                                ></div>
-                              </div>
-                            </div>
+                            ></div>
                           </div>
-                          
+                        </div>
+                      </div>
+                      
                           {/* Notes */}
                           <div className="p-3 bg-gray-50 rounded-lg">
                             <p className="text-xs text-gray-500 mb-1">Catatan & Rekomendasi</p>
@@ -970,10 +970,10 @@ function PatientHistoryPageComponent() {
                                 'notes', 
                                 extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'recommendation', 'Tidak ada catatan')
                               )}
-                            </p>
-                          </div>
-                        </div>
-                        
+                        </p>
+                      </div>
+                    </div>
+                    
                         {/* Actions */}
                         <div className="mt-6 flex justify-end space-x-2">
                           <button
@@ -1022,16 +1022,16 @@ function PatientHistoryPageComponent() {
                               return 'Lakukan pemeriksaan rutin sesuai anjuran dokter.';
                             }
                           })()}
-                        </p>
-                      </div>
+                      </p>
                     </div>
                   </div>
+                </div>
                 ) : (
                   <div className="bg-gray-50 p-6 rounded-lg text-center">
                     <FiInfo className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                     <p className="text-gray-500">Belum ada data analisis untuk pasien ini</p>
                   </div>
-                )}
+              )}
               </div>
             </motion.div>
           </div>

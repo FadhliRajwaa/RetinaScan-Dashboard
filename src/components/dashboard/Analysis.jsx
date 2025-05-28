@@ -217,16 +217,35 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
   // Fungsi baru untuk menangani tombol "Lihat Hasil"
   const handleViewResults = () => {
     if (analysis && onAnalysisComplete) {
-      // Pastikan data gambar disertakan saat memanggil callback
+      // Pastikan data gambar dan pasien disertakan saat memanggil callback
       const analysisWithImage = {
         ...analysis,
-        image: image, // Tambahkan gambar yang diupload
-        preview: image?.preview, // Tambahkan preview gambar
-        patient: image?.patient // Tambahkan data pasien dari gambar
+        image: image?.preview || image || analysis.image, // Tambahkan gambar yang diupload
+        preview: image?.preview || analysis.preview, // Tambahkan preview gambar
+        patient: image?.patient || analysis.patient, // Tambahkan data pasien dari gambar
+        patientId: image?.patientId || analysis.patientId, // Pastikan patientId terikut
+        _id: analysis._id || analysis.id || analysis.analysisId, // Pastikan ID analisis konsisten
+        id: analysis._id || analysis.id || analysis.analysisId, // Duplikasi ID untuk kompatibilitas
+        originalFilename: image?.name || analysis.originalFilename || analysis.imageDetails?.originalname,
+        createdAt: analysis.createdAt || new Date().toISOString(),
       };
       
-      console.log('Meneruskan hasil analisis dengan gambar ke callback:', analysisWithImage);
+      // Log data untuk debugging
+      console.log('Meneruskan hasil analisis ke callback:', analysisWithImage);
+      
+      // Pastikan imageData tersedia
+      if (!analysisWithImage.imageData && analysisWithImage.image && typeof analysisWithImage.image === 'string' && analysisWithImage.image.startsWith('data:')) {
+        analysisWithImage.imageData = analysisWithImage.image;
+      }
+      
+      // Pastikan patientId tersedia dalam format yang benar
+      if (analysisWithImage.patient && !analysisWithImage.patientId) {
+        analysisWithImage.patientId = analysisWithImage.patient;
+      }
+      
       onAnalysisComplete(analysisWithImage);
+    } else {
+      console.error('Tidak dapat meneruskan hasil: data analisis tidak lengkap', { analysis, image });
     }
   };
 

@@ -59,8 +59,19 @@ function Report({ result }) {
       return result.preview;
     }
     
-    // Jika ada image yang berisi URL
+    // Jika ada image yang berisi data URL
     if (result.image && typeof result.image === 'string') {
+      if (result.image.startsWith('data:')) {
+        return result.image;
+      }
+      
+      // Jika image adalah path relatif, tambahkan base URL API
+      if (result.image.startsWith('/')) {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        return `${API_URL}${result.image}`;
+      }
+      
+      // Gunakan image sebagai URL
       return result.image;
     }
     
@@ -483,11 +494,15 @@ function Report({ result }) {
         className="w-full h-full object-contain"
         onLoad={(e) => {
           // Hide loading overlay
-          e.target.previousSibling.style.display = 'none';
+          if (e.target.previousSibling) {
+            e.target.previousSibling.style.display = 'none';
+          }
         }}
         onError={(e) => {
           handleImageError();
-          e.target.previousSibling.style.display = 'none';
+          if (e.target.previousSibling) {
+            e.target.previousSibling.style.display = 'none';
+          }
           e.target.onerror = null;
           e.target.src = '/images/default-retina.jpg';
         }}
@@ -501,9 +516,14 @@ function Report({ result }) {
           <button 
             onClick={() => {
               setImageError(false);
-              // Force reload image
+              // Force reload image with timestamp
               const img = document.querySelector('img[alt="Retina scan"]');
-              if (img) img.src = getImageSource() + '?reload=' + new Date().getTime();
+              if (img) {
+                const imgSrc = getImageSource();
+                img.src = imgSrc.includes('?') 
+                  ? `${imgSrc}&reload=${new Date().getTime()}`
+                  : `${imgSrc}?reload=${new Date().getTime()}`;
+              }
             }}
             className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
           >

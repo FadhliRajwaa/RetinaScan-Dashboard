@@ -11,8 +11,8 @@ export const uploadImage = async (formData) => {
   // Tambahkan flag untuk menandai bahwa kita ingin menyimpan gambar dalam format base64
   formData.append('saveAsBase64', 'true');
   
-  // Jika file gambar ada, konversi ke base64 dan tambahkan ke formData
-  if (imageFile) {
+  // Jika file gambar ada dan belum ada imageData, konversi ke base64 dan tambahkan ke formData
+  if (imageFile && !formData.get('imageData')) {
     try {
       const base64Image = await fileToBase64(imageFile);
       // Tambahkan base64 image ke formData
@@ -33,6 +33,15 @@ export const uploadImage = async (formData) => {
   // Pastikan respons berisi semua data yang diperlukan
   if (response.data && response.data.analysis) {
     console.log('Berhasil upload dan mendapatkan data analisis lengkap');
+    
+    // Tambahkan data yang mungkin hilang
+    if (!response.data.analysis._id && response.data.analysis.id) {
+      response.data.analysis._id = response.data.analysis.id;
+    }
+    
+    if (!response.data.analysis.id && response.data.analysis._id) {
+      response.data.analysis.id = response.data.analysis._id;
+    }
   }
   
   return response.data;
@@ -59,23 +68,72 @@ export const getHistory = async () => {
   if (Array.isArray(response.data)) {
     console.log(`Berhasil mengambil ${response.data.length} data history dari server`);
     
-    // Data sudah dinormalisasi oleh backend, hanya perlu memeriksa apakah ada field yang hilang
-    response.data.forEach(analysis => {
+    // Normalisasi data untuk memastikan semua field tersedia
+    const normalizedData = response.data.map(analysis => {
+      // Pastikan ada id yang konsisten
+      if (!analysis._id && analysis.id) {
+        analysis._id = analysis.id;
+      }
+      
+      if (!analysis.id && analysis._id) {
+        analysis.id = analysis._id;
+      }
+      
       // Pastikan semua field penting tersedia, jika tidak gunakan nilai default
       if (!analysis.severity) {
         console.warn('Data history tidak memiliki field severity', analysis.id);
+        analysis.severity = 'Tidak diketahui';
       }
       
       if (analysis.severityLevel === undefined || analysis.severityLevel === null) {
         console.warn('Data history tidak memiliki field severityLevel', analysis.id);
+        
+        // Tentukan severityLevel berdasarkan severity
+        const severityLevelMapping = {
+          'Tidak ada': 0,
+          'No DR': 0,
+          'Ringan': 1, 
+          'Mild': 1,
+          'Sedang': 2,
+          'Moderate': 2,
+          'Berat': 3,
+          'Severe': 3,
+          'Sangat Berat': 4,
+          'Proliferative DR': 4
+        };
+        
+        analysis.severityLevel = severityLevelMapping[analysis.severity] || 0;
       }
       
+      // Pastikan confidence ada dan dalam format yang benar
+      if (analysis.confidence === undefined || analysis.confidence === null) {
+        analysis.confidence = 0;
+      } else if (analysis.confidence > 1) {
+        // Jika confidence > 1, mungkin sudah dalam persentase (e.g., 78 bukan 0.78)
+        analysis.confidence = analysis.confidence / 100;
+      }
+      
+      // Pastikan recommendation/notes konsisten
       if (!analysis.notes && analysis.recommendation) {
         analysis.notes = analysis.recommendation;
       } else if (!analysis.recommendation && analysis.notes) {
         analysis.recommendation = analysis.notes;
       }
+      
+      // Pastikan originalFilename ada
+      if (!analysis.originalFilename && analysis.imageDetails && analysis.imageDetails.originalname) {
+        analysis.originalFilename = analysis.imageDetails.originalname;
+      }
+      
+      // Pastikan createdAt ada
+      if (!analysis.createdAt) {
+        analysis.createdAt = analysis.timestamp || new Date().toISOString();
+      }
+      
+      return analysis;
     });
+    
+    return normalizedData;
   }
   
   return response.data;
@@ -94,12 +152,47 @@ export const getLatestAnalysis = async () => {
     if (response.data) {
       console.log('Berhasil mengambil data analisis terbaru', response.data);
       
-      // Data sudah dinormalisasi oleh backend, hanya perlu memeriksa apakah ada field yang hilang
-      if (!response.data.recommendation && response.data.notes) {
-        response.data.recommendation = response.data.notes;
-      } else if (!response.data.notes && response.data.recommendation) {
-        response.data.notes = response.data.recommendation;
+      // Normalisasi data
+      const analysis = response.data;
+      
+      // Pastikan ada id yang konsisten
+      if (!analysis._id && analysis.id) {
+        analysis._id = analysis.id;
       }
+      
+      if (!analysis.id && analysis._id) {
+        analysis.id = analysis._id;
+      }
+      
+      // Pastikan ada id yang konsisten untuk analysisId
+      if (!analysis._id && analysis.analysisId) {
+        analysis._id = analysis.analysisId;
+        analysis.id = analysis.analysisId;
+      }
+      
+      // Pastikan recommendation/notes konsisten
+      if (!analysis.recommendation && analysis.notes) {
+        analysis.recommendation = analysis.notes;
+      } else if (!analysis.notes && analysis.recommendation) {
+        analysis.notes = analysis.recommendation;
+      }
+      
+      // Pastikan confidence ada dan dalam format yang benar
+      if (analysis.confidence === undefined || analysis.confidence === null) {
+        analysis.confidence = 0;
+      } else if (analysis.confidence > 1) {
+        // Jika confidence > 1, mungkin sudah dalam persentase (e.g., 78 bukan 0.78)
+        analysis.confidence = analysis.confidence / 100;
+      }
+      
+      // Pastikan imageData ada jika ada imageUrl
+      if (!analysis.imageData && analysis.imageUrl) {
+        if (analysis.imageUrl.startsWith('data:')) {
+          analysis.imageData = analysis.imageUrl;
+        }
+      }
+      
+      return analysis;
     }
     
     return response.data;
