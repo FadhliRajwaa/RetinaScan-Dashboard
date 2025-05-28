@@ -4,6 +4,7 @@ import ReactApexChart from 'react-apexcharts';
 import { useTheme } from '../../context/ThemeContext';
 import axios from 'axios';
 import io from 'socket.io-client';
+import { getDashboardData } from '../../services/api';
 
 // Komponen untuk menampilkan status Flask API dinonaktifkan
 // karena masalah dengan endpoint /flask-info
@@ -721,22 +722,97 @@ const DashboardCharts = () => {
   const [error, setError] = useState(null);
   const { theme } = useTheme();
 
+  // Refresh data function
+  const refreshData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const dashboardData = await getDashboardData();
+      
+      if (dashboardData) {
+        if (dashboardData.severityDistribution) {
+          setSeverityDistribution(dashboardData.severityDistribution);
+        }
+        
+        if (dashboardData.monthlyTrend) {
+          setMonthlyTrend(dashboardData.monthlyTrend);
+        }
+        
+        if (dashboardData.ageGroups) {
+          setAgeGroups(dashboardData.ageGroups);
+        }
+        
+        if (dashboardData.confidenceLevels) {
+          setConfidenceLevels(dashboardData.confidenceLevels);
+        }
+        
+        if (dashboardData.genderDistribution) {
+          setGenderDistribution(dashboardData.genderDistribution);
+        }
+        
+        if (dashboardData.patients) {
+          setPatients(dashboardData.patients);
+        }
+      }
+      
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error refreshing dashboard data:', err);
+      setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
+      setIsLoading(false);
+    }
+  }, []);
+
   // Fetch data from API
   useEffect(() => {
-    // Simulate API call with setTimeout
-    setIsLoading(true);
-    setTimeout(() => {
-      // Dummy data
-      const dummyPatients = Array(100).fill().map((_, i) => ({
-        id: i + 1,
-        name: `Patient ${i + 1}`,
-        age: Math.floor(Math.random() * 80) + 1,
-        gender: Math.random() > 0.5 ? 'Laki-laki' : 'Perempuan',
-        severity: ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'][Math.floor(Math.random() * 5)]
-      }));
-      setPatients(dummyPatients);
-      setIsLoading(false);
-    }, 1000);
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch real data from backend API
+        const dashboardData = await getDashboardData();
+        
+        // Update state with real data if available
+        if (dashboardData) {
+          if (dashboardData.severityDistribution) {
+            setSeverityDistribution(dashboardData.severityDistribution);
+          }
+          
+          if (dashboardData.monthlyTrend) {
+            setMonthlyTrend(dashboardData.monthlyTrend);
+          }
+          
+          if (dashboardData.ageGroups) {
+            setAgeGroups(dashboardData.ageGroups);
+          }
+          
+          if (dashboardData.confidenceLevels) {
+            setConfidenceLevels(dashboardData.confidenceLevels);
+          }
+          
+          if (dashboardData.genderDistribution) {
+            setGenderDistribution(dashboardData.genderDistribution);
+          }
+          
+          if (dashboardData.patients) {
+            setPatients(dashboardData.patients);
+          }
+        }
+        
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
+        setIsLoading(false);
+        
+        // Fallback to dummy data if API fails
+        // Keep existing dummy data
+      }
+    };
+    
+    fetchDashboardData();
   }, []);
 
   const chartContainerStyle = {
@@ -862,20 +938,22 @@ const DashboardCharts = () => {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
+        transition={{ delay: 0.8 }}
         className="mt-4 flex items-center justify-end"
       >
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg flex items-center space-x-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>Refresh Data</span>
-              </motion.button>
-            </motion.div>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={refreshData}
+          disabled={isLoading}
+          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg flex items-center space-x-2"
+        >
+          <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>{isLoading ? 'Memuat...' : 'Refresh Data'}</span>
+        </motion.button>
+      </motion.div>
           </div>
         )}
       </AnimatePresence>
