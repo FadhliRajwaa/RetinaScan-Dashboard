@@ -44,13 +44,18 @@ function Report({ result }) {
 
   // Helper function untuk menampilkan gambar, prioritaskan imageData jika ada
   const getImageSource = () => {
+    if (!result) {
+      console.warn('Result object is undefined or null');
+      return '/images/default-retina.jpg';
+    }
+    
     // Jika ada imageData (base64), gunakan itu
-    if (result.imageData) {
+    if (result.imageData && result.imageData.startsWith('data:')) {
       return result.imageData;
     }
     
     // Jika ada preview (biasanya dari component UploadImage), gunakan itu
-    if (result.preview) {
+    if (result.preview && typeof result.preview === 'string') {
       return result.preview;
     }
     
@@ -79,21 +84,48 @@ function Report({ result }) {
     setImageError(true);
   };
 
-  // Format date
+  // Format date dengan validasi
   const formatDate = (date) => {
-    return new Date().toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      if (!date) return new Date().toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      return new Date(date).toLocaleDateString('id-ID', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Format date error:', error);
+      return 'Tanggal tidak valid';
+    }
   };
 
-  // Format percentage
+  // Format percentage dengan validasi
   const formatPercentage = (value) => {
-    return (value * 100).toFixed(1) + '%';
+    if (value === undefined || value === null) return '0%';
+    
+    try {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return '0%';
+      
+      // Jika nilai sudah dalam persentase (misal 78 bukan 0.78)
+      if (numValue > 1) {
+        return numValue.toFixed(1) + '%';
+      }
+      return (numValue * 100).toFixed(1) + '%';
+    } catch (error) {
+      return '0%';
+    }
   };
 
   // Get severity color
@@ -402,6 +434,86 @@ function Report({ result }) {
     }
   };
 
+  // Safely extract values with defaults
+  const extractValueWithDefault = (obj, path, defaultValue) => {
+    try {
+      const parts = path.split('.');
+      let current = obj;
+      
+      for (const part of parts) {
+        if (current === undefined || current === null) {
+          return defaultValue;
+        }
+        current = current[part];
+      }
+      
+      return current !== undefined && current !== null ? current : defaultValue;
+    } catch (e) {
+      console.error(`Error extracting ${path}:`, e);
+      return defaultValue;
+    }
+  };
+
+  // Safe extraction of patient data
+  const patientName = extractValueWithDefault(patient, 'fullName', extractValueWithDefault(patient, 'name', 'Tidak ada nama'));
+  const patientGender = extractValueWithDefault(patient, 'gender', '');
+  const patientAge = extractValueWithDefault(patient, 'age', '');
+  const patientPhone = extractValueWithDefault(patient, 'phone', '-');
+
+  // Safe extraction of result data
+  const resultDate = extractValueWithDefault(result, 'createdAt', new Date().toISOString());
+  const resultSeverity = extractValueWithDefault(result, 'severity', 'Tidak diketahui');
+  const resultConfidence = extractValueWithDefault(result, 'confidence', 0);
+  const resultNotes = extractValueWithDefault(result, 'notes', extractValueWithDefault(result, 'recommendation', 'Tidak ada catatan'));
+
+  // JSX for Image Viewer with improved error handling
+  const ImageViewer = () => (
+    <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg">
+      {/* Loading overlay */}
+      {!imageError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      )}
+      
+      {/* Actual image */}
+      <img
+        src={getImageSource()}
+        alt="Retina scan"
+        className="w-full h-full object-contain"
+        onLoad={(e) => {
+          // Hide loading overlay
+          e.target.previousSibling.style.display = 'none';
+        }}
+        onError={(e) => {
+          handleImageError();
+          e.target.previousSibling.style.display = 'none';
+          e.target.onerror = null;
+          e.target.src = '/images/default-retina.jpg';
+        }}
+      />
+      
+      {/* Error overlay */}
+      {imageError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20">
+          <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
+          <p className="text-white text-center">Gambar tidak dapat ditampilkan</p>
+          <button 
+            onClick={() => {
+              setImageError(false);
+              // Force reload image
+              const img = document.querySelector('img[alt="Retina scan"]');
+              if (img) img.src = getImageSource() + '?reload=' + new Date().getTime();
+            }}
+            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <motion.div
@@ -597,7 +709,7 @@ function Report({ result }) {
                 whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
               >
                 <p className="text-sm text-blue-500 font-medium mb-1">Nama Lengkap</p>
-                <p className="font-semibold text-gray-800 text-lg">{patient.fullName || patient.name}</p>
+                <p className="font-semibold text-gray-800 text-lg">{patientName}</p>
               </motion.div>
               <motion.div 
                 className="p-4 rounded-lg bg-white/50"
@@ -605,7 +717,7 @@ function Report({ result }) {
               >
                 <p className="text-sm text-blue-500 font-medium mb-1">Jenis Kelamin / Umur</p>
                 <p className="font-semibold text-gray-800 text-lg">
-                  {patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {patient.age} tahun
+                  {patientGender}, {patientAge} tahun
                 </p>
               </motion.div>
               {patient.dateOfBirth && (
@@ -639,57 +751,21 @@ function Report({ result }) {
               variants={itemVariants}
             >
               <h3 className="font-semibold mb-4 text-gray-700 text-lg flex items-center">
-                <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 shadow-md">
+                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center mr-3 shadow-md">
                   <FiEye className="text-white" />
                 </div>
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                  Citra Fundus Retina
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
+                  Citra Retina
                 </span>
               </h3>
               
               <motion.div 
-                className="w-full h-64 sm:h-80 relative rounded-xl overflow-hidden shadow-lg"
-                whileHover={{ scale: 1.02, boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
-              >
-                {imageError ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 p-4 text-center">
-                    <FiAlertTriangle className="w-12 h-12 text-red-400 mb-2" />
-                    <p className="text-gray-500 text-sm">Gambar tidak tersedia atau gagal dimuat</p>
-                  </div>
-                ) : (
-                  <img 
-                    src={getImageSource()}
-                    alt="Citra Fundus Retina" 
-                    className="w-full h-full object-cover object-center"
-                    onError={handleImageError}
-                  />
-                )}
-              </motion.div>
-              
-              {/* Informasi pasien */}
-              <motion.div 
-                className="p-6 rounded-xl shadow-md relative overflow-hidden"
+                className="p-6 mb-6 rounded-xl shadow-md relative overflow-hidden"
                 style={{ ...glassEffect }}
+                variants={itemVariants}
                 whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
               >
-                <motion.div 
-                  className="absolute inset-0 opacity-10"
-                  style={{
-                    background: getSeverityGradient(severity),
-                    zIndex: -1
-                  }}
-                />
-                <div className="flex items-center">
-                  <div className="p-3 rounded-full" style={{ background: getSeverityBgColor(severity) }}>
-                    {getSeverityIcon(severity)}
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
-                    <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
-                      {severity}
-                    </p>
-                  </div>
-                </div>
+                <ImageViewer />
               </motion.div>
             </motion.div>
             
@@ -716,18 +792,18 @@ function Report({ result }) {
                 <motion.div 
                   className="absolute inset-0 opacity-10"
                   style={{
-                    background: getSeverityGradient(severity),
+                    background: getSeverityGradient(resultSeverity),
                     zIndex: -1
                   }}
                 />
                 <div className="flex items-center">
-                  <div className="p-3 rounded-full" style={{ background: getSeverityBgColor(severity) }}>
-                    {getSeverityIcon(severity)}
+                  <div className="p-3 rounded-full" style={{ background: getSeverityBgColor(resultSeverity) }}>
+                    {getSeverityIcon(resultSeverity)}
                   </div>
                   <div className="ml-4">
                     <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
-                    <p className={`text-2xl font-bold ${getSeverityColor(severity)}`}>
-                      {severity}
+                    <p className={`text-2xl font-bold ${getSeverityColor(resultSeverity)}`}>
+                      {resultSeverity}
                     </p>
                   </div>
                 </div>
@@ -741,14 +817,14 @@ function Report({ result }) {
               >
                 <div className="flex justify-between mb-2">
                   <p className="text-sm text-gray-700 font-medium">Tingkat Kepercayaan</p>
-                  <p className="text-sm font-bold text-blue-600">{formatPercentage(confidence)}</p>
+                  <p className="text-sm font-bold text-blue-600">{formatPercentage(resultConfidence)}</p>
                 </div>
                 <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
                   <motion.div 
                     className="h-full relative overflow-hidden"
-                    style={{ width: formatPercentage(confidence) }}
+                    style={{ width: formatPercentage(resultConfidence) }}
                     initial={{ width: '0%' }}
-                    animate={{ width: formatPercentage(confidence) }}
+                    animate={{ width: formatPercentage(resultConfidence) }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></div>
@@ -793,17 +869,7 @@ function Report({ result }) {
                   </span>
                 </h4>
                 <p className="text-blue-700">
-                  {severity === 'Tidak ada' 
-                    ? 'Lakukan pemeriksaan rutin setiap tahun.' 
-                    : severity === 'Ringan'
-                    ? 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.' 
-                    : severity === 'Sedang'
-                    ? 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
-                    : severity === 'Berat'
-                    ? 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
-                    : severity === 'Sangat Berat'
-                    ? 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
-                    : 'Lakukan pemeriksaan rutin setiap tahun.'}
+                  {resultNotes || 'Tidak ada catatan atau rekomendasi tersedia.'}
                 </p>
               </motion.div>
             </motion.div>

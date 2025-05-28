@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getHistory } from '../../services/api';
-import { FiCalendar, FiAlertTriangle, FiPercent, FiFileText, FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiEye, FiUser, FiList, FiClock } from 'react-icons/fi';
+import { FiCalendar, FiAlertTriangle, FiPercent, FiFileText, FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiEye, FiUser, FiList, FiClock, FiImage, FiInfo } from 'react-icons/fi';
 import axios from 'axios';
 import { getSeverityBadge } from '../../utils/severityUtils';
+import { toast } from 'react-toastify';
 
 function History() {
   // State management
@@ -128,7 +129,19 @@ function History() {
 
   // Fungsi untuk navigasi ke halaman detail pasien
   const navigateToPatientDetail = (patientGroup) => {
-    navigate(`/patient-history/${patientGroup.patient._id}`);
+    // Pastikan patientGroup.patient dan patientGroup.patient._id ada sebelum navigasi
+    if (patientGroup && patientGroup.patient && patientGroup.patient._id) {
+      navigate(`/patient-history/${patientGroup.patient._id}`);
+    } else {
+      // Tampilkan pesan error dan tetap di halaman yang sama
+      console.error('Data pasien tidak valid atau tidak memiliki ID');
+      // Gunakan toast jika tersedia, jika tidak gunakan alert
+      if (typeof toast !== 'undefined') {
+        toast.error('Data pasien tidak valid. Silakan pilih pasien lain.');
+      } else {
+        alert('Data pasien tidak valid. Silakan pilih pasien lain.');
+      }
+    }
   };
 
   // Handle sort direction change
@@ -141,10 +154,45 @@ function History() {
     }
   };
 
-  // Format date helper
+  // Format date helper dengan validasi
   const formatDate = (dateString) => {
-    const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
+    if (!dateString) return 'Tanggal tidak tersedia';
+    
+    try {
+      const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    } catch (error) {
+      console.error('Format date error:', error);
+      return 'Format tanggal tidak valid';
+    }
+  };
+
+  // Format short date helper
+  const formatShortDate = (dateString) => {
+    if (!dateString) return '-';
+    
+    try {
+      return new Date(dateString).toLocaleDateString('id-ID');
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  // Format percentage dengan validasi
+  const formatPercentage = (value) => {
+    if (value === undefined || value === null) return '-';
+    try {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) return '0%';
+      
+      // Jika nilai sudah dalam persentase (misal 78 bukan 0.78)
+      if (numValue > 1) {
+        return numValue.toFixed(1) + '%';
+      }
+      return (numValue * 100).toFixed(1) + '%';
+    } catch (error) {
+      return '0%';
+    }
   };
 
   // Get patient name
@@ -170,10 +218,15 @@ function History() {
     return src && (src.startsWith('data:image') || src.startsWith('http'));
   };
   
-  // Helper untuk mendapatkan sumber gambar dengan prioritas imageData
+  // Helper untuk mendapatkan sumber gambar dengan prioritas imageData dan validasi
   const getImageSource = (analysis) => {
+    if (!analysis) {
+      console.warn('Analysis object is undefined or null');
+      return '/images/default-retina.jpg';
+    }
+    
     // Jika ada imageData (base64), gunakan itu
-    if (analysis.imageData) {
+    if (analysis.imageData && analysis.imageData.startsWith('data:')) {
       return analysis.imageData;
     }
     
@@ -187,18 +240,42 @@ function History() {
       return analysis.imageUrl;
     }
     
+    // Coba gunakan field image jika ada
+    if (analysis.image && typeof analysis.image === 'string') {
+      return analysis.image;
+    }
+    
     // Fallback ke default image jika tidak ada source yang valid
     return '/images/default-retina.jpg';
   };
 
-  // Fungsi untuk mengelompokkan analisis berdasarkan pasien
+  // Fungsi untuk mengelompokkan analisis berdasarkan pasien dengan validasi tambahan
   const groupAnalysesByPatient = (analyses) => {
+    if (!Array.isArray(analyses)) {
+      console.error('Expected analyses to be an array, got:', typeof analyses);
+      return [];
+    }
+    
     // Buat objek untuk menyimpan analisis dikelompokkan berdasarkan patientId
     const groupedByPatient = {};
     
     // Iterasi melalui semua analisis
     analyses.forEach(analysis => {
-      if (!analysis.patientId) return;
+      // Skip analisis tanpa patientId atau jika patientId tidak memiliki _id
+      if (!analysis.patientId || !analysis.patientId._id) {
+        console.warn('Analisis ditemukan tanpa patientId valid:', analysis._id || 'unknown');
+        return;
+      }
+      
+      // Validasi data analisis
+      const validAnalysis = {
+        ...analysis,
+        severity: analysis.severity || 'Tidak diketahui',
+        confidence: analysis.confidence !== undefined ? analysis.confidence : 0,
+        createdAt: analysis.createdAt || new Date().toISOString(),
+        notes: analysis.notes || analysis.recommendation || '',
+        originalFilename: analysis.originalFilename || 'Unnamed File'
+      };
       
       const patientId = analysis.patientId._id;
       
@@ -206,25 +283,33 @@ function History() {
       if (!groupedByPatient[patientId]) {
         groupedByPatient[patientId] = {
           patient: analysis.patientId,
-          analyses: [analysis],
-          latestAnalysis: analysis,
+          analyses: [validAnalysis],
+          latestAnalysis: validAnalysis,
           totalAnalyses: 1
         };
       } else {
         // Tambahkan analisis ke array analisis pasien
-        groupedByPatient[patientId].analyses.push(analysis);
+        groupedByPatient[patientId].analyses.push(validAnalysis);
         groupedByPatient[patientId].totalAnalyses++;
         
         // Perbarui analisis terbaru jika analisis ini lebih baru
-        if (new Date(analysis.createdAt) > new Date(groupedByPatient[patientId].latestAnalysis.createdAt)) {
-          groupedByPatient[patientId].latestAnalysis = analysis;
+        try {
+          if (new Date(validAnalysis.createdAt) > new Date(groupedByPatient[patientId].latestAnalysis.createdAt)) {
+            groupedByPatient[patientId].latestAnalysis = validAnalysis;
+          }
+        } catch (error) {
+          console.error('Error comparing dates:', error);
         }
       }
     });
     
     // Sortir analisis di dalam setiap grup berdasarkan tanggal (terbaru dulu)
     Object.values(groupedByPatient).forEach(group => {
-      group.analyses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      try {
+        group.analyses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      } catch (error) {
+        console.error('Error sorting analyses by date:', error);
+      }
     });
     
     // Konversi objek menjadi array
@@ -322,7 +407,7 @@ function History() {
                 <option value="all">Semua Pasien</option>
                 {patients.map(patient => (
                   <option key={patient._id} value={patient._id}>
-                    {patient.fullName || patient.name}
+                    {patient.fullName || patient.name || 'Pasien Tanpa Nama'}
                   </option>
                 ))}
               </select>
@@ -342,88 +427,150 @@ function History() {
       {/* History List - Grouped by Patient */}
       <div className="divide-y divide-gray-200">
         <AnimatePresence>
-          {currentItems.map((patientGroup, index) => (
-            <motion.div 
-              key={patientGroup.patient._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ delay: index * 0.05 }}
-              className="p-4 hover:bg-blue-50 transition-colors cursor-pointer relative"
-              onClick={() => navigateToPatientDetail(patientGroup)}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                {/* Thumbnail dan badge severity */}
-                <div className="md:col-span-2 relative">
-                  <div className="relative h-16 w-16 md:h-20 md:w-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                    {/* Gambar thumbnail */}
-                    <img 
-                      src={getImageSource(patientGroup.latestAnalysis)} 
-                      alt="Retina scan" 
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/images/default-retina.jpg';
-                      }}
-                    />
-                    
-                    {/* Badge overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 py-1 px-2 bg-black bg-opacity-60">
-                      <div className="flex items-center justify-center">
-                        {getSeverityBadge(patientGroup.latestAnalysis.severity, 'sm')}
+          {currentItems.length > 0 ? (
+            currentItems.map((patientGroup, index) => (
+              <motion.div 
+                key={patientGroup.patient._id || `patient-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ delay: index * 0.05 }}
+                className="p-5 hover:bg-blue-50 transition-colors cursor-pointer relative"
+                onClick={() => navigateToPatientDetail(patientGroup)}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  {/* Thumbnail dan badge severity */}
+                  <div className="md:col-span-2 relative">
+                    <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden border border-gray-200 shadow-sm transition-transform hover:scale-105">
+                      {/* Image loading state */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10 opacity-0 transition-opacity" id={`loading-${patientGroup.patient._id}`}>
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                      </div>
+                      
+                      {/* Gambar thumbnail */}
+                      <img 
+                        src={getImageSource(patientGroup.latestAnalysis)} 
+                        alt="Retina scan" 
+                        className="h-full w-full object-cover transform transition-transform hover:scale-110"
+                        onLoad={() => {
+                          const loadingEl = document.getElementById(`loading-${patientGroup.patient._id}`);
+                          if (loadingEl) loadingEl.style.opacity = '0';
+                        }}
+                        onError={(e) => {
+                          const loadingEl = document.getElementById(`loading-${patientGroup.patient._id}`);
+                          if (loadingEl) loadingEl.style.opacity = '0';
+                          
+                          e.target.onerror = null;
+                          e.target.src = '/images/default-retina.jpg';
+                        }}
+                      />
+                      
+                      {/* Badge overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 py-1 px-2 bg-black bg-opacity-60">
+                        <div className="flex items-center justify-center">
+                          {getSeverityBadge(patientGroup.latestAnalysis.severity || 'Tidak diketahui', 'sm')}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Info pasien */}
-                <div className="md:col-span-4">
-                  <h3 className="font-semibold text-gray-800">{patientGroup.patient.fullName || patientGroup.patient.name}</h3>
-                  <div className="flex items-center mt-1 text-sm text-gray-600">
-                    <FiUser className="mr-1 text-blue-500" />
-                    <span>{patientGroup.patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {patientGroup.patient.age || '-'} tahun</span>
-                  </div>
-                  <div className="flex items-center mt-1 text-sm text-gray-600">
-                    <FiList className="mr-1 text-blue-500" />
-                    <span>{patientGroup.totalAnalyses} analisis</span>
-                  </div>
-                </div>
-                
-                {/* Latest analysis info */}
-                <div className="md:col-span-4">
-                  <div className="flex flex-col">
-                    <div className="flex items-center mb-1">
-                      <FiCalendar className="mr-1 text-blue-500" />
-                      <span className="text-sm text-gray-600">Terbaru: {formatDate(patientGroup.latestAnalysis.createdAt)}</span>
-                    </div>
-                    <div className="flex items-center mb-1">
-                      <FiPercent className="mr-1 text-blue-500" />
-                      <span className="text-sm text-gray-600">Confidence: {(patientGroup.latestAnalysis.confidence * 100).toFixed(1)}%</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FiFileText className="mr-1 text-blue-500" />
-                      <span className="text-sm text-gray-600 truncate max-w-xs">
-                        {patientGroup.latestAnalysis.notes || patientGroup.latestAnalysis.recommendation || 'Tidak ada catatan'}
+                  
+                  {/* Info pasien */}
+                  <div className="md:col-span-4">
+                    <h3 className="font-semibold text-gray-800 text-lg">
+                      {patientGroup.patient.fullName || patientGroup.patient.name || 'Pasien Tanpa Nama'}
+                    </h3>
+                    <div className="flex items-center mt-2 text-sm text-gray-600">
+                      <FiUser className="mr-2 text-blue-500" />
+                      <span>
+                        {patientGroup.patient.gender === 'male' ? 'Laki-laki' : 
+                         patientGroup.patient.gender === 'female' ? 'Perempuan' : 'Tidak diketahui'}, 
+                        {patientGroup.patient.age ? ` ${patientGroup.patient.age} tahun` : ' Umur tidak diketahui'}
                       </span>
                     </div>
+                    <div className="flex items-center mt-2 text-sm text-gray-600">
+                      <FiList className="mr-2 text-blue-500" />
+                      <span>{patientGroup.totalAnalyses || 0} analisis</span>
+                    </div>
+                  </div>
+                  
+                  {/* Latest analysis info */}
+                  <div className="md:col-span-4">
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                          <FiCalendar className="text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Terbaru</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            {formatDate(patientGroup.latestAnalysis?.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-2">
+                          <FiPercent className="text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Kepercayaan</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            {formatPercentage(patientGroup.latestAnalysis?.confidence)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mr-2">
+                          <FiFileText className="text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Catatan</p>
+                          <p className="text-sm font-medium text-gray-700 truncate max-w-[250px]" title={patientGroup.latestAnalysis?.notes || patientGroup.latestAnalysis?.recommendation || 'Tidak ada catatan'}>
+                            {patientGroup.latestAnalysis?.notes || patientGroup.latestAnalysis?.recommendation || 'Tidak ada catatan'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Action button */}
+                  <div className="md:col-span-2 flex justify-end">
+                    <motion.div 
+                      className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <FiEye className="text-white text-lg" />
+                    </motion.div>
                   </div>
                 </div>
                 
-                {/* Action button */}
-                <div className="md:col-span-2 flex justify-end">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 transition-colors">
-                    <FiEye className="text-blue-600" />
-                  </div>
+                {/* Latest analysis time & count badge */}
+                <div className="absolute top-2 right-2 flex items-center space-x-2">
+                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    {patientGroup.totalAnalyses || 0} pemindaian
+                  </span>
+                  <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center">
+                    <FiClock className="mr-1" />
+                    {formatShortDate(patientGroup.latestAnalysis?.createdAt)}
+                  </span>
                 </div>
+              </motion.div>
+            ))
+          ) : (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-8 text-center"
+            >
+              <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <FiInfo className="text-blue-500 text-xl" />
               </div>
-              
-              {/* Latest analysis time */}
-              <div className="absolute top-2 right-2 flex items-center text-xs text-gray-500">
-                <FiClock className="mr-1" />
-                <span>{new Date(patientGroup.latestAnalysis.createdAt).toLocaleDateString('id-ID')}</span>
-              </div>
+              <h3 className="text-lg font-medium text-gray-800 mb-2">Tidak Ada Data Ditemukan</h3>
+              <p className="text-gray-500">Tidak ada data yang sesuai dengan filter yang dipilih.</p>
             </motion.div>
-          ))}
+          )}
         </AnimatePresence>
       </div>
       
