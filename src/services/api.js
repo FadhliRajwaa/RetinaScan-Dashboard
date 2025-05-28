@@ -273,14 +273,22 @@ function getClinicalSignsFromSeverity(severity) {
 export const getDashboardData = async () => {
   try {
     const token = localStorage.getItem('token');
+    console.log('Attempting to fetch dashboard data from API...');
+    
+    // Menggunakan endpoint yang benar: /api/analysis/dashboard/stats
     const response = await axios.get(`${API_URL}/api/analysis/dashboard/stats`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
+    
+    console.log('Dashboard data API response:', response.status);
     return response.data;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
+    if (error.response) {
+      console.error('Error response:', error.response.status, error.response.data);
+    }
     throw error;
   }
 };

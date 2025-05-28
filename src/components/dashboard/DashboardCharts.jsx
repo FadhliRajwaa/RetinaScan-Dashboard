@@ -459,6 +459,13 @@ const AgeDistributionChart = ({ ageDistribution }) => {
 const GenderDistributionChart = ({ genderDistribution }) => {
   const { theme } = useTheme();
   
+  console.log('GenderDistribution data received:', genderDistribution);
+  
+  // Memastikan genderDistribution adalah array dengan dua nilai
+  const safeGenderDistribution = Array.isArray(genderDistribution) && genderDistribution.length === 2 
+    ? genderDistribution 
+    : [50, 50]; // Default fallback jika data tidak valid
+  
   const options = {
     chart: {
       type: 'pie',
@@ -552,7 +559,7 @@ const GenderDistributionChart = ({ genderDistribution }) => {
     },
   };
 
-  const series = genderDistribution;
+  const series = safeGenderDistribution;
 
   return (
     <motion.div 
@@ -721,6 +728,13 @@ const DashboardCharts = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const { theme } = useTheme();
+  
+  // Tambahkan state untuk statistik pengguna
+  const [userStats, setUserStats] = useState({
+    totalAnalyses: 0,
+    lastActivity: '-',
+    profileStatus: 'Aktif'
+  });
 
   // Refresh data function
   const refreshData = useCallback(async () => {
@@ -728,31 +742,55 @@ const DashboardCharts = () => {
     setError(null);
     
     try {
+      console.log('Fetching dashboard data...');
       const dashboardData = await getDashboardData();
+      console.log('Dashboard data received:', dashboardData);
       
       if (dashboardData) {
         if (dashboardData.severityDistribution) {
+          console.log('Setting severity distribution:', dashboardData.severityDistribution);
           setSeverityDistribution(dashboardData.severityDistribution);
         }
         
         if (dashboardData.monthlyTrend) {
+          console.log('Setting monthly trend:', dashboardData.monthlyTrend);
           setMonthlyTrend(dashboardData.monthlyTrend);
         }
         
         if (dashboardData.ageGroups) {
+          console.log('Setting age groups:', dashboardData.ageGroups);
           setAgeGroups(dashboardData.ageGroups);
         }
         
         if (dashboardData.confidenceLevels) {
+          console.log('Setting confidence levels:', dashboardData.confidenceLevels);
           setConfidenceLevels(dashboardData.confidenceLevels);
         }
         
         if (dashboardData.genderDistribution) {
+          console.log('Setting gender distribution:', dashboardData.genderDistribution);
           setGenderDistribution(dashboardData.genderDistribution);
         }
         
         if (dashboardData.patients) {
+          console.log('Setting patients:', dashboardData.patients.length);
           setPatients(dashboardData.patients);
+          
+          // Update user stats
+          const totalAnalyses = dashboardData.patients.length;
+          let lastActivity = '-';
+          
+          if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
+            const currentMonth = new Date().getMonth();
+            const thisMonthAnalyses = dashboardData.monthlyTrend.data[currentMonth] || 0;
+            lastActivity = `${thisMonthAnalyses} analisis bulan ini`;
+          }
+          
+          setUserStats({
+            totalAnalyses,
+            lastActivity,
+            profileStatus: 'Aktif'
+          });
         }
       }
       
@@ -772,32 +810,56 @@ const DashboardCharts = () => {
       
       try {
         // Fetch real data from backend API
+        console.log('Initial fetch of dashboard data...');
         const dashboardData = await getDashboardData();
+        console.log('Initial dashboard data received:', dashboardData);
         
         // Update state with real data if available
         if (dashboardData) {
           if (dashboardData.severityDistribution) {
+            console.log('Setting severity distribution:', dashboardData.severityDistribution);
             setSeverityDistribution(dashboardData.severityDistribution);
           }
           
           if (dashboardData.monthlyTrend) {
+            console.log('Setting monthly trend:', dashboardData.monthlyTrend);
             setMonthlyTrend(dashboardData.monthlyTrend);
           }
           
           if (dashboardData.ageGroups) {
+            console.log('Setting age groups:', dashboardData.ageGroups);
             setAgeGroups(dashboardData.ageGroups);
           }
           
           if (dashboardData.confidenceLevels) {
+            console.log('Setting confidence levels:', dashboardData.confidenceLevels);
             setConfidenceLevels(dashboardData.confidenceLevels);
           }
           
           if (dashboardData.genderDistribution) {
+            console.log('Setting gender distribution:', dashboardData.genderDistribution);
             setGenderDistribution(dashboardData.genderDistribution);
           }
           
           if (dashboardData.patients) {
+            console.log('Setting patients:', dashboardData.patients.length);
             setPatients(dashboardData.patients);
+            
+            // Update user stats
+            const totalAnalyses = dashboardData.patients.length;
+            let lastActivity = '-';
+            
+            if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
+              const currentMonth = new Date().getMonth();
+              const thisMonthAnalyses = dashboardData.monthlyTrend.data[currentMonth] || 0;
+              lastActivity = `${thisMonthAnalyses} analisis bulan ini`;
+            }
+            
+            setUserStats({
+              totalAnalyses,
+              lastActivity,
+              profileStatus: 'Aktif'
+            });
           }
         }
         
@@ -934,11 +996,52 @@ const DashboardCharts = () => {
           <AIConfidenceChart confidenceLevels={confidenceLevels} />
         </motion.div>
       </div>
+      
+      {/* Statistik Pengguna */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+        style={chartContainerStyle}
+        whileHover={{ 
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          translateY: -4
+        }}
+        className="rounded-xl overflow-hidden transition-all duration-300 p-6 mt-6"
+      >
+        <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+          <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
+          Statistik Pengguna
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <motion.div 
+            whileHover={{ scale: 1.03 }}
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100"
+          >
+            <p className="text-sm text-gray-500 mb-2">Total Analisis</p>
+            <p className="text-3xl font-bold" style={{ color: theme.primary }}>{userStats.totalAnalyses}</p>
+          </motion.div>
+          <motion.div 
+            whileHover={{ scale: 1.03 }}
+            className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg border border-green-100"
+          >
+            <p className="text-sm text-gray-500 mb-2">Terakhir Aktivitas</p>
+            <p className="text-3xl font-bold" style={{ color: theme.accent }}>{userStats.lastActivity}</p>
+          </motion.div>
+          <motion.div 
+            whileHover={{ scale: 1.03 }}
+            className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-lg border border-purple-100"
+          >
+            <p className="text-sm text-gray-500 mb-2">Status Profil</p>
+            <p className="text-3xl font-bold" style={{ color: theme.secondary }}>{userStats.profileStatus}</p>
+          </motion.div>
+        </div>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
+        transition={{ delay: 0.9 }}
         className="mt-4 flex items-center justify-end"
       >
         <motion.button 

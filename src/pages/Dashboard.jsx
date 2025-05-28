@@ -234,6 +234,9 @@ function DashboardComponent() {
           <DashboardCharts />
         </motion.div>
         
+        {/* Statistik Pengguna sudah dipindahkan ke dalam DashboardCharts.jsx */}
+        
+        {/* Recent Activity */}
         <motion.div 
           variants={itemVariants}
           style={{ 
@@ -248,31 +251,9 @@ function DashboardComponent() {
         >
           <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center">
             <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
-            Statistik Pengguna
+            Recent Activity
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <motion.div 
-              whileHover={{ scale: 1.03 }}
-              className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100"
-            >
-              <p className="text-sm text-gray-500 mb-2">Total Analisis</p>
-              <p className="text-3xl font-bold" style={{ color: theme.primary }}>0</p>
-            </motion.div>
-            <motion.div 
-              whileHover={{ scale: 1.03 }}
-              className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg border border-green-100"
-            >
-              <p className="text-sm text-gray-500 mb-2">Terakhir Aktivitas</p>
-              <p className="text-3xl font-bold" style={{ color: theme.accent }}>-</p>
-            </motion.div>
-            <motion.div 
-              whileHover={{ scale: 1.03 }}
-              className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-lg border border-purple-100"
-            >
-              <p className="text-sm text-gray-500 mb-2">Status Profil</p>
-              <p className="text-3xl font-bold" style={{ color: theme.secondary }}>Aktif</p>
-            </motion.div>
-          </div>
+          {/* Recent Activity content */}
         </motion.div>
       </motion.div>
     </motion.div>
