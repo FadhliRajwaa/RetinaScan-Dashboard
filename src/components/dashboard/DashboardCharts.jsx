@@ -695,7 +695,7 @@ const AIConfidenceChart = ({ confidenceLevels }) => {
           <p className="text-xs text-gray-500">Terendah</p>
           <p className="text-lg font-bold text-amber-600">{confidenceLevels.lowest}%</p>
         </motion.div>
-      </div>
+    </div>
     </motion.div>
   );
 };
@@ -749,14 +749,14 @@ const DashboardCharts = () => {
     <div className="dashboard-charts">
       <AnimatePresence>
         {isLoading ? (
-          <motion.div 
+    <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="flex justify-center items-center h-64"
           >
             <div className="loader">
-              <motion.div 
+        <motion.div
                 animate={{ 
                   rotate: 360,
                   transition: { 
@@ -782,44 +782,44 @@ const DashboardCharts = () => {
           >
             <p className="font-medium">Error: {error}</p>
             <p className="text-sm mt-1">Gagal memuat data. Silakan coba lagi nanti.</p>
-          </motion.div>
+        </motion.div>
         ) : (
           <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
                 style={chartContainerStyle}
                 whileHover={{ 
                   boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                   translateY: -4
                 }}
                 className="rounded-xl overflow-hidden transition-all duration-300"
-              >
-                <SeverityDistributionChart severityDistribution={severityDistribution} />
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <SeverityDistributionChart severityDistribution={severityDistribution} />
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
                 style={chartContainerStyle}
                 whileHover={{ 
                   boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                   translateY: -4
                 }}
                 className="rounded-xl overflow-hidden transition-all duration-300"
-              >
-                <AnalysisTrendChart monthlyTrend={monthlyTrend} />
-              </motion.div>
+        >
+          <AnalysisTrendChart monthlyTrend={monthlyTrend} />
+        </motion.div>
             </div>
-            
+        
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
                 style={chartContainerStyle}
                 whileHover={{ 
                   boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
@@ -828,12 +828,12 @@ const DashboardCharts = () => {
                 className="rounded-xl overflow-hidden transition-all duration-300"
               >
                 <AgeDistributionChart ageDistribution={ageGroups} />
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
                 style={chartContainerStyle}
                 whileHover={{ 
                   boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
@@ -854,17 +854,17 @@ const DashboardCharts = () => {
                   translateY: -4
                 }}
                 className="rounded-xl overflow-hidden transition-all duration-300"
-              >
-                <AIConfidenceChart confidenceLevels={confidenceLevels} />
-              </motion.div>
-            </div>
-            
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+        >
+          <AIConfidenceChart confidenceLevels={confidenceLevels} />
+        </motion.div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
-              className="mt-4 flex items-center justify-end"
-            >
+        className="mt-4 flex items-center justify-end"
+      >
               <motion.button 
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -879,7 +879,7 @@ const DashboardCharts = () => {
           </div>
         )}
       </AnimatePresence>
-    </div>
+        </div>
   );
 };
 
