@@ -289,6 +289,7 @@ function App() {
             <Route path="/history" element={<HistoryPage userId={userId} />} />
             <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
             <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
+            <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
             <Route path="/report" element={<ReportPage userId={userId} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
