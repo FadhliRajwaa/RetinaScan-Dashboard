@@ -130,7 +130,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
       const result = await uploadImage(formData);
       console.log('Hasil analisis:', result);
       
-      // Pastikan semua data tersedia sebelum diarahkan ke halaman hasil
+      // Pastikan semua data tersedia
       if (result && result.analysis && result.analysis.id) {
         // Simpan data hasil analisis ke localStorage sementara untuk diakses di halaman hasil
         localStorage.setItem('currentAnalysis', JSON.stringify({
@@ -154,9 +154,28 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
         setSelectedPatient(null);
         setError('');
         
-        // Alihkan ke halaman hasil analisis
-        console.log('Mengarahkan ke halaman hasil analisis dengan ID:', result.analysis.id);
-        navigate('/analysis-result');
+        // Gunakan callback onUploadSuccess jika tersedia
+        if (onUploadSuccess && typeof onUploadSuccess === 'function') {
+          console.log('Memanggil callback onUploadSuccess');
+          // Format data sesuai harapan parent component
+          const formattedResult = {
+            prediction: {
+              severity: result.analysis.results.severity,
+              severityLevel: result.analysis.results.severityLevel,
+              confidence: result.analysis.results.confidence,
+              recommendation: result.analysis.recommendation,
+              analysisId: result.analysis.id,
+              patientId: selectedPatient._id,
+              isSimulation: result.analysis.results.isSimulation || false
+            },
+            preview: preview,
+            response: result
+          };
+          onUploadSuccess(formattedResult);
+        } else {
+          // Jika tidak ada callback, tampilkan pesan sukses
+          setSuccess('Gambar berhasil diunggah dan dianalisis.');
+        }
       } else {
         console.error('Format respons tidak valid:', result);
         setError('Terjadi kesalahan saat memproses hasil analisis. Format respons tidak valid.');
