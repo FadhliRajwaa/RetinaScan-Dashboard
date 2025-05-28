@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 // eslint-disable-next-line
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,6 +33,13 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
   const { theme } = useTheme();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Set active menu item based on location
+  useEffect(() => {
+    const index = menuItems.findIndex(item => item.path === location.pathname);
+    setActiveIndex(index >= 0 ? index : 0);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     console.log('Logging out from dashboard');
@@ -49,24 +56,48 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   };
 
   const sidebarVariants = {
-    open: { width: '260px', transition: { duration: 0.2, ease: 'easeOut' } },
-    closed: { width: '80px', transition: { duration: 0.2, ease: 'easeOut' } },
-    mobileOpen: { x: 0, opacity: 1, transition: { duration: 0.2, ease: 'easeOut' } },
-    mobileClosed: { x: '-100%', opacity: 0, transition: { duration: 0.2, ease: 'easeOut' } },
+    open: { width: '260px', transition: { duration: 0.3, ease: [0.42, 0, 0.58, 1] } },
+    closed: { width: '80px', transition: { duration: 0.3, ease: [0.42, 0, 0.58, 1] } },
+    mobileOpen: { x: 0, opacity: 1, transition: { duration: 0.3, ease: [0.42, 0, 0.58, 1] } },
+    mobileClosed: { x: '-100%', opacity: 0, transition: { duration: 0.3, ease: [0.42, 0, 0.58, 1] } },
   };
 
   const menuItemVariants = {
-    hidden: { opacity: 0, x: -10 },
+    hidden: { opacity: 0, x: -20 },
     visible: (i) => ({
       opacity: 1,
       x: 0,
-      transition: { duration: 0.15, delay: i * 0.05, ease: 'easeOut' },
+      transition: { duration: 0.3, delay: i * 0.07, ease: [0.42, 0, 0.58, 1] },
     }),
   };
 
-  const bgGradient = `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`;
+  // Animated indicator for active menu item
+  const indicatorVariants = {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { 
+      opacity: 1, 
+      scale: 1,
+      transition: { duration: 0.4, ease: [0.42, 0, 0.58, 1] }
+    }
+  };
+
+  // Logo animation variants
+  const logoVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { 
+        delay: 0.2, 
+        duration: 0.5,
+        ease: [0.42, 0, 0.58, 1]
+      } 
+    }
+  };
+
+  const bgGradient = `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
   const activeItemBg = `${theme.primary}`;
-  const hoverItemBg = `${theme.primary}90`;
+  const hoverItemBg = `${theme.primary}40`;
 
   return (
     <>
@@ -77,8 +108,8 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            transition={{ duration: 0.3 }}
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-md z-40"
             onClick={toggleMobileMenu}
             style={{ willChange: 'opacity' }}
           />
@@ -92,7 +123,9 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         animate={isMobileMenuOpen ? 'mobileOpen' : 'mobileClosed'}
         className="lg:hidden fixed top-0 left-0 h-screen text-white w-64 z-50 shadow-2xl overflow-hidden"
         style={{ 
-          background: bgGradient,
+          background: 'rgba(59, 130, 246, 0.85)',
+          backdropFilter: 'blur(12px)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
           willChange: 'transform, opacity',
           transform: 'translateZ(0)'
         }}
@@ -102,14 +135,14 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           <motion.div 
             className="p-4 pt-6 flex items-center justify-between"
             style={{ backgroundColor: `${theme.accent}30` }}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.2 }}
+            variants={logoVariants}
+            initial="hidden"
+            animate="visible"
           >
             <motion.div
               initial={{ x: -15, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.2 }}
+              transition={{ delay: 0.25, duration: 0.4 }}
             >
               <h1 className="text-2xl font-extrabold tracking-tight"
                   style={{
@@ -120,18 +153,19 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: 120 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
                 className="h-1 bg-white/40 rounded-full"
                 style={{ willChange: 'width' }}
               />
             </motion.div>
             <motion.button
               onClick={toggleMobileMenu}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.9, rotate: -5 }}
               className="p-2 rounded-full"
               style={{ 
                 backgroundColor: theme.accent,
+                boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
                 willChange: 'transform'
               }}
             >
@@ -152,52 +186,83 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   initial="hidden"
                   animate="visible"
                   exit="hidden"
-                  style={{ willChange: 'transform, opacity' }}
+                  style={{ willChange: 'transform, opacity', position: 'relative' }}
+                  className="relative mb-3"
                 >
+                  {/* Active indicator */}
+                  {location.pathname === item.path && (
+                    <motion.div 
+                      className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
+                      style={{ background: 'white' }}
+                      layoutId="activeIndicator"
+                      variants={indicatorVariants}
+                      initial="initial"
+                      animate="animate"
+                    />
+                  )}
+                  
                   {item.external ? (
                     <motion.a
                       href={item.path}
                       onClick={toggleMobileMenu}
-                      className={`flex items-center p-4 mb-3 rounded-xl transition-all duration-200 ${
+                      className={`flex items-center p-4 rounded-xl transition-all duration-300 ${
                         location.pathname === item.path ? 'shadow-inner' : ''
                       }`}
                       style={{ 
-                        backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                        boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
+                        backgroundColor: location.pathname === item.path ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                        boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.1)' : 'none',
                         willChange: 'transform, background-color'
                       }}
                       whileHover={{ 
-                        backgroundColor: hoverItemBg, 
-                        scale: 1.01,
-                        x: 2,
-                        transition: { duration: 0.15 }
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+                        scale: 1.03,
+                        x: 4,
+                        transition: { duration: 0.2 }
                       }}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ scale: 0.97 }}
                     >
-                      <item.icon className="h-6 w-6 mr-3" />
+                      <motion.div 
+                        className="p-2 rounded-lg mr-3"
+                        style={{ 
+                          backgroundColor: location.pathname === item.path ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'
+                        }}
+                        whileHover={{ rotate: 5 }}
+                        whileTap={{ rotate: -5, scale: 0.95 }}
+                      >
+                        <item.icon className="h-5 w-5" />
+                      </motion.div>
                       <span className="text-base font-medium">{item.name}</span>
                     </motion.a>
                   ) : (
                     <motion.div
                       whileHover={{ 
-                        scale: 1.01,
-                        x: 2,
-                        transition: { duration: 0.15 }
+                        scale: 1.03,
+                        x: 4,
+                        transition: { duration: 0.2 }
                       }}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ scale: 0.97 }}
                     >
                       <Link
                         to={item.path}
                         onClick={toggleMobileMenu}
-                        className={`flex items-center p-4 mb-3 rounded-xl transition-all duration-200 ${
+                        className={`flex items-center p-4 rounded-xl transition-all duration-300 ${
                           location.pathname === item.path ? 'shadow-inner' : ''
                         }`}
                         style={{ 
-                          backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                          boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
+                          backgroundColor: location.pathname === item.path ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                          boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.1)' : 'none'
                         }}
                       >
-                        <item.icon className="h-6 w-6 mr-3" />
+                        <motion.div 
+                          className="p-2 rounded-lg mr-3"
+                          style={{ 
+                            backgroundColor: location.pathname === item.path ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'
+                          }}
+                          whileHover={{ rotate: 5 }}
+                          whileTap={{ rotate: -5, scale: 0.95 }}
+                        >
+                          <item.icon className="h-5 w-5" />
+                        </motion.div>
                         <span className="text-base font-medium">{item.name}</span>
                       </Link>
                     </motion.div>
@@ -209,220 +274,268 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           
           {/* Logout Button */}
           <motion.div 
-            className="p-4 border-t border-white/10"
-            initial={{ opacity: 0, y: 10 }}
+            className="p-4 mt-auto"
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.2 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
           >
             <motion.button
-              onClick={(e) => handleLogoutEvent(e, toggleMobileMenu, FRONTEND_URL)}
-              className="flex items-center p-4 w-full rounded-xl transition-all duration-200"
+              onClick={handleLogout}
+              className="flex items-center justify-center w-full p-3 rounded-xl text-white"
               style={{ 
-                background: 'linear-gradient(135deg, #ef4444, #f87171)',
-                willChange: 'transform, background-color'
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(5px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
               }}
-              whileHover={{ scale: 1.02, backgroundColor: '#dc2626' }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ 
+                scale: 1.03, 
+                boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
+                background: 'rgba(255, 255, 255, 0.2)'
+              }}
+              whileTap={{ scale: 0.97 }}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-6 mr-3" />
-              <span className="text-base font-medium">Logout</span>
+              <ArrowLeftOnRectangleIcon className="h-5 w-5 mr-2" />
+              <span>Logout</span>
             </motion.button>
           </motion.div>
         </div>
       </motion.aside>
 
-      {/* Desktop/Tablet Sidebar */}
+      {/* Desktop Sidebar */}
       <motion.aside
         variants={sidebarVariants}
+        initial="open"
         animate={isOpen ? 'open' : 'closed'}
-        className="hidden lg:flex flex-col h-screen sticky top-0 shadow-2xl text-white"
+        className="hidden lg:flex fixed top-0 left-0 h-screen z-30 flex-col"
         style={{ 
-          background: bgGradient,
+          background: 'rgba(59, 130, 246, 0.85)',
+          backdropFilter: 'blur(12px)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
           willChange: 'width',
           transform: 'translateZ(0)'
         }}
       >
-        <div className="p-4 flex justify-between items-center">
-          <AnimatePresence mode="wait">
-            {isOpen ? (
-              <motion.h1 
-                key="full-logo"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="text-2xl font-extrabold tracking-tight"
-                style={{
-                  background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+        {/* Logo Container */}
+        <motion.div 
+          className="p-5 flex items-center"
+          variants={logoVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {isOpen ? (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex items-center"
+            >
+              <motion.div
+                className="w-10 h-10 rounded-xl mr-3 flex items-center justify-center"
+                style={{ 
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
+                whileHover={{ rotate: 5, scale: 1.05 }}
+                whileTap={{ rotate: -5, scale: 0.95 }}
               >
-                RetinaScan
-              </motion.h1>
-            ) : (
-              <motion.h1
-                key="logo-icon"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1.3 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-                className="text-2xl font-extrabold tracking-tight w-10 h-10 flex items-center justify-center"
-                style={{
-                  background: `linear-gradient(135deg, ${theme.accent}, ${theme.primary})`,
-                  borderRadius: '10px',
-                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
-                }}
-              >
-                R
-              </motion.h1>
-            )}
-          </AnimatePresence>
-          
-          <motion.button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-xl hover:bg-white/10 transition-colors duration-150"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            style={{ willChange: 'transform' }}
+                <EyeIcon className="h-6 w-6 text-white" />
+              </motion.div>
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight text-white">RetinaScan</h1>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: 100 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                  className="h-1 bg-white/40 rounded-full"
+                />
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto"
+              style={{ 
+                background: 'rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}
+              whileHover={{ rotate: 5, scale: 1.05 }}
+              whileTap={{ rotate: -5, scale: 0.95 }}
+            >
+              <EyeIcon className="h-6 w-6 text-white" />
+            </motion.div>
+          )}
+        </motion.div>
+        
+        {/* Toggle Button */}
+        <motion.button
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute -right-3 top-16 bg-white w-6 h-6 rounded-full flex items-center justify-center shadow-md"
+          style={{ 
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.8)'
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <motion.div
+            animate={{ rotate: isOpen ? 0 : 180 }}
+            transition={{ duration: 0.3 }}
           >
             <svg 
-              className="w-6 h-6 text-white" 
+              width="10" 
+              height="10" 
+              viewBox="0 0 10 10" 
               fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-              style={{
-                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s ease-out'
-              }}
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ color: theme.primary }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <path d="M3 1L7 5L3 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </motion.button>
-        </div>
+          </motion.div>
+        </motion.button>
         
-        <nav className="flex-1 overflow-y-auto px-4 pt-4 pb-20">
-          {menuItems.map((item, index) => (
-            <motion.div
-              key={item.path}
-              custom={index}
-              variants={menuItemVariants}
-              initial="hidden"
-              animate="visible"
-              style={{ willChange: 'transform, opacity' }}
-              className="mb-2"
-            >
-              {item.external ? (
-                <motion.a
-                  href={item.path}
-                  className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                    location.pathname === item.path ? 'shadow-inner' : ''
-                  }`}
-                  style={{ 
-                    backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
-                  }}
-                  whileHover={{ 
-                    backgroundColor: hoverItemBg, 
-                    scale: 1.01,
-                    x: 2,
-                    transition: { duration: 0.15 }
-                  }}
-                  whileTap={{ scale: 0.99 }}
-                >
-                  <item.icon className="h-5 w-5 min-w-[1.25rem]" />
-                  {isOpen && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="ml-3 text-sm font-medium whitespace-nowrap overflow-hidden"
-                      style={{ willChange: 'width, opacity' }}
-                    >
-                      {item.name}
-                    </motion.span>
-                  )}
-                </motion.a>
-              ) : (
-                <Link
-                  to={item.path}
-                  className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                    location.pathname === item.path ? 'shadow-inner' : ''
-                  }`}
-                  style={{ 
-                    backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
-                    willChange: 'transform, background-color'
-                  }}
-                >
-                  <motion.div
-                    whileHover={{ 
-                      scale: 1.01,
-                      x: 2,
-                      transition: { duration: 0.15 }
-                    }}
-                    whileTap={{ scale: 0.99 }}
-                    className="flex items-center w-full"
+        {/* Navigation Menu */}
+        <nav className="flex-1 overflow-y-auto py-8 px-4">
+          <ul className="space-y-2">
+            {menuItems.map((item, index) => (
+              <motion.li 
+                key={item.path}
+                custom={index}
+                variants={menuItemVariants}
+                initial="hidden"
+                animate="visible"
+                className="relative"
+              >
+                {/* Active indicator */}
+                {location.pathname === item.path && (
+                  <motion.div 
+                    className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
+                    style={{ background: 'white' }}
+                    layoutId="desktopActiveIndicator"
+                    variants={indicatorVariants}
+                    initial="initial"
+                    animate="animate"
+                  />
+                )}
+                
+                {item.external ? (
+                  <motion.a
+                    href={item.path}
+                    className={`flex items-center p-3 rounded-xl ${
+                      location.pathname === item.path 
+                        ? 'bg-white/15' 
+                        : 'hover:bg-white/10'
+                    }`}
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.97 }}
                   >
-                    <item.icon className="h-5 w-5 min-w-[1.25rem]" />
+                    <motion.div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{ 
+                        backgroundColor: location.pathname === item.path 
+                          ? 'rgba(255, 255, 255, 0.2)' 
+                          : 'rgba(255, 255, 255, 0.1)'
+                      }}
+                      whileHover={{ rotate: 5 }}
+                      whileTap={{ rotate: -5, scale: 0.95 }}
+                    >
+                      <item.icon className="h-5 w-5 text-white" />
+                    </motion.div>
                     {isOpen && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        className="ml-3 text-sm font-medium whitespace-nowrap overflow-hidden"
+                      <motion.span 
+                        className="ml-3 text-white font-medium"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2 }}
                       >
                         {item.name}
                       </motion.span>
                     )}
-                  </motion.div>
-                </Link>
-              )}
-            </motion.div>
-          ))}
+                  </motion.a>
+                ) : (
+                  <Link to={item.path}>
+                    <motion.div
+                      className={`flex items-center p-3 rounded-xl ${
+                        location.pathname === item.path 
+                          ? 'bg-white/15' 
+                          : 'hover:bg-white/10'
+                      }`}
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <motion.div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ 
+                          backgroundColor: location.pathname === item.path 
+                            ? 'rgba(255, 255, 255, 0.2)' 
+                            : 'rgba(255, 255, 255, 0.1)'
+                        }}
+                        whileHover={{ rotate: 5 }}
+                        whileTap={{ rotate: -5, scale: 0.95 }}
+                      >
+                        <item.icon className="h-5 w-5 text-white" />
+                      </motion.div>
+                      {isOpen && (
+                        <motion.span 
+                          className="ml-3 text-white font-medium"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          {item.name}
+                        </motion.span>
+                      )}
+                    </motion.div>
+                  </Link>
+                )}
+              </motion.li>
+            ))}
+          </ul>
         </nav>
         
-        {/* Logout Button for Desktop */}
-        <div className={`p-4 border-t border-white/10 ${isOpen ? 'block' : 'hidden'}`}>
+        {/* Logout Button */}
+        <motion.div 
+          className="p-4 mt-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+        >
           <motion.button
-            onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
-            className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
+            onClick={handleLogout}
+            className="flex items-center justify-center w-full p-3 rounded-xl text-white"
             style={{ 
-              background: 'linear-gradient(135deg, #ef4444, #f87171)',
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(5px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
             }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ 
+              scale: 1.03, 
+              boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
+              background: 'rgba(255, 255, 255, 0.2)'
+            }}
+            whileTap={{ scale: 0.97 }}
           >
-            <ArrowLeftOnRectangleIcon className="h-5 w-5 min-w-[1.25rem]" />
+            <ArrowLeftOnRectangleIcon className="h-5 w-5" />
             {isOpen && (
               <motion.span 
-                className="ml-3 text-sm font-medium whitespace-nowrap"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
+                className="ml-2"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
               >
                 Logout
               </motion.span>
             )}
           </motion.button>
-        </div>
-        
-        {/* Logout icon only for collapsed sidebar */}
-        {!isOpen && (
-          <div className="p-4 border-t border-white/10">
-            <motion.button
-              onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
-              className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
-              style={{ 
-                background: 'linear-gradient(135deg, #ef4444, #f87171)',
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-            </motion.button>
-          </div>
-        )}
+        </motion.div>
       </motion.aside>
     </>
   );

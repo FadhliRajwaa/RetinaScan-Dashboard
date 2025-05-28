@@ -342,6 +342,9 @@ const DashboardCharts = () => {
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState(null);
   const [socketStatus, setSocketStatus] = useState('connecting');
+  const { theme } = useTheme();
+  const [isVisible, setIsVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState('weekly');
 
   const fetchData = useCallback(async () => {
     try {
@@ -421,6 +424,63 @@ const DashboardCharts = () => {
     };
   }, [fetchData]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  const tabVariants = {
+    inactive: { 
+      color: '#6B7280',
+      backgroundColor: 'transparent',
+      scale: 0.95,
+      boxShadow: 'none'
+    },
+    active: { 
+      color: 'white',
+      backgroundColor: theme.primary,
+      scale: 1,
+      boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)'
+    },
+    hover: { 
+      scale: 1.05,
+      boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.2)'
+    },
+    tap: { scale: 0.98 }
+  };
+
+  const chartContainerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+        damping: 15,
+        duration: 0.5,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const chartItemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+        damping: 15,
+        duration: 0.5
+      }
+    }
+  };
+
   // Agregasi data untuk chart
   const severityDistribution = useMemo(() => {
     const dist = { 'Tidak ada': 0, Ringan: 0, Sedang: 0, Berat: 0, 'Sangat Berat': 0 };
@@ -485,123 +545,148 @@ const DashboardCharts = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      variants={chartContainerVariants}
+      initial="hidden"
+      animate={isVisible ? "visible" : "hidden"}
       className="mt-8"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="md:col-span-2 bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+      <motion.div 
+        className="bg-white p-5 rounded-2xl mb-8"
+        variants={chartItemVariants}
+        style={{ 
+          boxShadow: '0 10px 25px rgba(0, 0, 0, 0.06)',
+          border: '1px solid rgba(255, 255, 255, 0.8)'
+        }}
+        whileHover={{ 
+          boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
+          y: -5,
+          transition: { duration: 0.3 }
+        }}
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <div>
+            <h3 className="text-lg sm:text-xl font-bold mb-1 text-gray-800">Statistik Analisis</h3>
+            <p className="text-sm text-gray-500">Tren analisis dan pasien baru</p>
+          </div>
+          
+          <div className="flex mt-4 sm:mt-0 p-1 bg-gray-100 rounded-lg">
+            {['weekly', 'monthly', 'yearly'].map((tab) => (
+              <motion.button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="px-4 py-2 rounded-md text-sm font-medium"
+                variants={tabVariants}
+                initial="inactive"
+                animate={activeTab === tab ? "active" : "inactive"}
+                whileHover={activeTab !== tab ? "hover" : undefined}
+                whileTap="tap"
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              >
+                {tab === 'weekly' ? 'Mingguan' : tab === 'monthly' ? 'Bulanan' : 'Tahunan'}
+              </motion.button>
+            ))}
+          </div>
+        </div>
+        
+        <motion.div 
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.4 }}
         >
-          <h3 className="text-lg font-semibold mb-3">Status Sistem</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* <FlaskApiStatus /> */}
-            <div className="p-4 bg-white rounded-xl shadow-md">
-              <h3 className="font-medium text-gray-800">Flask API Status</h3>
-              <div className="mt-2">
-                {socketStatus === 'connected' ? (
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full mr-2 bg-green-500"></div>
-                    <span className="text-sm text-green-700">Online</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 rounded-full mr-2 bg-red-500"></div>
-                    <span className="text-sm text-red-700">Offline</span>
-                  </div>
-                )}
-                <div className="mt-2 text-xs text-gray-500">
-                  {socketStatus === 'connected' ? (
-                    <p>Model berhasil dimuat dan siap digunakan</p>
-                  ) : (
-                    <p className="text-red-500 font-medium">
-                      Flask API tidak tersedia. Pastikan Flask API berjalan dan model ML dimuat.
-                      <br />
-                      <span className="block mt-1">Jalankan: <code className="bg-gray-100 px-1 py-0.5 rounded">npm run test:flask</code></span>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="p-4 bg-white rounded-xl shadow-md">
-              <h3 className="font-medium text-gray-800">Backend API Status</h3>
-              <div className="mt-2">
+          <ReactApexChart 
+            options={lineChartOptions} 
+            series={lineChartSeries} 
+            type="line" 
+            height={350} 
+          />
+        </motion.div>
+      </motion.div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <motion.div 
+          className="bg-white p-5 rounded-2xl"
+          variants={chartItemVariants}
+          style={{ 
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.8)'
+          }}
+          whileHover={{ 
+            boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
+            y: -5,
+            transition: { duration: 0.3 }
+          }}
+        >
+          <h3 className="text-lg sm:text-xl font-bold mb-1 text-gray-800">Distribusi Tingkat Keparahan</h3>
+          <p className="text-sm text-gray-500 mb-6">Proporsi tingkat keparahan retinopati diabetik</p>
+          <ReactApexChart 
+            options={donutChartOptions} 
+            series={donutChartSeries} 
+            type="donut" 
+            height={350} 
+          />
+        </motion.div>
+        
+        <motion.div 
+          className="bg-white p-5 rounded-2xl"
+          variants={chartItemVariants}
+          style={{ 
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.06)',
+            border: '1px solid rgba(255, 255, 255, 0.8)'
+          }}
+          whileHover={{ 
+            boxShadow: '0 15px 30px rgba(0, 0, 0, 0.1)',
+            y: -5,
+            transition: { duration: 0.3 }
+          }}
+        >
+          <h3 className="text-lg sm:text-xl font-bold mb-1 text-gray-800">Statistik Pengguna</h3>
+          <p className="text-sm text-gray-500 mb-6">Informasi aktivitas pengguna terkini</p>
+          
+          <div className="space-y-5">
+            {[
+              { label: 'Total Analisis', value: 124, color: theme.primary, growth: '+12%', icon: '📊' },
+              { label: 'Pasien Aktif', value: 87, color: theme.secondary, growth: '+5%', icon: '👥' },
+              { label: 'Rata-rata Waktu Analisis', value: '2.5 detik', color: theme.accent, growth: '-8%', icon: '⏱️' },
+              { label: 'Tingkat Akurasi', value: '98%', color: '#F59E0B', growth: '+2%', icon: '🎯' }
+            ].map((stat, index) => (
+              <motion.div 
+                key={stat.label}
+                className="flex items-center justify-between p-4 rounded-xl bg-gray-50"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
+                whileHover={{ 
+                  backgroundColor: `${stat.color}10`,
+                  x: 5,
+                  transition: { duration: 0.2 }
+                }}
+              >
                 <div className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full mr-2 ${socketStatus === 'connected' ? 'bg-green-500' : socketStatus === 'connecting' ? 'bg-yellow-500' : 'bg-red-500'}`}></div>
-                  <span className={`text-sm ${socketStatus === 'connected' ? 'text-green-700' : socketStatus === 'connecting' ? 'text-yellow-700' : 'text-red-700'}`}>
-                    {socketStatus === 'connected' ? 'Online' : socketStatus === 'connecting' ? 'Connecting...' : 'Offline'}
-                  </span>
+                  <div 
+                    className="w-10 h-10 rounded-lg flex items-center justify-center mr-4 text-lg"
+                    style={{ backgroundColor: `${stat.color}20` }}
+                  >
+                    {stat.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">{stat.label}</p>
+                    <p className="text-lg font-bold text-gray-800">{stat.value}</p>
+                  </div>
                 </div>
-                <div className="mt-2 text-xs text-gray-600">
-                  <p>URL: {import.meta.env.VITE_API_URL || 'http://localhost:5000'}</p>
-                  <p>Socket Status: {socketStatus}</p>
+                <div 
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${
+                    stat.growth.startsWith('+') ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'
+                  }`}
+                >
+                  {stat.growth}
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            ))}
           </div>
         </motion.div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <SeverityDistributionChart severityDistribution={severityDistribution} />
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <AnalysisTrendChart monthlyTrend={monthlyTrend} />
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <PatientDemographicsChart ageGroups={ageGroups} />
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <AIConfidenceChart confidenceLevels={confidenceLevels} />
-        </motion.div>
-      </div>
-
-      {/* Real-time Status Indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.7 }}
-        className="mt-4 flex items-center justify-end"
-      >
-        <div className="flex items-center text-sm text-gray-600">
-          <div className={`w-2 h-2 rounded-full mr-2 ${
-            socketStatus === 'connected' ? 'bg-green-500' : 
-            socketStatus === 'connecting' ? 'bg-yellow-500' :
-            'bg-red-500'
-          }`}></div>
-          {socketStatus === 'connected' ? 'Real-time updates aktif' :
-           socketStatus === 'connecting' ? 'Menghubungkan ke server...' :
-           'Gagal terhubung ke server'}
-        </div>
-      </motion.div>
     </motion.div>
   );
 };
