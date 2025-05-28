@@ -1,15 +1,14 @@
-import Report from '../components/dashboard/Report';
 import { withPageTransition } from '../context/ThemeContext';
+import Report from '../components/dashboard/Report';
 
 function ReportPageComponent() {
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mt-6">
-        <Report />
-      </div>
+    <div className="p-4">
+      <Report />
     </div>
   );
 }
 
-const ReportPage = withPageTransition(ReportPageComponent);
+// Menggunakan efek fade untuk halaman laporan
+const ReportPage = withPageTransition(ReportPageComponent, "fade");
 export default ReportPage;

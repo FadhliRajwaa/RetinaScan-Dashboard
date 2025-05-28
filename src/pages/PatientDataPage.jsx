@@ -143,5 +143,5 @@ function PatientDataPageComponent() {
   );
 }
 
-const PatientDataPage = withPageTransition(PatientDataPageComponent);
+const PatientDataPage = withPageTransition(PatientDataPageComponent, "slideY");
 export default PatientDataPage; 

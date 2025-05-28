@@ -322,5 +322,5 @@ function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
   );
 }
 
-const ScanRetinaPage = withPageTransition(ScanRetinaPageComponent);
+const ScanRetinaPage = withPageTransition(ScanRetinaPageComponent, "flip");
 export default ScanRetinaPage; 
