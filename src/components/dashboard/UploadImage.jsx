@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { uploadImage } from '../../services/api';
 import PatientSelector from './PatientSelector';
 import { FiUpload, FiFile, FiImage, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 function UploadImage({ onUploadSuccess, autoUpload = true }) {
   const [file, setFile] = useState(null);
@@ -14,6 +15,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const fileInputRef = useRef(null);
   const dropAreaControls = useAnimation();
+  const navigate = useNavigate();
 
   // Gunakan ref untuk melacak apakah file sudah diupload
   const uploadedFileRef = useRef(null);
@@ -124,38 +126,45 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
       formData.append('image', file);
       formData.append('patientId', selectedPatient._id);
       
-      console.log('Mengunggah file:', file.name, 'untuk pasien:', selectedPatient.fullName || selectedPatient.name);
-      const response = await uploadImage(formData);
-      setSuccess(`Gambar berhasil diunggah!`);
-      setError('');
+      console.log('Mengunggah gambar untuk analisis...');
+      const result = await uploadImage(formData);
+      console.log('Hasil analisis:', result);
       
-      console.log('Hasil analisis dari Flask API:', response.prediction);
-      
-      // Call the callback function if provided with the prediction result
-      if (onUploadSuccess) {
-        onUploadSuccess({
-          file,
-          preview: preview,
-          patient: selectedPatient,
-          response: response,
-          prediction: response.prediction // Tambahkan hasil prediksi
-        });
-      }
-      
-      // Reset form setelah upload berhasil
-      if (autoUpload) {
-        // Jika autoUpload aktif, reset file dan preview
+      // Pastikan semua data tersedia sebelum diarahkan ke halaman hasil
+      if (result && result.analysis && result.analysis.id) {
+        // Simpan data hasil analisis ke localStorage sementara untuk diakses di halaman hasil
+        localStorage.setItem('currentAnalysis', JSON.stringify({
+          id: result.analysis.id,
+          patientId: selectedPatient._id,
+          patientName: selectedPatient.fullName || selectedPatient.name,
+          timestamp: result.analysis.timestamp,
+          imageUrl: result.analysis.imageUrl,
+          severity: result.analysis.results.severity,
+          severityLevel: result.analysis.results.severityLevel,
+          classification: result.analysis.results.classification,
+          confidence: result.analysis.results.confidence,
+          recommendation: result.analysis.recommendation,
+          notes: result.analysis.notes,
+          isSimulation: result.analysis.results.isSimulation || false
+        }));
+        
+        // Reset form setelah berhasil
         setFile(null);
         setPreview(null);
-        // Reset tracking
-        uploadedFileRef.current = null;
+        setSelectedPatient(null);
+        setError('');
+        
+        // Alihkan ke halaman hasil analisis
+        console.log('Mengarahkan ke halaman hasil analisis dengan ID:', result.analysis.id);
+        navigate('/analysis-result');
+      } else {
+        console.error('Format respons tidak valid:', result);
+        setError('Terjadi kesalahan saat memproses hasil analisis. Format respons tidak valid.');
       }
     } catch (err) {
-      console.error('Error saat upload:', err);
-      setError(err.response?.data?.message || 'Gagal mengunggah gambar. Coba lagi.');
-      setSuccess('');
-      // Reset tracking jika gagal
-      uploadedFileRef.current = null;
+      console.error('Error during image upload:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Terjadi kesalahan saat mengunggah gambar.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

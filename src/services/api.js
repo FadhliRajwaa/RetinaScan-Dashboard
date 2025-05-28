@@ -21,53 +21,24 @@ export const getHistory = async () => {
     },
   });
   
-  // Normalisasi data untuk konsistensi
+  // Pastikan data sudah ada dan valid
   if (Array.isArray(response.data)) {
+    console.log(`Berhasil mengambil ${response.data.length} data history dari server`);
+    
+    // Data sudah dinormalisasi oleh backend, hanya perlu memeriksa apakah ada field yang hilang
     response.data.forEach(analysis => {
-      // Pastikan severity konsisten
-      if (!analysis.severity && analysis.frontendSeverity) {
-        analysis.severity = analysis.frontendSeverity;
-      } else if (!analysis.severity && analysis.class) {
-        const severityMapping = {
-          'No DR': 'Tidak ada',
-          'Mild': 'Ringan',
-          'Moderate': 'Sedang',
-          'Severe': 'Berat',
-          'Proliferative DR': 'Sangat Berat'
-        };
-        analysis.severity = severityMapping[analysis.class] || analysis.class;
+      // Pastikan semua field penting tersedia, jika tidak gunakan nilai default
+      if (!analysis.severity) {
+        console.warn('Data history tidak memiliki field severity', analysis.id);
       }
       
-      // Pastikan severityLevel konsisten
-      if (!analysis.severityLevel && analysis.frontendSeverityLevel !== undefined) {
-        analysis.severityLevel = analysis.frontendSeverityLevel;
-      } else if (!analysis.severityLevel && analysis.severity_level !== undefined) {
-        analysis.severityLevel = analysis.severity_level;
-      } else if (analysis.severity) {
-        const severityLevelMapping = {
-          'Tidak ada': 0,
-          'Ringan': 1,
-          'Sedang': 2,
-          'Berat': 3,
-          'Sangat Berat': 4
-        };
-        analysis.severityLevel = severityLevelMapping[analysis.severity] || 0;
+      if (analysis.severityLevel === undefined || analysis.severityLevel === null) {
+        console.warn('Data history tidak memiliki field severityLevel', analysis.id);
       }
       
-      // Pastikan notes/recommendation konsisten
       if (!analysis.notes && analysis.recommendation) {
         analysis.notes = analysis.recommendation;
       } else if (!analysis.recommendation && analysis.notes) {
-        analysis.recommendation = analysis.notes;
-      } else if (!analysis.notes && !analysis.recommendation && analysis.severity) {
-        const recommendationMapping = {
-          'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
-          'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
-          'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
-          'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
-          'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
-        };
-        analysis.notes = recommendationMapping[analysis.severity] || 'Konsultasikan dengan dokter mata.';
         analysis.recommendation = analysis.notes;
       }
     });
@@ -85,57 +56,14 @@ export const getLatestAnalysis = async () => {
       }
     });
     
-    // Pastikan data memiliki format yang diharapkan
+    // Pastikan data valid
     if (response.data) {
-      // Pastikan severity ada, jika tidak gunakan fallback
-      if (!response.data.severity && response.data.frontendSeverity) {
-        response.data.severity = response.data.frontendSeverity;
-      } else if (!response.data.severity && response.data.class) {
-        // Handle format dari Flask API
-        const severityMapping = {
-          'No DR': 'Tidak ada',
-          'Mild': 'Ringan',
-          'Moderate': 'Sedang',
-          'Severe': 'Berat',
-          'Proliferative DR': 'Sangat Berat'
-        };
-        response.data.severity = severityMapping[response.data.class] || response.data.class;
-      }
+      console.log('Berhasil mengambil data analisis terbaru', response.data);
       
-      // Pastikan severityLevel ada, jika tidak gunakan fallback
-      if (!response.data.severityLevel && response.data.frontendSeverityLevel !== undefined) {
-        response.data.severityLevel = response.data.frontendSeverityLevel;
-      } else if (!response.data.severityLevel && response.data.severity_level !== undefined) {
-        response.data.severityLevel = response.data.severity_level;
-      } else if (response.data.severity) {
-        // Tentukan severityLevel berdasarkan severity jika tidak ada
-        const severityLevelMapping = {
-          'Tidak ada': 0,
-          'Ringan': 1,
-          'Sedang': 2,
-          'Berat': 3,
-          'Sangat Berat': 4
-        };
-        response.data.severityLevel = severityLevelMapping[response.data.severity] || 0;
-      }
-      
-      // Pastikan recommendation ada
+      // Data sudah dinormalisasi oleh backend, hanya perlu memeriksa apakah ada field yang hilang
       if (!response.data.recommendation && response.data.notes) {
         response.data.recommendation = response.data.notes;
-      }
-      
-      // Tambahkan rekomendasi jika tidak ada
-      if (!response.data.recommendation && !response.data.notes) {
-        // Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
-        const recommendationMapping = {
-          'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
-          'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
-          'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
-          'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
-          'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
-        };
-        response.data.recommendation = recommendationMapping[response.data.severity] || 'Konsultasikan dengan dokter mata.';
-        // Simpan juga ke notes untuk konsistensi
+      } else if (!response.data.notes && response.data.recommendation) {
         response.data.notes = response.data.recommendation;
       }
     }
@@ -144,10 +72,9 @@ export const getLatestAnalysis = async () => {
   } catch (error) {
     console.error('Error fetching latest analysis:', error);
     
-    // Tidak lagi menyediakan data simulasi sebagai fallback
     console.error('Flask API tidak tersedia. Pastikan Flask API berjalan dan dapat diakses.');
     
-    // Lempar error untuk ditangani di komponen, bukan menggunakan data simulasi
+    // Lempar error untuk ditangani di komponen
     throw new Error('Flask API tidak tersedia. Pastikan Flask API berjalan dengan benar dan model ML dimuat. Jalankan "npm run test:flask" di terminal untuk menguji koneksi.');
   }
 };

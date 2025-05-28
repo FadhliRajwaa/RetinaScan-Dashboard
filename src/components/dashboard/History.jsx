@@ -147,29 +147,50 @@ function History() {
 
   // Get severity badge style
   const getSeverityBadge = (severity) => {
-    const severityLower = severity?.toLowerCase() || '';
-    if (severityLower === 'tidak ada' || severityLower === 'normal') {
-      return 'bg-blue-100 text-blue-800';
-    } else if (severityLower === 'ringan' || severityLower === 'rendah') {
-      return 'bg-green-100 text-green-800';
-    } else if (severityLower === 'sedang') {
-      return 'bg-yellow-100 text-yellow-800';
-    } else if (severityLower === 'berat' || severityLower === 'parah') {
-      return 'bg-orange-100 text-orange-800';
-    } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
-      return 'bg-red-100 text-red-800';
-    } else {
-      // Fallback berdasarkan severityLevel jika ada
-      const level = parseInt(severity);
-      if (!isNaN(level)) {
-        if (level === 0) return 'bg-blue-100 text-blue-800';
-        if (level === 1) return 'bg-green-100 text-green-800';
-        if (level === 2) return 'bg-yellow-100 text-yellow-800';
-        if (level === 3) return 'bg-orange-100 text-orange-800';
-        if (level === 4) return 'bg-red-100 text-red-800';
-      }
+    if (!severity) {
       return 'bg-gray-100 text-gray-800';
     }
+    
+    const severityLower = severity.toLowerCase();
+    
+    // Mapping untuk warna badge berdasarkan severity
+    const badgeStyles = {
+      'tidak ada': 'bg-blue-100 text-blue-800',
+      'no dr': 'bg-blue-100 text-blue-800',
+      'normal': 'bg-blue-100 text-blue-800',
+      'ringan': 'bg-green-100 text-green-800',
+      'mild': 'bg-green-100 text-green-800',
+      'rendah': 'bg-green-100 text-green-800',
+      'sedang': 'bg-yellow-100 text-yellow-800',
+      'moderate': 'bg-yellow-100 text-yellow-800',
+      'berat': 'bg-orange-100 text-orange-800',
+      'severe': 'bg-orange-100 text-orange-800',
+      'parah': 'bg-orange-100 text-orange-800',
+      'sangat berat': 'bg-red-100 text-red-800',
+      'proliferative dr': 'bg-red-100 text-red-800'
+    };
+    
+    // Cek apakah severity ada di mapping
+    if (badgeStyles[severityLower]) {
+      return badgeStyles[severityLower];
+    }
+    
+    // Fallback berdasarkan severityLevel jika ada
+    if (typeof severity === 'number' || !isNaN(parseInt(severity))) {
+      const level = typeof severity === 'number' ? severity : parseInt(severity);
+      const levelBadges = [
+        'bg-blue-100 text-blue-800',   // Level 0 - Tidak ada
+        'bg-green-100 text-green-800', // Level 1 - Ringan
+        'bg-yellow-100 text-yellow-800', // Level 2 - Sedang
+        'bg-orange-100 text-orange-800', // Level 3 - Berat
+        'bg-red-100 text-red-800'      // Level 4 - Sangat Berat
+      ];
+      
+      return levelBadges[level] || 'bg-gray-100 text-gray-800';
+    }
+    
+    // Default fallback
+    return 'bg-gray-100 text-gray-800';
   };
 
   // Get patient name

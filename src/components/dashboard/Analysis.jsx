@@ -66,51 +66,119 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     // Buat salinan data untuk dimodifikasi
     const normalized = { ...data };
     
+    // Mapping dari nilai bahasa Inggris ke Indonesia
+    const severityMapping = {
+      'No DR': 'Tidak ada',
+      'Mild': 'Ringan',
+      'Moderate': 'Sedang',
+      'Severe': 'Berat',
+      'Proliferative DR': 'Sangat Berat'
+    };
+    
+    console.log('Normalizing data structure:', data);
+    
     // Pastikan severity ada dengan format yang benar
-    if (!normalized.severity && normalized.frontendSeverity) {
-      normalized.severity = normalized.frontendSeverity;
-    } else if (!normalized.severity && normalized.class) {
-      // Handle format dari Flask API
-      const severityMapping = {
-        'No DR': 'Tidak ada',
-        'Mild': 'Ringan',
-        'Moderate': 'Sedang',
-        'Severe': 'Berat',
-        'Proliferative DR': 'Sangat Berat'
-      };
-      normalized.severity = severityMapping[normalized.class] || normalized.class;
+    if (!normalized.severity) {
+      // Coba dapatkan dari frontendSeverity
+      if (normalized.frontendSeverity) {
+        normalized.severity = normalized.frontendSeverity;
+      } 
+      // Coba dapatkan dari class (format dari Flask API)
+      else if (normalized.class) {
+        normalized.severity = severityMapping[normalized.class] || normalized.class;
+      }
+      // Coba dari respons API yang bersarang
+      else if (normalized.prediction?.class) {
+        normalized.severity = severityMapping[normalized.prediction.class] || normalized.prediction.class;
+      }
+      // Coba dari structure API baru
+      else if (normalized.response?.analysis?.results?.classification) {
+        const classification = normalized.response.analysis.results.classification;
+        normalized.severity = severityMapping[classification] || classification;
+      }
     }
     
     // Pastikan severityLevel ada dengan format yang benar
-    if (!normalized.severityLevel && normalized.frontendSeverityLevel !== undefined) {
-      normalized.severityLevel = normalized.frontendSeverityLevel;
-    } else if (!normalized.severityLevel && normalized.severity_level !== undefined) {
-      normalized.severityLevel = normalized.severity_level;
+    if (!normalized.severityLevel && normalized.severityLevel !== 0) {
+      if (normalized.frontendSeverityLevel !== undefined) {
+        normalized.severityLevel = normalized.frontendSeverityLevel;
+      } else if (normalized.severity_level !== undefined) {
+        normalized.severityLevel = normalized.severity_level;
+      } else if (normalized.severity) {
+        // Tentukan severityLevel berdasarkan severity
+        const severityLevelMapping = {
+          'Tidak ada': 0,
+          'No DR': 0,
+          'Ringan': 1, 
+          'Mild': 1,
+          'Sedang': 2,
+          'Moderate': 2,
+          'Berat': 3,
+          'Severe': 3,
+          'Sangat Berat': 4,
+          'Proliferative DR': 4
+        };
+        normalized.severityLevel = severityLevelMapping[normalized.severity] || 0;
+      }
     }
     
     // Pastikan confidence ada
     if (!normalized.confidence) {
-      normalized.confidence = 0.8; // Default confidence
+      if (normalized.prediction?.confidence) {
+        normalized.confidence = normalized.prediction.confidence;
+      } else if (normalized.response?.analysis?.results?.confidence) {
+        normalized.confidence = normalized.response.analysis.results.confidence;
+      } else {
+        normalized.confidence = 0.8; // Default confidence
+      }
     }
     
     // Pastikan recommendation ada
-    if (!normalized.recommendation && normalized.notes) {
-      normalized.recommendation = normalized.notes;
-    }
-
-    // Tambahkan mapping rekomendasi berdasarkan severity jika tidak ada
-    // Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
     if (!normalized.recommendation) {
-      const recommendationMapping = {
-        'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
-        'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
-        'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
-        'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
-        'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
-      };
-      
-      normalized.recommendation = recommendationMapping[normalized.severity] || 'Konsultasikan dengan dokter mata.';
+      if (normalized.notes) {
+        normalized.recommendation = normalized.notes;
+      } else if (normalized.response?.analysis?.recommendation) {
+        normalized.recommendation = normalized.response.analysis.recommendation;
+      } else if (normalized.severity) {
+        // Tambahkan mapping rekomendasi berdasarkan severity jika tidak ada
+        // Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
+        const recommendationMapping = {
+          'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
+          'No DR': 'Lakukan pemeriksaan rutin setiap tahun.',
+          'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+          'Mild': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+          'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+          'Moderate': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+          'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+          'Severe': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+          'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.',
+          'Proliferative DR': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+        };
+        
+        normalized.recommendation = recommendationMapping[normalized.severity] || 'Konsultasikan dengan dokter mata.';
+      }
     }
+    
+    // Pastikan ada ID analisis
+    if (!normalized.analysisId && normalized.response?.analysis?.id) {
+      normalized.analysisId = normalized.response.analysis.id;
+    }
+    
+    // Pastikan ada data pasien
+    if (!normalized.patientId && normalized.response?.analysis?.patientId) {
+      normalized.patientId = normalized.response.analysis.patientId;
+    }
+    
+    // Periksa apakah ini mode simulasi
+    if (normalized.isSimulation === undefined) {
+      if (normalized.prediction?.isSimulation !== undefined) {
+        normalized.isSimulation = normalized.prediction.isSimulation;
+      } else if (normalized.response?.analysis?.results?.isSimulation !== undefined) {
+        normalized.isSimulation = normalized.response.analysis.results.isSimulation;
+      }
+    }
+    
+    console.log('Normalized data:', normalized);
     
     return normalized;
   };
@@ -605,29 +673,38 @@ const getMessage = (stage, stages) => {
 };
 
 const getSeverityTextColor = (severity) => {
+  // Periksa apakah severity ada dan bukan undefined
+  if (!severity) return 'text-gray-600';
+  
   const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal') return 'text-blue-600';
-  if (level === 'ringan') return 'text-green-600';
-  if (level === 'sedang') return 'text-yellow-600';
-  if (level === 'berat') return 'text-orange-600';
+  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'text-blue-600';
+  if (level === 'ringan' || level === 'mild') return 'text-green-600';
+  if (level === 'sedang' || level === 'moderate') return 'text-yellow-600';
+  if (level === 'berat' || level === 'severe') return 'text-orange-600';
   return 'text-red-600';
 };
 
 const getSeverityBgColor = (severity) => {
+  // Periksa apakah severity ada dan bukan undefined
+  if (!severity) return 'bg-gray-100 text-gray-800';
+  
   const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal') return 'bg-blue-100 text-blue-800';
-  if (level === 'ringan') return 'bg-green-100 text-green-800';
-  if (level === 'sedang') return 'bg-yellow-100 text-yellow-800';
-  if (level === 'berat') return 'bg-orange-100 text-orange-800';
+  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'bg-blue-100 text-blue-800';
+  if (level === 'ringan' || level === 'mild') return 'bg-green-100 text-green-800';
+  if (level === 'sedang' || level === 'moderate') return 'bg-yellow-100 text-yellow-800';
+  if (level === 'berat' || level === 'severe') return 'bg-orange-100 text-orange-800';
   return 'bg-red-100 text-red-800';
 };
 
 const getSeverityLabel = (severity) => {
+  // Periksa apakah severity ada dan bukan undefined
+  if (!severity) return 'Tidak Diketahui';
+  
   const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal') return 'Normal';
-  if (level === 'ringan') return 'Perlu Perhatian';
-  if (level === 'sedang') return 'Perlu Konsultasi';
-  if (level === 'berat') return 'Perlu Penanganan';
+  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'Normal';
+  if (level === 'ringan' || level === 'mild') return 'Perlu Perhatian';
+  if (level === 'sedang' || level === 'moderate') return 'Perlu Konsultasi';
+  if (level === 'berat' || level === 'severe') return 'Perlu Penanganan';
   return 'Darurat';
 };
 
