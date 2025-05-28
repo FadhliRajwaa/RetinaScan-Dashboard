@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiBrain, FiActivity, FiEye } from 'react-icons/fi';
+import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye } from 'react-icons/fi';
 import { getLatestAnalysis } from '../../services/api';
 
 // Glassmorphism style
@@ -189,7 +189,7 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
   const processStages = [
     { label: "Mempersiapkan Data", icon: <FiActivity className="w-8 h-8" />, color: "from-blue-500 to-cyan-400" },
     { label: "Menganalisis Citra", icon: <FiEye className="w-8 h-8" />, color: "from-indigo-500 to-purple-400" },
-    { label: "Mendeteksi Pola", icon: <FiBrain className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
+    { label: "Mendeteksi Pola", icon: <FiCpu className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
     { label: "Menyelesaikan Analisis", icon: <FiCheck className="w-8 h-8" />, color: "from-emerald-500 to-green-400" }
   ];
 
@@ -440,7 +440,7 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                     duration: 2,
                   }}
                 >
-                  <FiBrain className="w-10 h-10 text-white" />
+                  <FiCpu className="w-10 h-10 text-white" />
                 </motion.div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-3">Siap untuk Analisis</h3>
                 <p className="text-gray-600 mb-8 max-w-xs mx-auto">Klik tombol di bawah untuk memulai analisis citra retina dengan AI</p>
@@ -506,7 +506,7 @@ const LoadingIndicator = ({ stage, stages }) => {
             repeatType: "loop",
           }}
         >
-          {stages[stage]?.icon || <FiBrain className="w-8 h-8" />}
+          {stages[stage]?.icon || <FiCpu className="w-8 h-8" />}
         </motion.div>
         
         {/* Orbiting dots */}
