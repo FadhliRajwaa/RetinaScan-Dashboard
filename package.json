@@ -25,6 +25,7 @@
     "jwt-decode": "^4.0.0",
     "react": "^19.1.0",
     "react-apexcharts": "^1.7.0",
+    "react-countup": "^6.5.3",
     "react-curved-text": "^3.0.1",
     "react-custom-cursors": "^2.1.3",
     "react-dom": "^19.1.0",
