@@ -475,8 +475,16 @@ const AgeGenderHeatmapChart = ({ patients }) => {
       ageGroups.forEach((ageGroup, ageIndex) => {
         // Menghitung jumlah pasien dalam kelompok ini
         const count = patients.filter(patient => {
+          // Validasi data pasien
+          if (!patient || typeof patient.gender === 'undefined' || typeof patient.age === 'undefined') {
+            return false;
+          }
+          
           const patientGender = patient.gender;
           const age = patient.age;
+          
+          // Skip jika umur tidak valid
+          if (isNaN(age) || age < 0) return false;
           
           let inAgeGroup = false;
           if (ageGroup === '0-10') inAgeGroup = age >= 0 && age <= 10;
@@ -662,8 +670,8 @@ const AgeGenderHeatmapChart = ({ patients }) => {
   
   // Statistik tambahan
   const totalPatients = patients?.length || 0;
-  const maleCount = patients?.filter(p => p.gender === 'Laki-laki').length || 0;
-  const femaleCount = patients?.filter(p => p.gender === 'Perempuan').length || 0;
+  const maleCount = patients?.filter(p => p && p.gender === 'Laki-laki').length || 0;
+  const femaleCount = patients?.filter(p => p && p.gender === 'Perempuan').length || 0;
   const malePercentage = totalPatients > 0 ? Math.round((maleCount / totalPatients) * 100) : 0;
   const femalePercentage = totalPatients > 0 ? Math.round((femaleCount / totalPatients) * 100) : 0;
   
@@ -781,7 +789,7 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
     }
     
     // Urutkan analisis berdasarkan waktu
-    filteredAnalyses.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    filteredAnalyses.sort((a, b) => new Date(a.createdAt || a.timestamp || 0) - new Date(b.createdAt || b.timestamp || 0));
     
     // Siapkan data untuk chart
     const confidenceData = [];
@@ -789,20 +797,31 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
     const timeLabels = [];
     
     filteredAnalyses.forEach(analysis => {
-      // Konversi confidence dari 0-1 ke persentase
-      const confidence = Math.round(analysis.results.confidence * 100);
+      // Tambahkan validasi untuk memastikan analysis.results ada dan memiliki properti confidence
+      if (!analysis || !analysis.results || typeof analysis.results.confidence === 'undefined') {
+        console.warn('Skipping analysis with invalid data structure:', analysis);
+        return; // Skip item ini
+      }
       
-      // Dapatkan tingkat keparahan dan konversi ke nilai numerik
-      const severityLabel = severityLabels[analysis.results.classification] || analysis.results.classification;
-      const severityValue = severityMapping[severityLabel] * 25; // Skala 0-100
-      
-      // Format tanggal untuk label
-      const date = new Date(analysis.createdAt);
-      const formattedDate = `${date.getDate()}/${date.getMonth() + 1}`;
-      
-      confidenceData.push(confidence);
-      severityData.push(severityValue);
-      timeLabels.push(formattedDate);
+      try {
+        // Konversi confidence dari 0-1 ke persentase
+        const confidence = Math.round((analysis.results.confidence || 0) * 100);
+        
+        // Dapatkan tingkat keparahan dan konversi ke nilai numerik
+        const classification = analysis.results.classification || 'No DR';
+        const severityLabel = severityLabels[classification] || classification;
+        const severityValue = (severityMapping[severityLabel] || 0) * 25; // Skala 0-100
+        
+        // Format tanggal untuk label
+        const date = new Date(analysis.createdAt || analysis.timestamp || 0);
+        const formattedDate = `${date.getDate()}/${date.getMonth() + 1}`;
+        
+        confidenceData.push(confidence);
+        severityData.push(severityValue);
+        timeLabels.push(formattedDate);
+      } catch (error) {
+        console.error('Error processing analysis data:', error, analysis);
+      }
     });
     
     setChartData({
