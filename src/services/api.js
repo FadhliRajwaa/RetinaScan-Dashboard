@@ -1,8 +1,131 @@
 import axios from 'axios';
+import io from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const SOCKET_SERVER_URL = import.meta.env.VITE_SOCKET_SERVER_URL || API_URL;
+
+// Socket.io events
+export const SOCKET_EVENTS = {
+  CONNECT: 'connect',
+  DISCONNECT: 'disconnect',
+  NEW_ANALYSIS: 'new_analysis',
+  NEW_PATIENT: 'new_patient',
+  DASHBOARD_UPDATE: 'dashboard_update'
+};
+
+// Singleton Socket.io instance
+let socketInstance = null;
 
 const getToken = () => localStorage.getItem('token');
+
+// Fungsi untuk mendapatkan atau membuat koneksi Socket.io
+export const getSocketConnection = (options = {}) => {
+  if (!socketInstance) {
+    const token = getToken();
+    
+    // Opsi default untuk Socket.io
+    const defaultOptions = {
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      auth: {
+        token
+      }
+    };
+    
+    // Gabungkan opsi default dengan opsi yang diberikan
+    const socketOptions = { ...defaultOptions, ...options };
+    
+    console.log('Initializing new Socket.io connection to:', SOCKET_SERVER_URL);
+    socketInstance = io(SOCKET_SERVER_URL, socketOptions);
+    
+    // Setup event listeners default
+    socketInstance.on(SOCKET_EVENTS.CONNECT, () => {
+      console.log('Socket.io connected successfully');
+    });
+    
+    socketInstance.on(SOCKET_EVENTS.DISCONNECT, () => {
+      console.log('Socket.io disconnected');
+    });
+    
+    socketInstance.on('connect_error', (error) => {
+      console.error('Socket.io connection error:', error);
+    });
+    
+    socketInstance.on('error', (error) => {
+      console.error('Socket.io error:', error);
+    });
+  }
+  
+  return socketInstance;
+};
+
+// Fungsi untuk menutup koneksi Socket.io
+export const closeSocketConnection = () => {
+  if (socketInstance) {
+    console.log('Closing Socket.io connection');
+    socketInstance.disconnect();
+    socketInstance = null;
+  }
+};
+
+// Fungsi untuk menambahkan listener ke event Socket.io
+export const addSocketListener = (event, callback) => {
+  const socket = getSocketConnection();
+  socket.on(event, callback);
+  
+  // Return function untuk remove listener
+  return () => {
+    socket.off(event, callback);
+  };
+};
+
+// Fungsi untuk mengirim event ke server melalui Socket.io
+export const emitSocketEvent = (event, data) => {
+  const socket = getSocketConnection();
+  socket.emit(event, data);
+};
+
+// Fungsi untuk berlangganan update dashboard realtime
+export const subscribeToRealtimeUpdates = (callbacks = {}) => {
+  const socket = getSocketConnection();
+  
+  // Setup callback untuk setiap event
+  if (callbacks.onConnect) {
+    socket.on(SOCKET_EVENTS.CONNECT, callbacks.onConnect);
+  }
+  
+  if (callbacks.onDisconnect) {
+    socket.on(SOCKET_EVENTS.DISCONNECT, callbacks.onDisconnect);
+  }
+  
+  if (callbacks.onDashboardUpdate) {
+    socket.on(SOCKET_EVENTS.DASHBOARD_UPDATE, callbacks.onDashboardUpdate);
+  }
+  
+  if (callbacks.onNewAnalysis) {
+    socket.on(SOCKET_EVENTS.NEW_ANALYSIS, callbacks.onNewAnalysis);
+  }
+  
+  if (callbacks.onNewPatient) {
+    socket.on(SOCKET_EVENTS.NEW_PATIENT, callbacks.onNewPatient);
+  }
+  
+  // Emit event untuk berlangganan update dashboard
+  socket.emit('subscribe_dashboard');
+  
+  // Return function untuk unsubscribe
+  return () => {
+    if (callbacks.onConnect) socket.off(SOCKET_EVENTS.CONNECT, callbacks.onConnect);
+    if (callbacks.onDisconnect) socket.off(SOCKET_EVENTS.DISCONNECT, callbacks.onDisconnect);
+    if (callbacks.onDashboardUpdate) socket.off(SOCKET_EVENTS.DASHBOARD_UPDATE, callbacks.onDashboardUpdate);
+    if (callbacks.onNewAnalysis) socket.off(SOCKET_EVENTS.NEW_ANALYSIS, callbacks.onNewAnalysis);
+    if (callbacks.onNewPatient) socket.off(SOCKET_EVENTS.NEW_PATIENT, callbacks.onNewPatient);
+    
+    socket.emit('unsubscribe_dashboard');
+  };
+};
 
 export const uploadImage = async (formData) => {
   // Ambil file gambar dari formData
