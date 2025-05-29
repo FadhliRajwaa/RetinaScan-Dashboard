@@ -328,6 +328,11 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
             <div>
               <span className="font-bold block mb-1">PERHATIAN: Mode Simulasi Aktif</span> 
               <span>Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia. Hasil ini TIDAK BOLEH digunakan untuk diagnosis. Silakan konsultasikan dengan dokter mata untuk diagnosis yang akurat.</span>
+              {analysis.errorMessage && (
+                <div className="mt-2 text-sm font-medium text-red-600">
+                  Alasan: {analysis.errorMessage}
+                </div>
+              )}
               <div className="mt-2 text-xs">
                 <span className="font-semibold">Gunakan script "npm run test:flask" untuk menguji koneksi ke Flask API dan memastikan mode simulasi dinonaktifkan.</span>
               </div>

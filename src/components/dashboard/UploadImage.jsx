@@ -208,6 +208,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
         const classification = result.analysis.results?.classification || result.analysis.classification || 'Tidak diketahui';
         const confidence = result.analysis.results?.confidence || result.analysis.confidence || 0;
         const isSimulation = result.analysis.results?.isSimulation || result.analysis.isSimulation || false;
+        const errorMessage = result.analysis.results?.errorMessage || result.analysis.errorMessage || null;
         
         // Ambil rekomendasi dan catatan
         const recommendation = result.analysis.recommendation || 'Tidak ada rekomendasi';
@@ -230,6 +231,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
           recommendation: recommendation,
           notes: notes,
           isSimulation: isSimulation,
+          errorMessage: errorMessage, // Tambahkan pesan error jika ada
           originalFilename: file?.name || 'uploaded-image',
           createdAt: timestamp
         };
@@ -256,7 +258,8 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
               recommendation: recommendation,
               analysisId: analysisId,
               patientId: patientId,
-              isSimulation: isSimulation
+              isSimulation: isSimulation,
+              errorMessage: errorMessage // Tambahkan pesan error jika ada
             },
             preview: preview,
             file: file,
@@ -265,7 +268,8 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
             imageData: imageData,
             originalFilename: file?.name || 'uploaded-image',
             createdAt: timestamp,
-            response: result
+            response: result,
+            errorMessage: errorMessage // Tambahkan pesan error jika ada
           };
           onUploadSuccess(formattedResult);
         } else {
