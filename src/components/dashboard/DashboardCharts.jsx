@@ -459,9 +459,24 @@ const AgeDistributionChart = ({ ageDistribution }) => {
 const AgeGenderHeatmapChart = ({ patients }) => {
   const { theme } = useTheme();
   const [chartData, setChartData] = useState([]);
+  const [genderStats, setGenderStats] = useState({
+    maleCount: 0,
+    femaleCount: 0,
+    malePercentage: 0,
+    femalePercentage: 0,
+    totalPatients: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    if (!patients || patients.length === 0) return;
+    if (!patients || patients.length === 0) {
+      console.log('No patient data available for AgeGenderHeatmapChart');
+      setIsLoading(false);
+      return;
+    }
+    
+    console.log('Processing patient data for AgeGenderHeatmapChart:', patients.length);
+    setIsLoading(true);
     
     // Kelompok usia
     const ageGroups = ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61+'];
@@ -470,6 +485,11 @@ const AgeGenderHeatmapChart = ({ patients }) => {
     // Inisialisasi data heatmap
     const heatmapData = [];
     
+    // Menghitung jumlah pasien untuk setiap gender
+    let maleCount = 0;
+    let femaleCount = 0;
+    let totalValidPatients = 0;
+    
     // Menghitung jumlah pasien untuk setiap kombinasi usia dan gender
     genders.forEach((gender, genderIndex) => {
       ageGroups.forEach((ageGroup, ageIndex) => {
@@ -477,14 +497,18 @@ const AgeGenderHeatmapChart = ({ patients }) => {
         const count = patients.filter(patient => {
           // Validasi data pasien
           if (!patient || typeof patient.gender === 'undefined' || typeof patient.age === 'undefined') {
+            console.log('Invalid patient data:', patient);
             return false;
           }
           
           const patientGender = patient.gender;
-          const age = patient.age;
+          const age = parseInt(patient.age);
           
           // Skip jika umur tidak valid
-          if (isNaN(age) || age < 0) return false;
+          if (isNaN(age) || age < 0) {
+            console.log('Invalid age for patient:', patient);
+            return false;
+          }
           
           let inAgeGroup = false;
           if (ageGroup === '0-10') inAgeGroup = age >= 0 && age <= 10;
@@ -494,6 +518,12 @@ const AgeGenderHeatmapChart = ({ patients }) => {
           else if (ageGroup === '41-50') inAgeGroup = age >= 41 && age <= 50;
           else if (ageGroup === '51-60') inAgeGroup = age >= 51 && age <= 60;
           else if (ageGroup === '61+') inAgeGroup = age >= 61;
+          
+          // Hitung total untuk setiap gender
+          if (patientGender === gender) {
+            if (gender === 'Laki-laki') maleCount++;
+            else if (gender === 'Perempuan') femaleCount++;
+          }
           
           return patientGender === gender && inAgeGroup;
         }).length;
@@ -509,7 +539,30 @@ const AgeGenderHeatmapChart = ({ patients }) => {
       });
     });
     
-    setChartData(heatmapData);
+    // Hitung total pasien valid
+    totalValidPatients = maleCount + femaleCount;
+    
+    // Hitung persentase
+    const malePercentage = totalValidPatients > 0 ? Math.round((maleCount / totalValidPatients) * 100) : 0;
+    const femalePercentage = totalValidPatients > 0 ? Math.round((femaleCount / totalValidPatients) * 100) : 0;
+    
+    // Update state
+    setGenderStats({
+      maleCount,
+      femaleCount,
+      malePercentage,
+      femalePercentage,
+      totalPatients: totalValidPatients
+    });
+    
+    // Gunakan setTimeout untuk memberikan efek animasi loading
+    setTimeout(() => {
+      setChartData(heatmapData);
+      setIsLoading(false);
+    }, 800);
+    
+    console.log('Heatmap data processed:', heatmapData.length);
+    console.log('Gender stats:', { maleCount, femaleCount, totalValidPatients });
   }, [patients]);
   
   const options = {
@@ -522,15 +575,23 @@ const AgeGenderHeatmapChart = ({ patients }) => {
       animations: {
         enabled: true,
         easing: 'easeinout',
-        speed: 800,
+        speed: 1000,
         animateGradually: {
           enabled: true,
           delay: 150
         },
         dynamicAnimation: {
           enabled: true,
-          speed: 350
+          speed: 450
         }
+      },
+      dropShadow: {
+        enabled: true,
+        top: 3,
+        left: 3,
+        blur: 6,
+        opacity: 0.15,
+        color: theme.primary
       }
     },
     dataLabels: {
@@ -557,9 +618,11 @@ const AgeGenderHeatmapChart = ({ patients }) => {
     },
     plotOptions: {
       heatmap: {
-        shadeIntensity: 0.5,
-        radius: 8,
+        shadeIntensity: 0.6,
+        radius: 10,
         enableShades: true,
+        distributed: true,
+        useFillColorAsStroke: false,
         colorScale: {
           ranges: [
             {
@@ -610,15 +673,17 @@ const AgeGenderHeatmapChart = ({ patients }) => {
       custom: function({ series, seriesIndex, dataPointIndex, w }) {
         const data = w.config.series[seriesIndex].data[dataPointIndex];
         return `
-          <div class="p-2 bg-white shadow-lg rounded-lg border border-gray-200">
-            <div class="font-semibold text-gray-800 mb-1">
+          <div class="p-3 bg-white shadow-lg rounded-lg border border-gray-200">
+            <div class="font-semibold text-gray-800 mb-2 text-base">
               ${data.y} (${data.x} tahun)
             </div>
-            <div class="text-sm text-gray-600">
-              Jumlah: <span class="font-medium">${data.value}</span> pasien
+            <div class="text-sm text-gray-600 flex items-center">
+              <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>
+              Jumlah: <span class="font-medium ml-1">${data.value}</span> pasien
             </div>
-            <div class="text-sm text-gray-600">
-              Persentase: <span class="font-medium">${data.percentage}%</span>
+            <div class="text-sm text-gray-600 flex items-center mt-1">
+              <span class="inline-block w-3 h-3 rounded-full bg-indigo-500 mr-2"></span>
+              Persentase: <span class="font-medium ml-1">${data.percentage}%</span>
             </div>
           </div>
         `;
@@ -658,23 +723,18 @@ const AgeGenderHeatmapChart = ({ patients }) => {
           color: '#64748b'
         }
       }
-    },
+    }
   };
-  
+
   const series = [
     {
       name: 'Jumlah Pasien',
       data: chartData
     }
   ];
-  
-  // Statistik tambahan
-  const totalPatients = patients?.length || 0;
-  const maleCount = patients?.filter(p => p && p.gender === 'Laki-laki').length || 0;
-  const femaleCount = patients?.filter(p => p && p.gender === 'Perempuan').length || 0;
-  const malePercentage = totalPatients > 0 ? Math.round((maleCount / totalPatients) * 100) : 0;
-  const femalePercentage = totalPatients > 0 ? Math.round((femaleCount / totalPatients) * 100) : 0;
-  
+
+  const { maleCount, femaleCount, malePercentage, femalePercentage, totalPatients } = genderStats;
+
   return (
     <motion.div 
       variants={chartContainerVariants}
@@ -683,21 +743,43 @@ const AgeGenderHeatmapChart = ({ patients }) => {
       className="chart-container p-5"
     >
       <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-        <span className="w-2 h-6 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full mr-3"></span>
+        <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-blue-500 rounded-full mr-3"></span>
         Demografi Pasien
       </h3>
       
-      <ReactApexChart 
-        options={options}
-        series={series}
-        type="heatmap"
-        height={320}
-      />
+      <div className="mb-6 relative">
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10 rounded-lg" style={{ minHeight: "320px" }}>
+            <motion.div
+              animate={{ 
+                rotate: 360,
+                transition: { 
+                  repeat: Infinity, 
+                  duration: 1.5, 
+                  ease: "linear" 
+                }
+              }}
+              className="w-10 h-10 border-4 border-t-4 rounded-full"
+              style={{
+                borderColor: `${theme.accent}30`,
+                borderTopColor: theme.primary
+              }}
+            />
+          </div>
+        ) : null}
+        
+        <ReactApexChart 
+          options={options}
+          series={series}
+          type="heatmap"
+          height={320}
+        />
+      </div>
       
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
         <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex items-center"
+          whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+          className="p-4 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex items-center transition-all duration-300"
         >
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mr-4">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -707,15 +789,22 @@ const AgeGenderHeatmapChart = ({ patients }) => {
           <div>
             <p className="text-sm text-gray-600 font-medium">Laki-laki</p>
             <div className="flex items-end">
-              <p className="text-2xl font-bold text-blue-600">{maleCount}</p>
+              <motion.p 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-2xl font-bold text-blue-600"
+              >
+                {maleCount}
+              </motion.p>
               <p className="ml-2 text-sm text-gray-500">({malePercentage}%)</p>
             </div>
           </div>
         </motion.div>
         
         <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="p-4 rounded-lg bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 flex items-center"
+          whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+          className="p-4 rounded-lg bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-100 flex items-center transition-all duration-300"
         >
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-pink-100 mr-4">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -725,16 +814,31 @@ const AgeGenderHeatmapChart = ({ patients }) => {
           <div>
             <p className="text-sm text-gray-600 font-medium">Perempuan</p>
             <div className="flex items-end">
-              <p className="text-2xl font-bold text-pink-600">{femaleCount}</p>
+              <motion.p 
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="text-2xl font-bold text-pink-600"
+              >
+                {femaleCount}
+              </motion.p>
               <p className="ml-2 text-sm text-gray-500">({femalePercentage}%)</p>
             </div>
           </div>
         </motion.div>
       </div>
       
-      <div className="mt-4 text-center">
-        <p className="text-sm text-gray-500">Total: {totalPatients} pasien</p>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="mt-4 text-center"
+      >
+        <p className="text-sm text-gray-500">Total: <span className="font-medium">{totalPatients}</span> pasien</p>
+        {totalPatients === 0 && (
+          <p className="text-xs text-gray-400 mt-1">Tidak ada data pasien yang tersedia</p>
+        )}
+      </motion.div>
     </motion.div>
   );
 };
@@ -748,6 +852,8 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
   });
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [highlightedPoint, setHighlightedPoint] = useState(null);
+  const [noDataAvailable, setNoDataAvailable] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   // Mapping tingkat keparahan ke nilai numerik untuk visualisasi
   const severityMapping = {
@@ -755,7 +861,13 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
     'Ringan': 1,
     'Sedang': 2,
     'Berat': 3,
-    'Sangat Berat': 4
+    'Sangat Berat': 4,
+    // Tambahkan mapping bahasa Inggris
+    'No DR': 0,
+    'Mild': 1,
+    'Moderate': 2,
+    'Severe': 3,
+    'Proliferative DR': 4
   };
   
   // Mapping dari kelas bahasa Inggris ke Indonesia
@@ -768,7 +880,15 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
   };
   
   useEffect(() => {
-    if (!analyses || analyses.length === 0) return;
+    if (!analyses || analyses.length === 0) {
+      console.log('No analyses data available for ConfidenceSeverityTimelineChart');
+      setNoDataAvailable(true);
+      return;
+    }
+    
+    console.log('Processing analyses data for ConfidenceSeverityTimelineChart:', analyses.length);
+    setNoDataAvailable(false);
+    setIsAnimating(true);
     
     // Filter data berdasarkan periode yang dipilih
     let filteredAnalyses = [...analyses];
@@ -795,6 +915,7 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
     const confidenceData = [];
     const severityData = [];
     const timeLabels = [];
+    const validAnalyses = [];
     
     filteredAnalyses.forEach(analysis => {
       // Tambahkan validasi untuk memastikan analysis.results ada dan memiliki properti confidence
@@ -810,7 +931,7 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
         // Dapatkan tingkat keparahan dan konversi ke nilai numerik
         const classification = analysis.results.classification || 'No DR';
         const severityLabel = severityLabels[classification] || classification;
-        const severityValue = (severityMapping[severityLabel] || 0) * 25; // Skala 0-100
+        const severityValue = (severityMapping[severityLabel] || severityMapping[classification] || 0) * 25; // Skala 0-100
         
         // Format tanggal untuk label
         const date = new Date(analysis.createdAt || analysis.timestamp || 0);
@@ -819,16 +940,29 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
         confidenceData.push(confidence);
         severityData.push(severityValue);
         timeLabels.push(formattedDate);
+        validAnalyses.push(analysis);
       } catch (error) {
         console.error('Error processing analysis data:', error, analysis);
       }
     });
+    
+    // Jika tidak ada data valid, tampilkan pesan
+    if (validAnalyses.length === 0) {
+      setNoDataAvailable(true);
+    }
+    
+    console.log(`Processed ${validAnalyses.length} valid analyses for chart`);
     
     setChartData({
       confidenceSeries: confidenceData,
       severitySeries: severityData,
       categories: timeLabels
     });
+    
+    // Matikan animasi setelah data diproses
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 1000);
   }, [analyses, selectedPeriod]);
   
   const options = {
@@ -842,14 +976,14 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
       animations: {
         enabled: true,
         easing: 'easeinout',
-        speed: 800,
+        speed: 1000,
         animateGradually: {
           enabled: true,
           delay: 150
         },
         dynamicAnimation: {
           enabled: true,
-          speed: 350
+          speed: 450
         }
       },
       dropShadow: {
@@ -857,7 +991,8 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
         top: 3,
         left: 3,
         blur: 5,
-        opacity: 0.1
+        opacity: 0.15,
+        color: theme.primary
       },
       events: {
         mouseMove: function(event, chartContext, config) {
@@ -876,22 +1011,31 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
     colors: [theme.primary, theme.accent],
     stroke: {
       curve: 'smooth',
-      width: [3, 3]
+      width: [4, 3],
+      dashArray: [0, 5]
     },
     markers: {
-      size: 4,
+      size: 5,
       strokeWidth: 2,
+      strokeColors: ['#fff', '#fff'],
       hover: {
-        size: 7,
+        size: 8,
+        sizeOffset: 3
       }
     },
     grid: {
       borderColor: '#f1f5f9',
       strokeDashArray: 4,
       padding: {
-        left: 0,
-        right: 0,
+        left: 10,
+        right: 10,
+        top: 10
       },
+      xaxis: {
+        lines: {
+          show: true
+        }
+      }
     },
     xaxis: {
       categories: chartData.categories,
@@ -909,6 +1053,9 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
           fontWeight: 500,
           color: '#64748b'
         }
+      },
+      tooltip: {
+        enabled: false
       }
     },
     yaxis: [
@@ -932,7 +1079,8 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
           }
         },
         min: 0,
-        max: 100
+        max: 100,
+        forceNiceScale: true
       },
       {
         opposite: true,
@@ -951,50 +1099,55 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
             fontWeight: 500,
           },
           formatter: function(val) {
-            if (val === 0) return 'Tidak ada';
-            if (val === 25) return 'Ringan';
-            if (val === 50) return 'Sedang';
-            if (val === 75) return 'Berat';
-            if (val === 100) return 'Sangat Berat';
-            return '';
+            const severityLevels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
+            const index = Math.round(val / 25);
+            return severityLevels[index] || '';
           }
         },
         min: 0,
         max: 100,
-        tickAmount: 5
+        tickAmount: 4
       }
     ],
     tooltip: {
       shared: true,
       intersect: false,
-      y: [
-        {
-          formatter: function(val) {
-            return val.toFixed(0) + '%';
-          }
-        },
-        {
-          formatter: function(val) {
-            if (val === 0) return 'Tidak ada';
-            if (val === 25) return 'Ringan';
-            if (val === 50) return 'Sedang';
-            if (val === 75) return 'Berat';
-            if (val === 100) return 'Sangat Berat';
-            return '';
-          }
-        }
-      ],
       theme: 'light',
       style: {
-        fontFamily: 'Inter, sans-serif',
-      }
+        fontSize: '14px',
+        fontFamily: 'Inter, sans-serif'
+      },
+      marker: {
+        show: true,
+      },
+      x: {
+        show: true,
+        format: 'dd MMM',
+      },
+      y: [{
+        formatter: function(y) {
+          if(typeof y !== "undefined") {
+            return y.toFixed(0) + "%";
+          }
+          return y;
+        }
+      }, {
+        formatter: function(y) {
+          if(typeof y !== "undefined") {
+            const severityLevels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
+            const index = Math.round(y / 25);
+            return severityLevels[index] || '';
+          }
+          return y;
+        }
+      }]
     },
     legend: {
       position: 'top',
       horizontalAlign: 'right',
-      fontFamily: 'Inter, sans-serif',
-      fontSize: '14px',
-      fontWeight: 500,
+      floating: true,
+      offsetY: -25,
+      offsetX: -5,
       markers: {
         width: 12,
         height: 12,
@@ -1004,9 +1157,22 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
         horizontal: 10,
         vertical: 0
       }
+    },
+    fill: {
+      type: ['gradient', 'gradient'],
+      gradient: {
+        shade: 'light',
+        type: "vertical",
+        shadeIntensity: 0.4,
+        gradientToColors: [theme.primary, theme.accent],
+        inverseColors: false,
+        opacityFrom: 0.9,
+        opacityTo: 0.3,
+        stops: [0, 100]
+      }
     }
   };
-  
+
   const series = [
     {
       name: 'Tingkat Kepercayaan',
@@ -1019,24 +1185,12 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
       data: chartData.severitySeries
     }
   ];
-  
-  // Statistik kepercayaan AI
-  const confidenceData = chartData.confidenceSeries;
-  const avgConfidence = confidenceData.length > 0 
-    ? Math.round(confidenceData.reduce((a, b) => a + b, 0) / confidenceData.length) 
-    : 0;
-  const highestConfidence = confidenceData.length > 0 
-    ? Math.max(...confidenceData) 
-    : 0;
-  const lowestConfidence = confidenceData.length > 0 
-    ? Math.min(...confidenceData) 
-    : 0;
-  
-  // Fungsi untuk mengubah periode yang dipilih
+
   const handlePeriodChange = (period) => {
     setSelectedPeriod(period);
+    setIsAnimating(true);
   };
-  
+
   return (
     <motion.div 
       variants={chartContainerVariants}
@@ -1044,115 +1198,141 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
       animate="visible"
       className="chart-container p-5"
     >
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-          <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
-          Analisis Tingkat Kepercayaan AI
-        </h3>
+      <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+        <span className="w-2 h-6 bg-gradient-to-b from-purple-500 to-indigo-500 rounded-full mr-3"></span>
+        Analisis Tingkat Kepercayaan AI
+      </h3>
+      
+      <div className="mb-6 flex flex-wrap items-center justify-between">
+        <p className="text-sm text-gray-600 mb-2 md:mb-0">
+          Menampilkan tren tingkat kepercayaan AI dan tingkat keparahan dari waktu ke waktu
+        </p>
         
         <div className="flex space-x-2">
-          <button 
+          <motion.button 
             onClick={() => handlePeriodChange('month')}
-            className={`px-3 py-1 text-xs rounded-md transition-all ${
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-3 py-1 text-xs rounded-full transition-all duration-300 ${
               selectedPeriod === 'month' 
-                ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md' 
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             1 Bulan
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={() => handlePeriodChange('quarter')}
-            className={`px-3 py-1 text-xs rounded-md transition-all ${
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-3 py-1 text-xs rounded-full transition-all duration-300 ${
               selectedPeriod === 'quarter' 
-                ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md' 
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             3 Bulan
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={() => handlePeriodChange('year')}
-            className={`px-3 py-1 text-xs rounded-md transition-all ${
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-3 py-1 text-xs rounded-full transition-all duration-300 ${
               selectedPeriod === 'year' 
-                ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md' 
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             1 Tahun
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
             onClick={() => handlePeriodChange('all')}
-            className={`px-3 py-1 text-xs rounded-md transition-all ${
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`px-3 py-1 text-xs rounded-full transition-all duration-300 ${
               selectedPeriod === 'all' 
-                ? 'bg-indigo-100 text-indigo-700 font-medium' 
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md' 
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             Semua
-          </button>
+          </motion.button>
         </div>
       </div>
       
-      <ReactApexChart 
-        options={options}
-        series={series}
-        type="line"
-        height={320}
-      />
+      {noDataAvailable ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center justify-center h-64 bg-gray-50 rounded-lg border border-gray-200"
+        >
+          <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-gray-600 text-center">Tidak ada data analisis yang tersedia untuk periode ini.</p>
+          <p className="text-gray-500 text-sm mt-2">Silakan lakukan analisis retina untuk melihat data.</p>
+        </motion.div>
+      ) : (
+        <div className="relative">
+          {isAnimating && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10 rounded-lg">
+              <motion.div
+                animate={{ 
+                  rotate: 360,
+                  transition: { 
+                    repeat: Infinity, 
+                    duration: 1.5, 
+                    ease: "linear" 
+                  }
+                }}
+                className="w-10 h-10 border-4 border-t-4 rounded-full"
+                style={{
+                  borderColor: `${theme.accent}30`,
+                  borderTopColor: theme.primary
+                }}
+              />
+            </div>
+          )}
+          <ReactApexChart 
+            options={options}
+            series={series}
+            type="line"
+            height={350}
+          />
+        </div>
+      )}
       
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100"
+          whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+          className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100 transition-all duration-300"
         >
-          <p className="text-xs text-gray-500">Tertinggi</p>
-          <p className="text-lg font-bold text-green-600">{highestConfidence}%</p>
+          <p className="text-sm text-gray-500 mb-1">Rata-rata Kepercayaan AI</p>
+          <p className="text-2xl font-bold text-blue-600">{confidenceLevels.average}%</p>
         </motion.div>
         <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+          whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+          className="bg-gradient-to-br from-green-50 to-teal-50 p-4 rounded-lg border border-green-100 transition-all duration-300"
         >
-          <p className="text-xs text-gray-500">Rata-rata</p>
-          <p className="text-lg font-bold text-blue-600">{avgConfidence}%</p>
+          <p className="text-sm text-gray-500 mb-1">Kepercayaan Tertinggi</p>
+          <p className="text-2xl font-bold text-green-600">{confidenceLevels.highest}%</p>
         </motion.div>
         <motion.div 
-          whileHover={{ scale: 1.05 }}
-          className="p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100"
+          whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+          className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-100 transition-all duration-300"
         >
-          <p className="text-xs text-gray-500">Terendah</p>
-          <p className="text-lg font-bold text-amber-600">{lowestConfidence}%</p>
+          <p className="text-sm text-gray-500 mb-1">Kepercayaan Terendah</p>
+          <p className="text-2xl font-bold text-amber-600">{confidenceLevels.lowest}%</p>
         </motion.div>
       </div>
-      
-      {highlightedPoint && (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-4 p-3 rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100"
-        >
-          <p className="text-sm font-medium text-gray-700">
-            Pada tanggal {chartData.categories[highlightedPoint.dataPointIndex]}, 
-            {highlightedPoint.seriesIndex === 0 ? (
-              <span> tingkat kepercayaan AI adalah <span className="font-bold text-indigo-600">{chartData.confidenceSeries[highlightedPoint.dataPointIndex]}%</span></span>
-            ) : (
-              <span> tingkat keparahan adalah <span className="font-bold text-purple-600">
-                {chartData.severitySeries[highlightedPoint.dataPointIndex] === 0 && 'Tidak ada'}
-                {chartData.severitySeries[highlightedPoint.dataPointIndex] === 25 && 'Ringan'}
-                {chartData.severitySeries[highlightedPoint.dataPointIndex] === 50 && 'Sedang'}
-                {chartData.severitySeries[highlightedPoint.dataPointIndex] === 75 && 'Berat'}
-                {chartData.severitySeries[highlightedPoint.dataPointIndex] === 100 && 'Sangat Berat'}
-              </span></span>
-            )}
-          </p>
-        </motion.div>
-      )}
     </motion.div>
   );
 };
 
 const DashboardCharts = () => {
   const [patients, setPatients] = useState([]);
+  const [analyses, setAnalyses] = useState([]);
   const [severityDistribution, setSeverityDistribution] = useState([0, 0, 0, 0, 0]);
   const [monthlyTrend, setMonthlyTrend] = useState({
     categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -1169,6 +1349,10 @@ const DashboardCharts = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(60); // dalam detik
+  const [refreshCountdown, setRefreshCountdown] = useState(0);
   const { theme } = useTheme();
   
   // Tambahkan state untuk statistik pengguna
@@ -1177,6 +1361,18 @@ const DashboardCharts = () => {
     lastActivity: '-',
     profileStatus: 'Aktif'
   });
+
+  // Format tanggal dan waktu
+  const formatDateTime = (date) => {
+    return date.toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
 
   // Refresh data function
   const refreshData = useCallback(async () => {
@@ -1205,8 +1401,12 @@ const DashboardCharts = () => {
         console.log('Setting patients:', dashboardData.patients ? dashboardData.patients.length : 0);
         setPatients(dashboardData.patients || []);
         
+        // Simpan data analisis
+        console.log('Setting analyses:', dashboardData.analyses ? dashboardData.analyses.length : 0);
+        setAnalyses(dashboardData.analyses || []);
+        
         // Update user stats
-        const totalAnalyses = dashboardData.patients ? dashboardData.patients.length : 0;
+        const totalAnalyses = dashboardData.analyses ? dashboardData.analyses.length : 0;
         let lastActivity = '-';
         
         if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
@@ -1220,6 +1420,11 @@ const DashboardCharts = () => {
           lastActivity,
           profileStatus: 'Aktif'
         });
+
+        // Update waktu refresh terakhir
+        setLastRefresh(new Date());
+        // Reset countdown
+        setRefreshCountdown(refreshInterval);
       } else {
         // Jika tidak ada data, tampilkan pesan error
         setError('Tidak ada data yang diterima dari server');
@@ -1231,7 +1436,39 @@ const DashboardCharts = () => {
       setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshInterval]);
+
+  // Toggle auto refresh
+  const toggleAutoRefresh = () => {
+    setAutoRefresh(prev => !prev);
+  };
+
+  // Handle interval change
+  const handleIntervalChange = (e) => {
+    const newInterval = parseInt(e.target.value);
+    setRefreshInterval(newInterval);
+    setRefreshCountdown(newInterval);
+  };
+
+  // Countdown timer untuk auto refresh
+  useEffect(() => {
+    let timer;
+    if (autoRefresh && !isLoading) {
+      timer = setInterval(() => {
+        setRefreshCountdown(prev => {
+          if (prev <= 1) {
+            refreshData();
+            return refreshInterval;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [autoRefresh, refreshInterval, isLoading, refreshData]);
 
   // Fetch data from API
   useEffect(() => {
@@ -1263,8 +1500,12 @@ const DashboardCharts = () => {
           console.log('Setting patients:', dashboardData.patients ? dashboardData.patients.length : 0);
           setPatients(dashboardData.patients || []);
           
+          // Simpan data analisis
+          console.log('Setting analyses:', dashboardData.analyses ? dashboardData.analyses.length : 0);
+          setAnalyses(dashboardData.analyses || []);
+          
           // Update user stats
-          const totalAnalyses = dashboardData.patients ? dashboardData.patients.length : 0;
+          const totalAnalyses = dashboardData.analyses ? dashboardData.analyses.length : 0;
           let lastActivity = '-';
           
           if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
@@ -1278,6 +1519,11 @@ const DashboardCharts = () => {
             lastActivity,
             profileStatus: 'Aktif'
           });
+
+          // Update waktu refresh terakhir
+          setLastRefresh(new Date());
+          // Set countdown
+          setRefreshCountdown(refreshInterval);
         } else {
           // Jika tidak ada data, tampilkan pesan error
           setError('Tidak ada data yang diterima dari server');
@@ -1292,7 +1538,7 @@ const DashboardCharts = () => {
     };
     
     fetchDashboardData();
-  }, []);
+  }, [refreshInterval]);
 
   const chartContainerStyle = {
     ...glassEffect,
@@ -1412,7 +1658,7 @@ const DashboardCharts = () => {
               }}
               className="rounded-xl overflow-hidden transition-all duration-300"
             >
-              <ConfidenceSeverityTimelineChart analyses={patients} />
+              <ConfidenceSeverityTimelineChart analyses={analyses} />
             </motion.div>
             
             {/* Statistik Pengguna */}
@@ -1441,7 +1687,7 @@ const DashboardCharts = () => {
                 </motion.div>
                 <motion.div 
                   whileHover={{ scale: 1.03 }}
-                  className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-lg border border-green-100"
+                  className="bg-gradient-to-br from-green-50 to-teal-50 p-6 rounded-lg border border-green-100"
                 >
                   <p className="text-sm text-gray-500 mb-2">Terakhir Aktivitas</p>
                   <p className="text-3xl font-bold" style={{ color: theme.accent }}>{userStats.lastActivity}</p>
@@ -1456,24 +1702,68 @@ const DashboardCharts = () => {
               </div>
             </motion.div>
 
+            {/* Refresh Controls */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
-              className="mt-4 flex items-center justify-end"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.5 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
             >
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={refreshData}
-                disabled={isLoading}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg flex items-center space-x-2"
-              >
-                <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>{isLoading ? 'Memuat...' : 'Refresh Data'}</span>
-              </motion.button>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center space-x-4">
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={refreshData}
+                    disabled={isLoading}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg flex items-center space-x-2"
+                  >
+                    <svg className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>{isLoading ? 'Memuat...' : 'Refresh Data'}</span>
+                  </motion.button>
+                  
+                  <div className="flex items-center">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={autoRefresh} 
+                        onChange={toggleAutoRefresh}
+                        className="sr-only peer" 
+                      />
+                      <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <span className="ms-3 text-sm font-medium text-gray-700">Auto Refresh</span>
+                    </label>
+                  </div>
+                  
+                  {autoRefresh && (
+                    <div className="flex items-center space-x-2">
+                      <select 
+                        value={refreshInterval} 
+                        onChange={handleIntervalChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                      >
+                        <option value="30">30 detik</option>
+                        <option value="60">1 menit</option>
+                        <option value="300">5 menit</option>
+                        <option value="600">10 menit</option>
+                      </select>
+                      
+                      <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        Refresh dalam: <span className="font-medium">{refreshCountdown}</span> detik
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="text-xs text-gray-500 flex items-center">
+                  <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Terakhir diperbarui: {formatDateTime(lastRefresh)}
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
