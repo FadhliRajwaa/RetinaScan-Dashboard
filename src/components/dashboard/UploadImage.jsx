@@ -187,66 +187,94 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
   
   // Fungsi untuk menangani hasil upload yang sukses
   const handleUploadSuccess = (result) => {
-    // Pastikan semua data tersedia
-    if (result && result.analysis && result.analysis.id) {
-      // Simpan data hasil analisis ke localStorage sementara untuk diakses di halaman hasil
-      const analysisData = {
-        id: result.analysis.id,
-        _id: result.analysis.id, // Tambahkan _id juga untuk konsistensi
-        patientId: selectedPatient._id,
-        patientName: selectedPatient.fullName || selectedPatient.name,
-        patient: selectedPatient, // Simpan semua data pasien
-        timestamp: result.analysis.timestamp,
-        imageUrl: result.analysis.imageUrl,
-        imageData: result.analysis.imageData, // Tambahkan imageData jika ada
-        severity: result.analysis.results.severity,
-        severityLevel: result.analysis.results.severityLevel,
-        classification: result.analysis.results.classification,
-        confidence: result.analysis.results.confidence,
-        recommendation: result.analysis.recommendation,
-        notes: result.analysis.notes,
-        isSimulation: result.analysis.results.isSimulation || false,
-        originalFilename: file.name || 'uploaded-image',
-        createdAt: result.analysis.timestamp || new Date().toISOString()
-      };
-      
-      localStorage.setItem('currentAnalysis', JSON.stringify(analysisData));
-      
-      // Reset form setelah berhasil
-      setFile(null);
-      setPreview(null);
-      setSelectedPatient(null);
-      setError('');
-      
-      // Gunakan callback onUploadSuccess jika tersedia
-      if (onUploadSuccess && typeof onUploadSuccess === 'function') {
-        console.log('Memanggil callback onUploadSuccess');
-        // Format data sesuai harapan parent component
-        const formattedResult = {
-          _id: result.analysis.id, // Tambahkan _id untuk konsistensi
-          id: result.analysis.id,
-          prediction: {
-            severity: result.analysis.results.severity,
-            severityLevel: result.analysis.results.severityLevel,
-            confidence: result.analysis.results.confidence,
-            recommendation: result.analysis.recommendation,
-            analysisId: result.analysis.id,
-            patientId: selectedPatient._id,
-            isSimulation: result.analysis.results.isSimulation || false
-          },
-          preview: preview,
-          file: file,
-          patient: selectedPatient,
-          patientId: selectedPatient, // Duplikasi patientId untuk kompabilitas
-          imageData: result.analysis.imageData, // Tambahkan imageData
-          originalFilename: file.name || 'uploaded-image',
-          createdAt: result.analysis.timestamp || new Date().toISOString(),
-          response: result
+    console.log('Handling upload success with result:', result);
+    
+    // Implementasi defensive programming untuk menghindari error saat property tidak ada
+    if (result && result.analysis) {
+      try {
+        // Validasi dan ambil data yang dibutuhkan dengan nilai default jika tidak ada
+        const analysisId = result.analysis.id || result.analysis._id || '';
+        const patientId = selectedPatient?._id || '';
+        const patientName = selectedPatient?.fullName || selectedPatient?.name || 'Pasien';
+        const timestamp = result.analysis.timestamp || new Date().toISOString();
+        const imageUrl = result.analysis.imageUrl || preview || '';
+        const imageData = result.analysis.imageData || null;
+        
+        // Ambil data severity dari hasil dengan validasi bertingkat
+        // Cek dari hasil.results (format baru) atau langsung dari root (format lama)
+        const results = result.analysis.results || {};
+        const severity = result.analysis.results?.severity || result.analysis.severity || 'Tidak diketahui';
+        const severityLevel = result.analysis.results?.severityLevel || result.analysis.severityLevel || 0;
+        const classification = result.analysis.results?.classification || result.analysis.classification || 'Tidak diketahui';
+        const confidence = result.analysis.results?.confidence || result.analysis.confidence || 0;
+        const isSimulation = result.analysis.results?.isSimulation || result.analysis.isSimulation || false;
+        
+        // Ambil rekomendasi dan catatan
+        const recommendation = result.analysis.recommendation || 'Tidak ada rekomendasi';
+        const notes = result.analysis.notes || recommendation || '';
+        
+        // Simpan data hasil analisis ke localStorage sementara untuk diakses di halaman hasil
+        const analysisData = {
+          id: analysisId,
+          _id: analysisId, // Tambahkan _id juga untuk konsistensi
+          patientId: patientId,
+          patientName: patientName,
+          patient: selectedPatient, // Simpan semua data pasien
+          timestamp: timestamp,
+          imageUrl: imageUrl,
+          imageData: imageData, // Tambahkan imageData jika ada
+          severity: severity,
+          severityLevel: severityLevel,
+          classification: classification,
+          confidence: confidence,
+          recommendation: recommendation,
+          notes: notes,
+          isSimulation: isSimulation,
+          originalFilename: file?.name || 'uploaded-image',
+          createdAt: timestamp
         };
-        onUploadSuccess(formattedResult);
-      } else {
-        // Jika tidak ada callback, tampilkan pesan sukses
-        setSuccess('Gambar berhasil diunggah dan dianalisis.');
+        
+        localStorage.setItem('currentAnalysis', JSON.stringify(analysisData));
+        
+        // Reset form setelah berhasil
+        setFile(null);
+        setPreview(null);
+        setSelectedPatient(null);
+        setError('');
+        
+        // Gunakan callback onUploadSuccess jika tersedia
+        if (onUploadSuccess && typeof onUploadSuccess === 'function') {
+          console.log('Memanggil callback onUploadSuccess dengan data yang divalidasi');
+          // Format data sesuai harapan parent component dengan validasi
+          const formattedResult = {
+            _id: analysisId,
+            id: analysisId,
+            prediction: {
+              severity: severity,
+              severityLevel: severityLevel,
+              confidence: confidence,
+              recommendation: recommendation,
+              analysisId: analysisId,
+              patientId: patientId,
+              isSimulation: isSimulation
+            },
+            preview: preview,
+            file: file,
+            patient: selectedPatient,
+            patientId: selectedPatient, // Duplikasi patientId untuk kompabilitas
+            imageData: imageData,
+            originalFilename: file?.name || 'uploaded-image',
+            createdAt: timestamp,
+            response: result
+          };
+          onUploadSuccess(formattedResult);
+        } else {
+          // Jika tidak ada callback, tampilkan pesan sukses
+          setSuccess('Gambar berhasil diunggah dan dianalisis.');
+        }
+      } catch (parseError) {
+        console.error('Error parsing response data:', parseError);
+        setError(`Terjadi kesalahan saat memproses hasil analisis: ${parseError.message}`);
       }
     } else {
       console.error('Format respons tidak valid:', result);

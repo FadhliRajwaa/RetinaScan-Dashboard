@@ -15,22 +15,40 @@ function UploadImagePage({ toggleMobileMenu, isMobileMenuOpen }) {
     setUploadCount(prev => prev + 1);
     
     // Set upload result untuk ditampilkan di komponen Analysis
-    if (result && result.prediction) {
-      // Format data untuk komponen Analysis
-      const analysisData = {
-        severity: result.prediction.severity,
-        severityLevel: result.prediction.severityLevel,
-        confidence: result.prediction.confidence,
-        recommendation: result.prediction.recommendation,
-        image: {
-          preview: result.preview
-        },
-        analysisId: result.prediction.analysisId,
-        patientId: result.prediction.patientId,
-        isSimulation: result.prediction.isSimulation
-      };
-      
-      setUploadResult(analysisData);
+    if (result) {
+      try {
+        // Validasi dan ambil data prediction dengan nilai default jika tidak ada
+        const prediction = result.prediction || {};
+        
+        // Format data untuk komponen Analysis dengan validasi
+        const analysisData = {
+          severity: prediction.severity || 'Tidak diketahui',
+          severityLevel: prediction.severityLevel !== undefined ? prediction.severityLevel : 0,
+          confidence: prediction.confidence || 0,
+          recommendation: prediction.recommendation || 'Tidak ada rekomendasi',
+          image: {
+            preview: result.preview || null
+          },
+          analysisId: prediction.analysisId || result.id || '',
+          patientId: prediction.patientId || '',
+          isSimulation: prediction.isSimulation || false
+        };
+        
+        console.log('Data analisis yang diformat:', analysisData);
+        setUploadResult(analysisData);
+      } catch (error) {
+        console.error('Error saat memproses data hasil upload:', error);
+        // Tetap tampilkan hasil meskipun ada error dengan data minimal
+        setUploadResult({
+          severity: 'Tidak diketahui',
+          severityLevel: 0,
+          confidence: 0,
+          recommendation: 'Terjadi kesalahan saat memproses data',
+          image: {
+            preview: result.preview || null
+          }
+        });
+      }
     }
   };
 
