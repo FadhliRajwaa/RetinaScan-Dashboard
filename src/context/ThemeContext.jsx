@@ -1,79 +1,40 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { globalTheme, animations as sharedAnimations } from '../utils/theme';
 
-// Default theme
-const defaultTheme = {
-  primary: '#3b82f6', // blue-500
-  secondary: '#818cf8', // indigo-400
-  accent: '#06b6d4', // cyan-500
-  textColor: '#334155', // slate-700
-  backgroundColor: '#ffffff', // white
-  isDark: false,
-  chartColors: {
-    low: '#8ECAE6',
-    medium: '#219EBC',
-    high: '#023E8A',
-    veryHigh: '#03045E'
-  }
-};
+// Theme Context
+export const ThemeContext = createContext();
 
-// Create context
-const ThemeContext = createContext();
-
-// Theme provider component
+// Theme Provider Component
 export const ThemeProvider = ({ children }) => {
-  // Try to get theme from localStorage
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('dashboard-theme');
-    if (savedTheme) {
-      try {
-        return JSON.parse(savedTheme);
-      } catch (e) {
-        console.error('Error parsing theme from localStorage:', e);
-        return defaultTheme;
-      }
-    }
-    return defaultTheme;
-  });
-  
-  // Update body class when theme changes
+  const [isMobile, setIsMobile] = useState(false);
+  const [theme, setTheme] = useState(globalTheme);
+
+  // Deteksi perangkat mobile
   useEffect(() => {
-    if (theme.isDark) {
-      document.body.classList.add('dark');
-      document.documentElement.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme.isDark]);
-  
-  // Update CSS variables for theme colors
-  useEffect(() => {
-    document.documentElement.style.setProperty('--color-primary', theme.primary);
-    document.documentElement.style.setProperty('--color-secondary', theme.secondary);
-    document.documentElement.style.setProperty('--color-accent', theme.accent);
-    document.documentElement.style.setProperty('--color-text', theme.textColor);
-    document.documentElement.style.setProperty('--color-background', theme.backgroundColor);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
     
-    // Chart colors
-    document.documentElement.style.setProperty('--chart-color-low', theme.chartColors.low);
-    document.documentElement.style.setProperty('--chart-color-medium', theme.chartColors.medium);
-    document.documentElement.style.setProperty('--chart-color-high', theme.chartColors.high);
-    document.documentElement.style.setProperty('--chart-color-very-high', theme.chartColors.veryHigh);
-  }, [theme]);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, isMobile }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-// Custom hook to use theme
+// Custom hook untuk menggunakan theme context
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
@@ -103,6 +64,4 @@ export const withPageTransition = (Component) => {
 };
 
 // Export animations dari tema bersama
-export const animations = sharedAnimations;
-
-export default ThemeContext; 
+export const animations = sharedAnimations; 
