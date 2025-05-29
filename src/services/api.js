@@ -384,3 +384,22 @@ export const testFlaskConnection = async () => {
     };
   }
 };
+
+// Fungsi untuk mengambil riwayat analisis berdasarkan ID pasien
+export const getPatientHistory = async (patientId) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan');
+    }
+
+    const response = await axios.get(`${API_URL}/api/analysis/history/patient/${patientId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error getting patient history:', error);
+    throw error;
+  }
+};

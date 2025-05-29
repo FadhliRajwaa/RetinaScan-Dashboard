@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { getHistory } from '../../services/api';
-import { FiCalendar, FiAlertTriangle, FiPercent, FiFileText, FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiEye, FiUser, FiList, FiClock } from 'react-icons/fi';
+import { getHistory, deleteAnalysis } from '../../services/api';
+import { FiCalendar, FiAlertTriangle, FiPercent, FiFileText, FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiEye, FiUser, FiList, FiClock, FiTrash } from 'react-icons/fi';
 import axios from 'axios';
 
 function History() {
@@ -126,7 +126,15 @@ function History() {
 
   // Fungsi untuk navigasi ke halaman detail pasien
   const navigateToPatientDetail = (patientGroup) => {
-    navigate(`/patient-history/${patientGroup.patient._id}`);
+    // Dapatkan ID pasien dari berbagai kemungkinan struktur data
+    const patientId = patientGroup.patient._id || patientGroup.patient.id || patientGroup.patientId;
+    
+    if (!patientId) {
+      console.error('ID pasien tidak ditemukan:', patientGroup);
+      return;
+    }
+    
+    navigate(`/patient-history/${patientId}`);
   };
 
   // Handle sort direction change
@@ -204,12 +212,18 @@ function History() {
     analyses.forEach(analysis => {
       if (!analysis.patientId) return;
       
-      const patientId = analysis.patientId._id;
+      // Handle kasus di mana patientId bisa berupa objek atau string
+      const patientId = typeof analysis.patientId === 'object' ? analysis.patientId._id : analysis.patientId;
+      
+      // Dapatkan nama pasien dari berbagai kemungkinan sumber data
+      const patientName = typeof analysis.patientId === 'object' 
+        ? (analysis.patientId.fullName || analysis.patientId.name) 
+        : analysis.patientName || 'Pasien Tidak Diketahui';
       
       // Jika pasien belum ada di objek, tambahkan
       if (!groupedByPatient[patientId]) {
         groupedByPatient[patientId] = {
-          patient: analysis.patientId,
+          patient: typeof analysis.patientId === 'object' ? analysis.patientId : { _id: patientId, name: patientName },
           analyses: [analysis],
           latestAnalysis: analysis,
           totalAnalyses: 1
