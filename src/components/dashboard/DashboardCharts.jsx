@@ -1153,21 +1153,21 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
 
 const DashboardCharts = () => {
   const [patients, setPatients] = useState([]);
-  const [severityDistribution, setSeverityDistribution] = useState([20, 25, 30, 15, 10]);
+  const [severityDistribution, setSeverityDistribution] = useState([0, 0, 0, 0, 0]);
   const [monthlyTrend, setMonthlyTrend] = useState({
     categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    data: [30, 40, 35, 50, 49, 60, 70, 91, 125, 150, 180, 220]
+    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   });
   const [ageGroups, setAgeGroups] = useState({
     categories: ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61+'],
-    data: [5, 10, 15, 25, 20, 15, 10]
+    data: [0, 0, 0, 0, 0, 0, 0]
   });
   const [confidenceLevels, setConfidenceLevels] = useState({
-    average: 87,
-    highest: 98,
-    lowest: 72
+    average: 0,
+    highest: 0,
+    lowest: 0
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const { theme } = useTheme();
   
@@ -1189,46 +1189,40 @@ const DashboardCharts = () => {
       console.log('Dashboard data received:', dashboardData);
       
       if (dashboardData) {
-        if (dashboardData.severityDistribution) {
-          console.log('Setting severity distribution:', dashboardData.severityDistribution);
-          setSeverityDistribution(dashboardData.severityDistribution);
+        // Selalu update state dengan data dari API tanpa kondisi tambahan
+        console.log('Setting severity distribution:', dashboardData.severityDistribution);
+        setSeverityDistribution(dashboardData.severityDistribution);
+        
+        console.log('Setting monthly trend:', dashboardData.monthlyTrend);
+        setMonthlyTrend(dashboardData.monthlyTrend);
+        
+        console.log('Setting age groups:', dashboardData.ageGroups);
+        setAgeGroups(dashboardData.ageGroups);
+        
+        console.log('Setting confidence levels:', dashboardData.confidenceLevels);
+        setConfidenceLevels(dashboardData.confidenceLevels);
+        
+        console.log('Setting patients:', dashboardData.patients ? dashboardData.patients.length : 0);
+        setPatients(dashboardData.patients || []);
+        
+        // Update user stats
+        const totalAnalyses = dashboardData.patients ? dashboardData.patients.length : 0;
+        let lastActivity = '-';
+        
+        if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
+          const currentMonth = new Date().getMonth();
+          const thisMonthAnalyses = dashboardData.monthlyTrend.data[currentMonth] || 0;
+          lastActivity = `${thisMonthAnalyses} analisis bulan ini`;
         }
         
-        if (dashboardData.monthlyTrend) {
-          console.log('Setting monthly trend:', dashboardData.monthlyTrend);
-          setMonthlyTrend(dashboardData.monthlyTrend);
-        }
-        
-        if (dashboardData.ageGroups) {
-          console.log('Setting age groups:', dashboardData.ageGroups);
-          setAgeGroups(dashboardData.ageGroups);
-        }
-        
-        if (dashboardData.confidenceLevels) {
-          console.log('Setting confidence levels:', dashboardData.confidenceLevels);
-          setConfidenceLevels(dashboardData.confidenceLevels);
-        }
-        
-        if (dashboardData.patients) {
-          console.log('Setting patients:', dashboardData.patients.length);
-          setPatients(dashboardData.patients);
-          
-          // Update user stats
-          const totalAnalyses = dashboardData.patients.length;
-          let lastActivity = '-';
-          
-          if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
-            const currentMonth = new Date().getMonth();
-            const thisMonthAnalyses = dashboardData.monthlyTrend.data[currentMonth] || 0;
-            lastActivity = `${thisMonthAnalyses} analisis bulan ini`;
-          }
-          
-          setUserStats({
-            totalAnalyses,
-            lastActivity,
-            profileStatus: 'Aktif'
-          });
-        }
+        setUserStats({
+          totalAnalyses,
+          lastActivity,
+          profileStatus: 'Aktif'
+        });
+      } else {
+        // Jika tidak ada data, tampilkan pesan error
+        setError('Tidak ada data yang diterima dari server');
       }
       
       setIsLoading(false);
@@ -1253,46 +1247,40 @@ const DashboardCharts = () => {
         
         // Update state with real data if available
         if (dashboardData) {
-          if (dashboardData.severityDistribution) {
-            console.log('Setting severity distribution:', dashboardData.severityDistribution);
-            setSeverityDistribution(dashboardData.severityDistribution);
+          // Selalu update state dengan data dari API tanpa kondisi tambahan
+          console.log('Setting severity distribution:', dashboardData.severityDistribution);
+          setSeverityDistribution(dashboardData.severityDistribution);
+          
+          console.log('Setting monthly trend:', dashboardData.monthlyTrend);
+          setMonthlyTrend(dashboardData.monthlyTrend);
+          
+          console.log('Setting age groups:', dashboardData.ageGroups);
+          setAgeGroups(dashboardData.ageGroups);
+          
+          console.log('Setting confidence levels:', dashboardData.confidenceLevels);
+          setConfidenceLevels(dashboardData.confidenceLevels);
+          
+          console.log('Setting patients:', dashboardData.patients ? dashboardData.patients.length : 0);
+          setPatients(dashboardData.patients || []);
+          
+          // Update user stats
+          const totalAnalyses = dashboardData.patients ? dashboardData.patients.length : 0;
+          let lastActivity = '-';
+          
+          if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
+            const currentMonth = new Date().getMonth();
+            const thisMonthAnalyses = dashboardData.monthlyTrend.data[currentMonth] || 0;
+            lastActivity = `${thisMonthAnalyses} analisis bulan ini`;
           }
           
-          if (dashboardData.monthlyTrend) {
-            console.log('Setting monthly trend:', dashboardData.monthlyTrend);
-            setMonthlyTrend(dashboardData.monthlyTrend);
-          }
-          
-          if (dashboardData.ageGroups) {
-            console.log('Setting age groups:', dashboardData.ageGroups);
-            setAgeGroups(dashboardData.ageGroups);
-          }
-          
-          if (dashboardData.confidenceLevels) {
-            console.log('Setting confidence levels:', dashboardData.confidenceLevels);
-            setConfidenceLevels(dashboardData.confidenceLevels);
-          }
-          
-          if (dashboardData.patients) {
-            console.log('Setting patients:', dashboardData.patients.length);
-            setPatients(dashboardData.patients);
-            
-            // Update user stats
-            const totalAnalyses = dashboardData.patients.length;
-            let lastActivity = '-';
-            
-            if (totalAnalyses > 0 && dashboardData.monthlyTrend && dashboardData.monthlyTrend.data) {
-              const currentMonth = new Date().getMonth();
-              const thisMonthAnalyses = dashboardData.monthlyTrend.data[currentMonth] || 0;
-              lastActivity = `${thisMonthAnalyses} analisis bulan ini`;
-            }
-            
-            setUserStats({
-              totalAnalyses,
-              lastActivity,
-              profileStatus: 'Aktif'
-            });
-          }
+          setUserStats({
+            totalAnalyses,
+            lastActivity,
+            profileStatus: 'Aktif'
+          });
+        } else {
+          // Jika tidak ada data, tampilkan pesan error
+          setError('Tidak ada data yang diterima dari server');
         }
         
         setIsLoading(false);
@@ -1300,9 +1288,6 @@ const DashboardCharts = () => {
         console.error('Error fetching dashboard data:', err);
         setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
         setIsLoading(false);
-        
-        // Fallback to dummy data if API fails
-        // Keep existing dummy data
       }
     };
     
