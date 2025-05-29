@@ -16,13 +16,8 @@ import {
   FiBarChart2,
   FiRefreshCcw,
   FiTrash,
-  FiDownload,
-  FiEye,
-  FiInfo
+  FiDownload
 } from 'react-icons/fi';
-import { getSeverityBadge, getSeverityBgColor } from '../utils/severityUtils';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
 const FALLBACK_API_URLS = [
@@ -99,36 +94,6 @@ const formatImageUrl = (imagePath) => {
   return `/uploads/${filename}?t=${timestamp}`;
 };
 
-// Gunakan fungsi ini untuk mendapatkan sumber gambar dengan prioritas yang tepat
-const getImageSource = (analysis) => {
-  if (!analysis) {
-    console.warn('Analysis object is undefined or null');
-    return DEFAULT_IMAGE;
-  }
-  
-  // Prioritaskan imageData (base64) jika tersedia
-  if (analysis.imageData && analysis.imageData.startsWith('data:')) {
-    console.log('Using base64 image data');
-    return analysis.imageData;
-  }
-  
-  // Coba imageUrl jika tersedia
-  if (analysis.imageUrl) {
-    console.log('Using image URL:', analysis.imageUrl);
-    return formatImageUrl(analysis.imageUrl);
-  }
-  
-  // Coba imagePath jika tersedia (format lama)
-  if (analysis.imagePath) {
-    console.log('Using image path:', analysis.imagePath);
-    return formatImageUrl(analysis.imagePath);
-  }
-  
-  // Fallback ke gambar default jika tidak ada data gambar
-  console.log('No image data available, using default image');
-  return DEFAULT_IMAGE;
-};
-
 function PatientHistoryPageComponent() {
   const { patientId } = useParams();
   const navigate = useNavigate();
@@ -149,7 +114,6 @@ function PatientHistoryPageComponent() {
         setIsLoading(true);
         // Ambil semua riwayat analisis
         const data = await getHistory();
-        console.log('Fetched history data:', data.length);
         
         // Fungsi untuk mengelompokkan analisis berdasarkan pasien
         const groupAnalysesByPatient = (analyses) => {
@@ -201,25 +165,6 @@ function PatientHistoryPageComponent() {
           setError('Data pasien tidak ditemukan');
         } else {
           setPatientData(patientHistory);
-          console.log('Patient analyses:', patientHistory.analyses.length);
-          
-          // Persiapkan gambar dari analisis pertama
-          if (patientHistory.analyses.length > 0) {
-            const firstAnalysis = patientHistory.analyses[0];
-            setImageStatus('loading');
-            
-            // Periksa prioritas sumber gambar
-            if (firstAnalysis.imageData) {
-              console.log('Found imageData in first analysis');
-              setImageStatus('success');
-            } else if (firstAnalysis.imageUrl) {
-              console.log('Using imageUrl from first analysis');
-              setActiveImageUrl(formatImageUrl(firstAnalysis.imageUrl));
-            } else {
-              console.log('No image source found in first analysis');
-              setImageStatus('error');
-            }
-          }
         }
       } catch (err) {
         console.error('Error fetching patient history:', err);
@@ -237,73 +182,55 @@ function PatientHistoryPageComponent() {
     if (patientData && patientData.analyses.length > 0) {
       setImageStatus('loading');
       
-      const currentAnalysis = patientData.analyses[selectedAnalysisIndex];
-      
-      // Get image source with proper priority
-      const imgSrc = getImageSource(currentAnalysis);
-      
-      if (imgSrc.startsWith('data:')) {
-        // Base64 data is already available, set status to success
+      // Prioritaskan penggunaan imageData (base64) jika tersedia
+      if (patientData.analyses[selectedAnalysisIndex].imageData) {
+        // Jika ada imageData, tidak perlu URL tambahan
         setActiveImageUrl('');
-        setImageStatus('success');
+        console.log('Menggunakan data base64 dari database untuk analisis');
+      } 
+      // Jika tidak ada imageData, coba gunakan path sebagai fallback
+      else if (patientData.analyses[selectedAnalysisIndex].imagePath) {
+        const imageUrl = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+        setActiveImageUrl(imageUrl);
+        console.log('Menggunakan URL gambar sebagai fallback:', imageUrl);
       } else {
-        // Using URL, need to set active URL and check if it can be loaded
-        setActiveImageUrl(imgSrc);
-        // Status will be updated by the img onLoad/onError handler
+        // Tidak ada imageData atau imagePath, gunakan gambar default
+        setActiveImageUrl(DEFAULT_IMAGE);
+        console.log('Tidak ada data gambar tersedia, menggunakan gambar default');
       }
     }
   }, [selectedAnalysisIndex, patientData]);
 
-  // Handle image load errors
-  const handleImageError = () => {
-    console.error('Failed to load image from URL:', activeImageUrl);
-    setImageStatus('error');
-    
-    // If we've tried less than 3 times and have a URL, try a different format
-    if (imageLoadAttempt < 3 && activeImageUrl) {
-      setImageLoadAttempt(prev => prev + 1);
-      
-      // Try alternative URL format
-      const urlWithoutQuery = activeImageUrl.split('?')[0];
-      const newUrl = `${urlWithoutQuery}?attempt=${imageLoadAttempt + 1}`;
-      console.log('Trying alternative URL:', newUrl);
-      setActiveImageUrl(newUrl);
-    }
-  };
-
-  // Handle image load success
-  const handleImageLoaded = () => {
-    console.log('Image loaded successfully from URL:', activeImageUrl);
-    setImageStatus('success');
-  };
-
-  // Format date helper dengan validasi
+  // Format date helper
   const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    
-    try {
-      return format(new Date(dateString), 'dd MMMM yyyy, HH:mm', { locale: id });
-    } catch (error) {
-      console.error('Format date error:', error);
-      return 'Format tanggal tidak valid';
-    }
+    const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
   };
 
-  // Format percentage dengan validasi
-  const formatPercentage = (value) => {
-    if (value === undefined || value === null) return '0%';
-    
-    try {
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) return '0%';
-      
-      // Jika nilai sudah dalam persentase (misal 78 bukan 0.78)
-      if (numValue > 1) {
-        return numValue.toFixed(1) + '%';
+  // Get severity badge style
+  const getSeverityBadge = (severity) => {
+    const severityLower = severity.toLowerCase();
+    if (severityLower === 'tidak ada' || severityLower === 'normal') {
+      return 'bg-blue-100 text-blue-800';
+    } else if (severityLower === 'ringan' || severityLower === 'rendah') {
+      return 'bg-green-100 text-green-800';
+    } else if (severityLower === 'sedang') {
+      return 'bg-yellow-100 text-yellow-800';
+    } else if (severityLower === 'berat' || severityLower === 'parah') {
+      return 'bg-orange-100 text-orange-800';
+    } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
+      return 'bg-red-100 text-red-800';
+    } else {
+      // Fallback berdasarkan severityLevel jika ada
+      const level = parseInt(severity);
+      if (!isNaN(level)) {
+        if (level === 0) return 'bg-blue-100 text-blue-800';
+        if (level === 1) return 'bg-green-100 text-green-800';
+        if (level === 2) return 'bg-yellow-100 text-yellow-800';
+        if (level === 3) return 'bg-orange-100 text-orange-800';
+        if (level === 4) return 'bg-red-100 text-red-800';
       }
-      return (numValue * 100).toFixed(1) + '%';
-    } catch (error) {
-      return '0%';
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -418,26 +345,6 @@ function PatientHistoryPageComponent() {
       y: 0, 
       opacity: 1,
       transition: { type: 'spring', stiffness: 100, damping: 12 }
-    }
-  };
-
-  // Safe extraction helper function
-  const extractValueWithDefault = (obj, path, defaultValue) => {
-    try {
-      const parts = path.split('.');
-      let current = obj;
-      
-      for (const part of parts) {
-        if (current === undefined || current === null) {
-          return defaultValue;
-        }
-        current = current[part];
-      }
-      
-      return current !== undefined && current !== null ? current : defaultValue;
-    } catch (e) {
-      console.error(`Error extracting ${path}:`, e);
-      return defaultValue;
     }
   };
 
@@ -831,208 +738,208 @@ function PatientHistoryPageComponent() {
               variants={itemVariants}
               className="lg:col-span-8"
             >
-              {/* Image and details */}
-              <div className="p-6">
-                {patientData.analyses.length > 0 ? (
+              {patientData.analyses.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                  <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
                     <div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      {/* Image container */}
-                      <div className="relative bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden p-4">
-                        <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
-                          <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center mr-3 shadow-md">
-                            <FiEye className="text-white" />
+                    <h2 className="text-lg font-semibold">Detail Analisis</h2>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
+                    </p>
                     </div>
-                          <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
-                            Citra Retina
-                          </span>
-                        </h3>
-                        
-                        <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-lg">
-                          {/* Loading state */}
-                          {imageStatus === 'loading' && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10">
-                              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+                    <button
+                      onClick={handleDownloadPdf}
+                      disabled={isPdfLoading}
+                      className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
+                    >
+                      <FiDownload />
+                      {isPdfLoading ? 'Memproses...' : 'Unduh PDF'}
+                    </button>
                   </div>
-                          )}
-                          
-                          {/* Image */}
-                          <img 
-                            src={activeImageUrl || getImageSource(patientData.analyses[selectedAnalysisIndex])}
-                            alt="Retina scan" 
-                            className="w-full h-full object-contain"
-                            onLoad={handleImageLoaded}
-                            onError={handleImageError}
-                            style={{ display: imageStatus === 'loading' ? 'none' : 'block' }}
-                          />
-                          
-                          {/* Error state */}
-                          {imageStatus === 'error' && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20">
-                              <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
-                              <p className="text-white text-center">Gambar tidak dapat ditampilkan</p>
+                  
+                  <div className="p-6 space-y-6">
+                    {/* Image Preview */}
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
+                        <div className="flex gap-1">
                           <button 
                             onClick={() => {
+                              const imgEl = document.getElementById('retina-image');
+                              if (imgEl) {
+                                delete imgEl.dataset.fallbackAttempted;
                                 setImageStatus('loading');
-                                  setImageLoadAttempt(0);
-                                  // Force reload image with different URL
-                                  const analysis = patientData.analyses[selectedAnalysisIndex];
-                                  const newUrl = getImageSource(analysis) + '?reload=' + Date.now();
-                                  setActiveImageUrl(newUrl);
-                                }}
-                                className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                              >
-                                Coba Lagi
+                                setImageLoadAttempt(prev => prev + 1);
+                                
+                                // Enforce re-rendering with a small delay
+                                setTimeout(() => {
+                                  if (patientData.analyses[selectedAnalysisIndex].imagePath) {
+                                  imgEl.src = formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath);
+                                  } else if (patientData.analyses[selectedAnalysisIndex].imageData) {
+                                    imgEl.src = patientData.analyses[selectedAnalysisIndex].imageData;
+                                  }
+                                }, 50);
+                              }
+                            }}
+                            className="px-2 py-1 bg-green-500 text-white rounded text-xs flex items-center"
+                            title="Muat ulang gambar"
+                          >
+                            <FiRefreshCcw className="mr-1" /> Refresh
                           </button>
                         </div>
+                      </div>
+                      
+                      {/* Debug info panel (tersembunyi) */}
+                      <div id="debug-image-info" className="mb-2 p-2 bg-gray-700 text-white text-xs rounded hidden">
+                        {patientData.analyses[selectedAnalysisIndex].imagePath && (
+                          <>
+                            <p><strong>Original:</strong> {patientData.analyses[selectedAnalysisIndex].imagePath}</p>
+                            <p><strong>Filename:</strong> {patientData.analyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop()}</p>
+                            <p><strong>URL:</strong> {formatImageUrl(patientData.analyses[selectedAnalysisIndex].imagePath)}</p>
+                          </>
                         )}
                       </div>
                       
-                        <div className="mt-4 text-center">
-                          <p className="text-sm text-gray-500">
-                            {extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'originalFilename', 'Nama file tidak tersedia')}
-                          </p>
+                      <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
+                        {patientData.analyses[selectedAnalysisIndex] ? (
+                          <>
+                            {imageStatus === 'loading' && (
+                              <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
+                                <div className="flex flex-col items-center space-y-2">
+                                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                                  <p className="text-xs text-gray-600">Memuat gambar...</p>
                                 </div>
                               </div>
-                      
-                      {/* Analysis details */}
-                      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden p-4">
-                        <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
-                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 shadow-md">
-                            <FiInfo className="text-white" />
+                            )}
+                            <img 
+                              id="retina-image"
+                              src={patientData.analyses[selectedAnalysisIndex].imageData || activeImageUrl || DEFAULT_IMAGE}
+                              alt="Retina scan"
+                              className="object-cover w-full h-full"
+                              onLoad={() => setImageStatus('success')}
+                              onError={(e) => {
+                                console.error('Error loading image:', e.target.src.substring(0, 50) + '...');
+                                
+                                // Stop onError dari berjalan lagi untuk mencegah infinite loop
+                                e.target.onerror = null;
+                                
+                                // Tandai error dan gunakan gambar default
+                                setImageStatus('error');
+                                
+                                // Prioritaskan imageData (base64) jika tersedia
+                                if (patientData.analyses[selectedAnalysisIndex].imageData) {
+                                  console.log('Menggunakan data base64 dari database');
+                                  
+                                  // Pastikan imageData adalah string base64 yang valid
+                                  const imageData = patientData.analyses[selectedAnalysisIndex].imageData;
+                                  if (imageData && imageData.startsWith('data:')) {
+                                    e.target.src = imageData;
+                                    return;
+                                  }
+                                }
+                                
+                                // Coba file path sebagai alternatif jika yang gagal adalah base64
+                                if (activeImageUrl) {
+                                  console.log('Mencoba menggunakan URL file sebagai fallback');
+                                  e.target.src = activeImageUrl;
+                                  return;
+                                }
+                                
+                                // Gunakan gambar not-found.jpg sebagai fallback terakhir
+                                e.target.src = DEFAULT_IMAGE;
+                                console.log('Menggunakan gambar tidak ditemukan:', DEFAULT_IMAGE);
+                              }}
+                            />
+                            
+                            {imageStatus === 'error' && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-red-500/80 p-2 text-xs text-white text-center">
+                                Gagal memuat gambar. Silakan coba tombol Refresh atau API alternatif.
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-gray-500 text-sm">Gambar tidak tersedia</p>
                           </div>
-                          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                            Detail Analisis
-                          </span>
-                        </h3>
-                        
-                        <div className="space-y-4">
-                          {/* Date and time */}
-                          <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <FiCalendar className="text-blue-500 mr-3" />
-                            <div>
-                              <p className="text-xs text-gray-500">Tanggal & Waktu</p>
-                              <p className="font-medium">
-                                {formatDate(extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'createdAt', ''))}
-                              </p>
+                        )}
                       </div>
                     </div>
                     
-                          {/* Severity */}
-                          <div className="flex items-center p-3 rounded-lg" 
-                            style={{ 
-                              backgroundColor: getSeverityBgColor(
-                                extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'severity', 'Tidak diketahui')
-                              ) + '20' 
-                            }}
-                          >
-                            <FiAlertTriangle className="mr-3" style={{ 
-                              color: getSeverityBgColor(
-                                extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'severity', 'Tidak diketahui')
-                              ) 
-                            }} />
-                            <div>
-                              <p className="text-xs text-gray-500">Tingkat Keparahan</p>
-                              <p className="font-medium">
-                                {extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'severity', 'Tidak diketahui')}
+                    {/* Analysis Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-gray-500 mb-2">Nama File</p>
+                        <p className="text-base font-medium break-words">
+                          {patientData.analyses[selectedAnalysisIndex].originalFilename}
                         </p>
                       </div>
+                      
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan</p>
+                        <span className={`px-3 py-1 rounded-full text-sm inline-block ${
+                          getSeverityBadge(patientData.analyses[selectedAnalysisIndex].severity)
+                        }`}>
+                          {patientData.analyses[selectedAnalysisIndex].severity}
+                        </span>
                       </div>
                       
-                          {/* Confidence */}
-                          <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                            <FiPercent className="text-blue-500 mr-3" />
-                            <div className="w-full">
-                              <div className="flex justify-between mb-1">
-                                <p className="text-xs text-gray-500">Tingkat Kepercayaan</p>
-                                <p className="text-xs font-medium">
-                                  {formatPercentage(extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'confidence', 0))}
-                                </p>
-                              </div>
-                              <div className="w-full h-2 bg-gray-200 rounded-full">
-                                <div 
-                                  className="h-full bg-blue-500 rounded-full"
-                                  style={{ 
-                                    width: formatPercentage(
-                                      extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'confidence', 0)
-                                    ) 
-                                  }}
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Kepercayaan</p>
+                        <div className="flex items-center">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                            <div 
+                              className="bg-blue-600 h-2.5 rounded-full" 
+                              style={{ width: `${(patientData.analyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
                             ></div>
                           </div>
+                          <span className="text-base font-medium min-w-[60px] text-right">
+                            {(patientData.analyses[selectedAnalysisIndex].confidence * 100).toFixed(1)}%
+                          </span>
                         </div>
                       </div>
                       
-                          {/* Notes */}
-                          <div className="p-3 bg-gray-50 rounded-lg">
-                            <p className="text-xs text-gray-500 mb-1">Catatan & Rekomendasi</p>
-                            <p className="text-sm">
-                              {extractValueWithDefault(
-                                patientData.analyses[selectedAnalysisIndex], 
-                                'notes', 
-                                extractValueWithDefault(patientData.analyses[selectedAnalysisIndex], 'recommendation', 'Tidak ada catatan')
-                              )}
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-gray-500 mb-2">Tanggal Analisis</p>
+                        <p className="text-base font-medium">
+                          {formatDate(patientData.analyses[selectedAnalysisIndex].createdAt)}
                         </p>
                       </div>
                     </div>
                     
-                        {/* Actions */}
-                        <div className="mt-6 flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleDownloadPdf()}
-                            disabled={isPdfLoading}
-                            className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors flex items-center disabled:opacity-50"
-                          >
-                            {isPdfLoading ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-blue-500 mr-2"></div>
-                            ) : (
-                              <FiDownload className="mr-2" />
-                            )}
-                            Unduh PDF
-                          </button>
-                        </div>
+                    {/* Notes */}
+                    {patientData.analyses[selectedAnalysisIndex].notes && (
+                      <div className="bg-gray-100 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-gray-500 mb-2">Catatan</p>
+                        <p className="text-base">
+                          {patientData.analyses[selectedAnalysisIndex].notes}
+                        </p>
                       </div>
-                    </div>
+                    )}
                     
-                    {/* Recommendation section */}
-                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden p-4 mt-6">
-                      <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
-                        <FiFileText className="text-blue-500 mr-2" />
-                        Rekomendasi Tindak Lanjut
-                      </h3>
-                      
-                      <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
-                        <p className="text-blue-800">
-                          {(() => {
-                            const severity = extractValueWithDefault(
-                              patientData.analyses[selectedAnalysisIndex], 
-                              'severity', 
-                              'Tidak diketahui'
-                            ).toLowerCase();
-                            
-                            if (severity === 'tidak ada' || severity === 'normal') {
-                              return 'Lakukan pemeriksaan rutin setiap tahun.';
-                            } else if (severity === 'ringan') {
-                              return 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
-                            } else if (severity === 'sedang') {
-                              return 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
-                            } else if (severity === 'berat') {
-                              return 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
-                            } else if (severity === 'sangat berat' || severity === 'proliferative dr') {
-                              return 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
-                            } else {
-                              return 'Lakukan pemeriksaan rutin sesuai anjuran dokter.';
-                            }
-                          })()}
+                    {/* Recommendations based on severity */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
+                      <p className="text-base text-blue-700">
+                        {patientData.analyses[selectedAnalysisIndex].notes ? (
+                          patientData.analyses[selectedAnalysisIndex].notes
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
+                          'Lakukan pemeriksaan rutin setiap tahun.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'ringan' ? (
+                          'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'sedang' ? (
+                          'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'berat' ? (
+                          'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+                        ) : patientData.analyses[selectedAnalysisIndex].severity.toLowerCase() === 'sangat berat' ? (
+                          'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+                        ) : (
+                          'Lakukan pemeriksaan rutin setiap tahun.'
+                        )}
                       </p>
                     </div>
                   </div>
                 </div>
-                ) : (
-                  <div className="bg-gray-50 p-6 rounded-lg text-center">
-                    <FiInfo className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Belum ada data analisis untuk pasien ini</p>
-                  </div>
               )}
-              </div>
             </motion.div>
           </div>
         </motion.div>
