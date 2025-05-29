@@ -843,7 +843,7 @@ const AgeGenderHeatmapChart = ({ patients }) => {
   );
 };
 
-const ConfidenceSeverityTimelineChart = ({ analyses }) => {
+const ConfidenceSeverityTimelineChart = ({ analyses, confidenceLevels }) => {
   const { theme } = useTheme();
   const [chartData, setChartData] = useState({
     confidenceSeries: [],
@@ -854,6 +854,38 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
   const [highlightedPoint, setHighlightedPoint] = useState(null);
   const [noDataAvailable, setNoDataAvailable] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Menyediakan nilai default untuk confidenceLevels jika tidak ada
+  const defaultConfidenceLevels = useMemo(() => ({
+    average: 0,
+    highest: 0,
+    lowest: 0
+  }), []);
+  
+  // Gunakan confidenceLevels yang diberikan atau nilai default
+  const safeConfidenceLevels = useMemo(() => {
+    // Log untuk debugging
+    console.log('ConfidenceSeverityTimelineChart received confidenceLevels:', confidenceLevels);
+    
+    // Validasi confidenceLevels
+    if (!confidenceLevels) {
+      console.warn('ConfidenceSeverityTimelineChart: confidenceLevels prop is missing, using default values');
+      return defaultConfidenceLevels;
+    }
+    
+    // Validasi properti yang diharapkan
+    const { average, highest, lowest } = confidenceLevels;
+    if (average === undefined || highest === undefined || lowest === undefined) {
+      console.warn('ConfidenceSeverityTimelineChart: confidenceLevels is missing required properties, using default values');
+      return {
+        average: average ?? defaultConfidenceLevels.average,
+        highest: highest ?? defaultConfidenceLevels.highest,
+        lowest: lowest ?? defaultConfidenceLevels.lowest
+      };
+    }
+    
+    return confidenceLevels;
+  }, [confidenceLevels, defaultConfidenceLevels]);
   
   // Mapping tingkat keparahan ke nilai numerik untuk visualisasi
   const severityMapping = {
@@ -1309,21 +1341,21 @@ const ConfidenceSeverityTimelineChart = ({ analyses }) => {
           className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-100 transition-all duration-300"
         >
           <p className="text-sm text-gray-500 mb-1">Rata-rata Kepercayaan AI</p>
-          <p className="text-2xl font-bold text-blue-600">{confidenceLevels.average}%</p>
+          <p className="text-2xl font-bold text-blue-600">{safeConfidenceLevels.average}%</p>
         </motion.div>
         <motion.div 
           whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
           className="bg-gradient-to-br from-green-50 to-teal-50 p-4 rounded-lg border border-green-100 transition-all duration-300"
         >
           <p className="text-sm text-gray-500 mb-1">Kepercayaan Tertinggi</p>
-          <p className="text-2xl font-bold text-green-600">{confidenceLevels.highest}%</p>
+          <p className="text-2xl font-bold text-green-600">{safeConfidenceLevels.highest}%</p>
         </motion.div>
         <motion.div 
           whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
           className="bg-gradient-to-br from-amber-50 to-orange-50 p-4 rounded-lg border border-amber-100 transition-all duration-300"
         >
           <p className="text-sm text-gray-500 mb-1">Kepercayaan Terendah</p>
-          <p className="text-2xl font-bold text-amber-600">{confidenceLevels.lowest}%</p>
+          <p className="text-2xl font-bold text-amber-600">{safeConfidenceLevels.lowest}%</p>
         </motion.div>
       </div>
     </motion.div>
@@ -1395,8 +1427,24 @@ const DashboardCharts = () => {
         console.log('Setting age groups:', dashboardData.ageGroups);
         setAgeGroups(dashboardData.ageGroups);
         
-        console.log('Setting confidence levels:', dashboardData.confidenceLevels);
-        setConfidenceLevels(dashboardData.confidenceLevels);
+        // Validasi confidenceLevels sebelum menetapkan state
+        if (dashboardData.confidenceLevels) {
+          console.log('Setting confidence levels:', dashboardData.confidenceLevels);
+          // Pastikan semua properti yang diharapkan ada
+          const validatedConfidenceLevels = {
+            average: dashboardData.confidenceLevels.average ?? 0,
+            highest: dashboardData.confidenceLevels.highest ?? 0,
+            lowest: dashboardData.confidenceLevels.lowest ?? 0
+          };
+          setConfidenceLevels(validatedConfidenceLevels);
+        } else {
+          console.warn('Dashboard data does not contain confidenceLevels, using default values');
+          setConfidenceLevels({
+            average: 0,
+            highest: 0,
+            lowest: 0
+          });
+        }
         
         console.log('Setting patients:', dashboardData.patients ? dashboardData.patients.length : 0);
         setPatients(dashboardData.patients || []);
@@ -1494,8 +1542,24 @@ const DashboardCharts = () => {
           console.log('Setting age groups:', dashboardData.ageGroups);
           setAgeGroups(dashboardData.ageGroups);
           
-          console.log('Setting confidence levels:', dashboardData.confidenceLevels);
-          setConfidenceLevels(dashboardData.confidenceLevels);
+          // Validasi confidenceLevels sebelum menetapkan state
+          if (dashboardData.confidenceLevels) {
+            console.log('Setting confidence levels:', dashboardData.confidenceLevels);
+            // Pastikan semua properti yang diharapkan ada
+            const validatedConfidenceLevels = {
+              average: dashboardData.confidenceLevels.average ?? 0,
+              highest: dashboardData.confidenceLevels.highest ?? 0,
+              lowest: dashboardData.confidenceLevels.lowest ?? 0
+            };
+            setConfidenceLevels(validatedConfidenceLevels);
+          } else {
+            console.warn('Dashboard data does not contain confidenceLevels, using default values');
+            setConfidenceLevels({
+              average: 0,
+              highest: 0,
+              lowest: 0
+            });
+          }
           
           console.log('Setting patients:', dashboardData.patients ? dashboardData.patients.length : 0);
           setPatients(dashboardData.patients || []);
@@ -1658,7 +1722,12 @@ const DashboardCharts = () => {
               }}
               className="rounded-xl overflow-hidden transition-all duration-300"
             >
-              <ConfidenceSeverityTimelineChart analyses={analyses} />
+              {/* Log untuk debugging */}
+              {console.log('Rendering ConfidenceSeverityTimelineChart with confidenceLevels:', confidenceLevels)}
+              <ConfidenceSeverityTimelineChart 
+                analyses={analyses} 
+                confidenceLevels={confidenceLevels}  // Lewatkan confidenceLevels sebagai prop
+              />
             </motion.div>
             
             {/* Statistik Pengguna */}
