@@ -146,8 +146,11 @@ const EnhancedSeverityChart = ({ data, loading }) => {
   
   // Render labels inside each segment of the pie chart
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
+    // Jika persentase sangat kecil, jangan tampilkan label
+    if (percent < 0.03) return null;
+    
     // Adjust radial position of label based on segment size
-    const adjustedRadius = percent < 0.05 ? outerRadius * 1.3 : (outerRadius + innerRadius) / 2;
+    const adjustedRadius = outerRadius * 0.72; // Posisikan label lebih ke dalam
     
     // Calculate position
     const RADIAN = Math.PI / 180;
@@ -155,53 +158,39 @@ const EnhancedSeverityChart = ({ data, loading }) => {
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     
-    // Adjust position for very small slices to avoid overlap
-    let textAnchor;
-    let labelX = x;
-    let offsetY = 0;
-    
-    if (x < cx) {
-      textAnchor = "end";
-      if (percent < 0.05) labelX -= 10;
-    } else {
-      textAnchor = "start";
-      if (percent < 0.05) labelX += 10;
-    }
-    
-    if (Math.abs(y - cy) < 10) {
-      offsetY = y < cy ? -5 : 15;
-    }
+    // Tentukan posisi teks
+    const textAnchor = "middle";
     
     return (
       <g>
-        {/* Show value (percentage) for all segments */}
+        {/* Show value (percentage) for all segments with stronger styling */}
         <text 
-          x={labelX} 
-          y={y + offsetY} 
-          fill={percent < 0.05 ? COLORS[index] : "#fff"} 
+          x={x} 
+          y={y} 
+          fill="#FFFFFF" 
           textAnchor={textAnchor} 
           dominantBaseline="central"
-          className="text-xs font-semibold"
+          className="text-sm font-bold"
           style={{ 
-            filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5))',
-            textShadow: '0px 0px 3px rgba(0, 0, 0, 0.5)'
+            textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+            fontWeight: 800
           }}
         >
           {`${(percent * 100).toFixed(0)}%`}
         </text>
         
-        {/* Show label for larger segments only to avoid clutter */}
-        {percent > 0.08 && (
+        {/* Show label for larger segments only */}
+        {percent > 0.1 && (
           <text 
-            x={labelX} 
-            y={y + offsetY + 15} 
-            fill="#fff" 
+            x={x} 
+            y={y + 15} 
+            fill="#FFFFFF" 
             textAnchor={textAnchor} 
             dominantBaseline="central"
             className="text-xs"
             style={{ 
-              filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5))',
-              textShadow: '0px 0px 3px rgba(0, 0, 0, 0.5)'
+              textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+              fontWeight: 600
             }}
           >
             {name}
@@ -247,7 +236,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
             cx="50%"
             cy="50%"
             innerRadius={60}
-            outerRadius={80}
+            outerRadius={90} // Sedikit lebih besar agar label terlihat jelas
             dataKey="value"
             paddingAngle={4}
             cornerRadius={3}
@@ -312,7 +301,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+              className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
             >
               <p className="font-semibold text-sm" style={{ color: COLORS[activeIndex] }}>
                 {transformedData[activeIndex]?.name}
@@ -326,18 +315,18 @@ const EnhancedSeverityChart = ({ data, loading }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+              className="w-32 h-32 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
             >
-              <p className="text-gray-600 text-sm">Distribusi</p>
-              <p className="text-gray-800 font-bold text-sm">Tingkat</p>
-              <p className="text-gray-800 font-bold text-sm">Keparahan</p>
+              <p className="text-gray-600 text-xs font-medium">Distribusi</p>
+              <p className="text-gray-800 font-bold text-base">Tingkat</p>
+              <p className="text-gray-800 font-bold text-base">Keparahan</p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
       
       {/* Legend dengan tampilan yang lebih menarik */}
-      <div className="flex flex-wrap justify-center gap-2 mt-4">
+      <div className="flex flex-wrap justify-center gap-3 mt-4 bg-white bg-opacity-60 py-2 px-1 rounded-lg">
         {LABELS.map((label, index) => {
           const matchingData = transformedData.find(item => item.name === label);
           const value = matchingData ? matchingData.value : 0;
@@ -360,11 +349,11 @@ const EnhancedSeverityChart = ({ data, loading }) => {
               onMouseLeave={() => setActiveIndex(null)}
             >
               <span 
-                className="w-3 h-3 rounded-full mr-2" 
+                className="w-4 h-4 rounded-full mr-2" 
                 style={{ backgroundColor: COLORS[index] }}
               />
-              <span className="text-xs font-medium">{label}</span>
-              <span className="text-xs ml-1 text-gray-500">({value}%)</span>
+              <span className="text-xs font-semibold">{label}</span>
+              <span className="text-xs ml-1 text-gray-600 font-medium">({value}%)</span>
             </motion.div>
           );
         })}
