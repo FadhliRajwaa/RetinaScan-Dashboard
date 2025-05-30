@@ -341,15 +341,29 @@ function DashboardComponent() {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     console.log('Connecting to socket server at:', API_URL);
     
+    // Ambil token dari localStorage dan verifikasi apakah tersedia
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('Token not found in localStorage, socket authentication will fail');
+      setConnectionStatus('error_auth');
+      setSocketConnected(false);
+      // Tetap lanjutkan dengan fetchDashboardData untuk mendapatkan data awal
+      fetchDashboardData();
+      return;
+    }
+    
+    // Konfigurasi socket.io dengan auth yang lebih sederhana dan robust
     const socket = io(API_URL, {
-      withCredentials: true,
-      extraHeaders: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+      auth: {
+        token: token
       },
+      withCredentials: true,
       autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionAttempts: 10,
+      reconnectionDelay: 3000,
+      timeout: 10000,
+      transports: ['websocket', 'polling']
     });
 
     socket.on('connect', () => {
@@ -359,6 +373,23 @@ function DashboardComponent() {
       setConnectionAttempts(0);
       setFailedAttempts(0); // Reset counter saat berhasil terhubung
       setUsingFallbackData(false);
+      
+      // Untuk debugging, tampilkan room yang sedang didengarkan
+      console.log('Listening for events on rooms:', socket.rooms);
+      
+      // Testing socket connection dengan mengirim ping
+      socket.emit('ping', { timestamp: new Date().toISOString() });
+      console.log('Ping sent to server');
+    });
+
+    // Menambahkan handler untuk event pong dari server
+    socket.on('pong', (data) => {
+      console.log('Received pong from server:', data);
+      // Hitung latency
+      if (data.timestamp) {
+        const latency = Date.now() - new Date(data.timestamp).getTime();
+        console.log(`Socket latency: ${latency}ms`);
+      }
     });
 
     socket.on('disconnect', (reason) => {
@@ -377,7 +408,12 @@ function DashboardComponent() {
       // Log additional details about the connection attempt
       console.warn('Connection details:', {
         url: API_URL,
-        transportOptions: socket.io.opts,
+        authToken: token ? `${token.substring(0, 10)}...` : 'missing',
+        socketOptions: {
+          transports: socket.io?.opts?.transports || ['unknown'],
+          timeout: socket.io?.opts?.timeout || 'default',
+          reconnection: socket.io?.opts?.reconnection
+        },
         attempt: attempts
       });
     });
@@ -416,6 +452,43 @@ function DashboardComponent() {
       setTimeout(() => {
         setNotificationCount(0);
       }, 3000);
+    });
+    
+    // Tambahkan listener untuk notifikasi analisis baru
+    socket.on('new_analysis', (data) => {
+      console.log('Received new analysis notification:', data);
+      
+      // Tampilkan notifikasi untuk pengguna
+      setNotificationCount(prev => prev + 1);
+      
+      // Opsional: Ambil data dashboard baru
+      if (!usingFallbackData) {
+        fetchDashboardData();
+      }
+    });
+
+    // Tambahkan deteksi error pada socket.io
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+      setConnectionStatus('error_socket');
+    });
+    
+    socket.on('reconnect', (attemptNumber) => {
+      console.log(`Socket reconnected after ${attemptNumber} attempts`);
+      setConnectionStatus('socket_connected');
+    });
+    
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`Socket reconnection attempt ${attemptNumber}`);
+    });
+    
+    socket.on('reconnect_error', (error) => {
+      console.error('Socket reconnection error:', error);
+    });
+    
+    socket.on('reconnect_failed', () => {
+      console.error('Socket reconnection failed after all attempts');
+      setConnectionStatus('error_socket');
     });
 
     // Ambil data awal saat komponen di-mount
@@ -473,6 +546,8 @@ function DashboardComponent() {
         return { text: 'Server Error', color: 'bg-red-500' };
       case 'error_socket':
         return { text: 'Socket Error', color: 'bg-red-500' };
+      case 'error_auth':
+        return { text: 'Authentication Error', color: 'bg-red-500' };
       default:
         return { text: 'Unknown', color: 'bg-gray-500' };
     }
