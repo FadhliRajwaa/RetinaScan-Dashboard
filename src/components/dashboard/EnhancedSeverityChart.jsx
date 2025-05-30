@@ -6,18 +6,35 @@ import {
   ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
 import { FiPieChart, FiUsers, FiInfo, FiAlertTriangle, FiEye, FiPercent } from 'react-icons/fi';
+import CountUp from 'react-countup';
 
 // Konstanta untuk ukuran yang konsisten
 const CHART_SIZES = {
-  innerRadius: 75,
-  outerRadius: 115,
+  // Radius chart 
+  innerRadius: 80,     // Meningkatkan sedikit untuk area tengah yang lebih besar
+  outerRadius: 130,    // Meningkatkan untuk pie chart yang lebih besar
+  activeOuterRadius: 138, // Radius ketika segment aktif (hovered)
+  
+  // Tebal stroke dan padding
   strokeWidth: 2,
   padding: 16, // 1rem
+
+  // Ketebalan garis hover pada bagian dalam
+  innerHoverStrokeWidth: 4,
+  
+  // Height untuk responsive container
+  chartHeight: 400,
+  
+  // Ukuran ikon
   iconSize: {
+    tiny: 12,
     small: 16,
     medium: 20,
-    large: 24
+    large: 24,
+    xl: 32
   },
+  
+  // Ukuran font
   fontSize: {
     xs: '0.75rem',
     sm: '0.875rem',
@@ -25,12 +42,22 @@ const CHART_SIZES = {
     lg: '1.125rem',
     xl: '1.25rem'
   },
+  
+  // Border radius
   borderRadius: {
     sm: '0.25rem',
     md: '0.375rem',
     lg: '0.5rem',
     xl: '0.75rem',
     full: '9999px'
+  },
+  
+  // Elevasi shadow
+  shadow: {
+    sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
   }
 };
 
@@ -49,50 +76,115 @@ const SkeletonLoader = () => (
 const TotalBadge = ({ total }) => (
   <motion.div 
     className="absolute top-4 right-4 z-10"
-    initial={{ opacity: 0, scale: 0.8 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ delay: 0.5, duration: 0.3 }}
+    initial={{ opacity: 0, scale: 0.8, y: -10 }}
+    animate={{ opacity: 1, scale: 1, y: 0 }}
+    transition={{ delay: 0.5, ...ANIMATIONS.spring }}
   >
-    <div className="flex items-center bg-gradient-to-r from-indigo-600 to-blue-700 text-white px-4 py-2 rounded-lg shadow-md">
-      <FiUsers size={CHART_SIZES.iconSize.medium} className="mr-2 text-blue-200" />
-      <span className="text-lg font-bold">{total.toLocaleString()}</span>
+    <motion.div 
+      className="flex items-center bg-gradient-to-r from-indigo-600 to-blue-700 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+      whileHover={ANIMATIONS.hoverBounce}
+      whileTap={ANIMATIONS.tap}
+    >
+      <motion.div
+        initial={{ rotate: -5, scale: 0.9 }}
+        animate={{ rotate: 0, scale: 1 }}
+        transition={{ delay: 0.7, ...ANIMATIONS.spring }}
+      >
+        <FiUsers size={CHART_SIZES.iconSize.medium} className="mr-2 text-blue-200" />
+      </motion.div>
+      <span className="text-lg font-bold">
+        <CountUpValue value={total} duration={2} />
+      </span>
       <span className="ml-2 text-blue-100 font-medium">Pasien</span>
-    </div>
+    </motion.div>
   </motion.div>
 );
+
+// Komponen untuk animasi angka
+const CountUpValue = ({ value, duration = 2 }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.span
+          key="count-value"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          {value.toLocaleString()}
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+};
 
 // Komponen info card untuk detail severity
 const SeverityInfoCard = ({ severity, color, description, percent, count }) => (
   <motion.div
-    className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow duration-200"
+    className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all duration-300"
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3 }}
-    whileHover={{ y: -2, transition: { duration: 0.2 } }}
+    transition={{ duration: 0.4, ease: "easeOut" }}
+    whileHover={{ 
+      y: -3, 
+      boxShadow: CHART_SIZES.shadow.lg,
+      borderColor: `${color}40` 
+    }}
   >
     <div className="p-3 border-b border-gray-100" style={{ backgroundColor: `${color}15` }}>
       <div className="flex items-center">
-        <div 
-          className="w-4 h-4 rounded-full mr-2 border-2 border-white shadow-sm" 
+        <motion.div 
+          className="w-5 h-5 rounded-full mr-2 border-2 border-white shadow-sm" 
           style={{ backgroundColor: color }}
+          whileHover={{ scale: 1.2 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
         />
         <h3 className="font-semibold text-gray-800">{severity}</h3>
-        <div className="ml-auto flex items-center bg-white rounded-full px-2 py-1 shadow-sm">
+        <motion.div 
+          className="ml-auto flex items-center bg-white rounded-full px-2 py-1 shadow-sm"
+          whileHover={{ scale: 1.1, backgroundColor: `${color}10` }}
+          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+        >
           <span className="text-sm font-bold" style={{ color }}>{percent}%</span>
-        </div>
+        </motion.div>
       </div>
     </div>
     <div className="p-3">
-      <p className="text-xs text-gray-600 mb-2">{description}</p>
-      <div className="flex items-center justify-between text-xs">
-        <span className="flex items-center text-gray-500">
+      <p className="text-xs text-gray-600 mb-3">{description}</p>
+      <div className="flex items-center justify-between text-xs mb-2">
+        <motion.span 
+          className="flex items-center text-gray-500"
+          whileHover={{ color: color, scale: 1.05 }}
+        >
           <FiUsers size={CHART_SIZES.iconSize.small} className="mr-1" />
           <span>{count} pasien</span>
-        </span>
-        <span className="flex items-center text-gray-500">
+        </motion.span>
+        <motion.span 
+          className="flex items-center text-gray-500"
+          whileHover={{ color: color, scale: 1.05 }}
+        >
           <FiPercent size={CHART_SIZES.iconSize.small} className="mr-1" />
           <span>{percent}% dari total</span>
-        </span>
+        </motion.span>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+        <motion.div 
+          className="h-1.5 rounded-full" 
+          initial={{ width: 0 }}
+          animate={{ width: `${percent}%` }}
+          transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+          style={{ backgroundColor: color }}
+        />
       </div>
     </div>
   </motion.div>
@@ -100,6 +192,7 @@ const SeverityInfoCard = ({ severity, color, description, percent, count }) => (
 
 // Animation constants
 const ANIMATIONS = {
+  // Spring animations
   spring: {
     type: "spring",
     stiffness: 300,
@@ -110,6 +203,13 @@ const ANIMATIONS = {
     stiffness: 200,
     damping: 15
   },
+  gentleBounce: {
+    type: "spring",
+    stiffness: 100,
+    damping: 20
+  },
+  
+  // Tween animations
   easeOut: {
     type: "tween",
     ease: "easeOut",
@@ -119,7 +219,312 @@ const ANIMATIONS = {
     type: "tween",
     ease: "easeInOut",
     duration: 0.5
+  },
+  easeOutLong: {
+    type: "tween",
+    ease: "easeOut",
+    duration: 0.8
+  },
+  
+  // Staggered animations
+  staggered: (delay = 0.05, startDelay = 0) => ({
+    type: "tween",
+    ease: "easeOut",
+    duration: 0.4,
+    delay: startDelay + delay
+  }),
+  
+  // Special animations
+  fadeIn: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.4, ease: "easeOut" }
+  },
+  scaleIn: {
+    initial: { opacity: 0, scale: 0.9 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { duration: 0.4, ease: "easeOut" }
+  },
+  slideInBottom: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.4, ease: "easeOut" }
+  },
+  slideInLeft: {
+    initial: { opacity: 0, x: -20 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.4, ease: "easeOut" }
+  },
+  slideInRight: {
+    initial: { opacity: 0, x: 20 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.4, ease: "easeOut" }
+  },
+  
+  // Hover animations
+  hover: {
+    scale: 1.05,
+    transition: { duration: 0.2 }
+  },
+  hoverBounce: {
+    scale: 1.05,
+    transition: { type: "spring", stiffness: 400, damping: 10 }
+  },
+  
+  // Tap animations
+  tap: {
+    scale: 0.95
   }
+};
+
+// Komponen legend item dengan animasi bertahap
+const AnimatedLegendItem = ({ label, index, value, color, hoverColor, isActive, onMouseEnter, onMouseLeave }) => {
+  return (
+    <motion.div
+      key={`legend-${index}`}
+      className="flex items-center px-3 py-2 rounded-full cursor-pointer"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        x: [0, 0], // Force GPU acceleration for smoother transitions
+      }}
+      transition={{ 
+        delay: 0.8 + (index * 0.05),
+        ...ANIMATIONS.spring
+      }}
+      style={{ 
+        backgroundColor: isActive ? `${color}15` : 'white',
+        border: `1px solid ${isActive ? color : '#e5e7eb'}`
+      }}
+      whileHover={{ 
+        scale: 1.05, 
+        backgroundColor: `${color}10`,
+        border: `1px solid ${color}`,
+        boxShadow: `0 4px 12px ${color}25`
+      }}
+      whileTap={ANIMATIONS.tap}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <motion.span 
+        className="w-4 h-4 rounded-full mr-2 border border-white" 
+        style={{ backgroundColor: color }}
+        whileHover={{ scale: 1.2 }}
+        transition={ANIMATIONS.gentleBounce}
+      />
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <motion.span 
+        className="text-xs ml-2 px-2 py-0.5 rounded-full font-semibold" 
+        style={{ 
+          backgroundColor: isActive ? `${color}15` : '#f3f4f6',
+          color: color
+        }}
+        whileHover={{ backgroundColor: `${color}20` }}
+      >
+        {value}%
+      </motion.span>
+    </motion.div>
+  );
+};
+
+// Komponen untuk animasi di tengah chart saat hover
+const CenterInfo = ({ isHovering, hoverInfo, hasAnimated, calculatePatientCount }) => {
+  if (isHovering && hoverInfo) {
+    return (
+      <motion.div
+        key={`active-info-${hoverInfo.index}`}
+        initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        exit={{ opacity: 0, scale: 0.8, rotate: 5 }}
+        transition={ANIMATIONS.spring}
+        className="w-40 h-40 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+        style={{ boxShadow: CHART_SIZES.shadow.lg + ', inset 0 0 0 1px rgba(255, 255, 255, 0.4)' }}
+      >
+        <motion.div 
+          className="w-12 h-12 rounded-full mb-2 flex items-center justify-center"
+          style={{ 
+            backgroundColor: hoverInfo.color,
+            boxShadow: `0 0 0 2px white, 0 0 0 4px ${hoverInfo.color}40`
+          }}
+          initial={{ scale: 0.8 }}
+          animate={{ 
+            scale: [0.9, 1.05, 1],
+            rotate: [0, 2, 0, -2, 0],
+          }}
+          transition={{ 
+            scale: { delay: 0.1, ...ANIMATIONS.spring },
+            rotate: { 
+              repeat: Infinity, 
+              repeatType: "loop", 
+              duration: 3,
+              ease: "easeInOut"
+            }
+          }}
+        >
+          <span className="text-white text-sm font-bold">{hoverInfo.value}%</span>
+        </motion.div>
+        <motion.p 
+          className="font-bold text-lg mb-1" 
+          style={{ color: hoverInfo.color }}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, ...ANIMATIONS.easeOut }}
+        >
+          {hoverInfo.name}
+        </motion.p>
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, ...ANIMATIONS.easeOut }}
+          className="flex flex-col items-center"
+        >
+          <motion.p className="text-sm text-gray-500">
+            {calculatePatientCount(hoverInfo.value)} pasien
+          </motion.p>
+          <motion.div 
+            className="w-24 h-1 mt-2 rounded-full overflow-hidden bg-gray-200"
+            initial={{ width: 0 }}
+            animate={{ width: "24px" }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+          >
+            <motion.div 
+              className="h-1 rounded-full"
+              style={{ background: `linear-gradient(90deg, ${hoverInfo.color}80, ${hoverInfo.color})` }}
+              initial={{ width: 0 }}
+              animate={{ width: `100%` }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            />
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    );
+  }
+  
+  return (
+    <motion.div
+      key="center-info"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        rotate: [0, 2, 0, -2, 0],
+      }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{
+        ...ANIMATIONS.easeInOut,
+        rotate: {
+          repeat: hasAnimated ? 0 : Infinity,
+          repeatType: "loop",
+          duration: 5,
+          ease: "easeInOut"
+        }
+      }}
+      className="w-36 h-36 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+      style={{ boxShadow: CHART_SIZES.shadow.lg + ', inset 0 0 0 1px rgba(255, 255, 255, 0.4)' }}
+    >
+      <motion.div 
+        className="bg-gradient-to-br from-indigo-100 to-blue-100 p-3 rounded-full mb-2"
+        whileHover={{ rotate: 15, scale: 1.1 }}
+        animate={{ 
+          rotate: hasAnimated ? 0 : [0, 10, 0, -10, 0],
+          scale: hasAnimated ? 1 : [1, 1.05, 1, 1.05, 1]
+        }}
+        transition={{ 
+          repeat: hasAnimated ? 0 : Infinity, 
+          repeatType: "loop", 
+          duration: 6 
+        }}
+      >
+        <FiAlertTriangle size={CHART_SIZES.iconSize.medium} className="text-indigo-600" />
+      </motion.div>
+      <p className="text-gray-800 font-bold text-sm">Tingkat</p>
+      <p className="text-gray-800 font-bold text-sm">Keparahan</p>
+    </motion.div>
+  );
+};
+
+// Komponen untuk header yang lebih animatif
+const AnimatedHeader = ({ showDetails, setShowDetails }) => {
+  return (
+    <motion.div 
+      className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2, ...ANIMATIONS.easeOut }}
+    >
+      <div className="flex items-center">
+        <motion.div 
+          className="bg-gradient-to-br from-indigo-600 to-blue-700 p-2 rounded-md shadow-md mr-3 flex items-center justify-center w-10 h-10"
+          initial={{ scale: 0.8, rotate: -10 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: 0.3, ...ANIMATIONS.spring }}
+          whileHover={{ 
+            rotate: 5, 
+            scale: 1.05, 
+            boxShadow: '0 6px 20px rgba(79, 70, 229, 0.4)'
+          }}
+        >
+          <motion.div
+            animate={{ 
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              rotate: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: 20,
+                ease: "linear"
+              }
+            }}
+          >
+            <FiPieChart size={CHART_SIZES.iconSize.medium} className="text-white" />
+          </motion.div>
+        </motion.div>
+        <div>
+          <motion.h3 
+            className="font-bold text-gray-800 text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-blue-700"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, ...ANIMATIONS.easeOut }}
+          >
+            Tingkat Keparahan
+          </motion.h3>
+          <motion.p 
+            className="text-xs text-gray-500"
+            initial={{ opacity: 0, x: -5 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5, ...ANIMATIONS.easeOut }}
+          >
+            Distribusi berdasarkan tingkat keparahan pasien
+          </motion.p>
+        </div>
+      </div>
+      <motion.button
+        className="flex items-center text-xs bg-white px-3 py-1.5 rounded-md border border-indigo-200 shadow-sm text-indigo-700 font-medium"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.6, ...ANIMATIONS.spring }}
+        whileHover={{ 
+          scale: 1.05, 
+          backgroundColor: '#EEF2FF', 
+          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.15)'
+        }}
+        whileTap={ANIMATIONS.tap}
+        onClick={() => setShowDetails(!showDetails)}
+      >
+        <motion.div
+          initial={{ rotate: 0 }}
+          animate={{ rotate: showDetails ? 90 : 0 }}
+          transition={ANIMATIONS.spring}
+          className="mr-1.5"
+        >
+          <FiEye size={CHART_SIZES.iconSize.small} />
+        </motion.div>
+        {showDetails ? 'Sembunyikan' : 'Detail'}
+      </motion.button>
+    </motion.div>
+  );
 };
 
 const EnhancedSeverityChart = ({ data, loading, props }) => {
@@ -332,7 +737,7 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
     
     // Expanded radius for active segment
-    const expandedOuterRadius = outerRadius * 1.08;
+    const expandedOuterRadius = CHART_SIZES.activeOuterRadius;
     
     return (
       <g>
@@ -347,6 +752,15 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
           strokeWidth={CHART_SIZES.strokeWidth}
           stroke="#fff"
           style={{ filter: 'drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.2))' }}
+        />
+        <Sector
+          cx={cx}
+          cy={cy}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          innerRadius={innerRadius - CHART_SIZES.innerHoverStrokeWidth}
+          outerRadius={innerRadius - 1}
+          fill={HOVER_COLORS[payload.index]}
         />
       </g>
     );
@@ -417,6 +831,72 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
     animationEasing: "ease-out"
   };
   
+  // Custom tooltip with improved animations
+  const renderTooltip = (props) => {
+    const { active, payload } = props;
+    
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const patientCount = calculatePatientCount(data.value);
+      
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9, y: -10 }}
+          transition={ANIMATIONS.spring}
+          className="bg-white p-4 rounded-lg shadow-lg border border-gray-100 max-w-xs"
+          style={{ boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)' }}
+        >
+          <div className="flex items-center border-b border-gray-100 pb-2 mb-2">
+            <motion.div 
+              className="w-4 h-4 rounded-full mr-2 border border-white shadow-sm" 
+              style={{ 
+                backgroundColor: COLORS[data.index],
+                boxShadow: `0 0 0 2px white, 0 0 0 3px ${COLORS[data.index]}40`
+              }}
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 5, 0]
+              }}
+              transition={{ 
+                duration: 1.5, 
+                repeat: Infinity, 
+                repeatType: "loop",
+                ease: "easeInOut"
+              }}
+            />
+            <span className="font-bold text-gray-800 text-lg">{data.name}</span>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">{data.description}</p>
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm font-semibold text-gray-700">Persentase:</span>
+            <span className="text-sm font-bold" style={{ color: COLORS[data.index] }}>{`${data.value}%`}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-gray-700">Jumlah Pasien:</span>
+            <span className="text-sm font-bold text-indigo-600">{patientCount} pasien</span>
+          </div>
+          <motion.div 
+            className="w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden"
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div 
+              className="h-2 rounded-full" 
+              initial={{ width: 0 }}
+              animate={{ width: `${data.value}%` }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              style={{ background: `linear-gradient(90deg, ${COLORS[data.index]} 0%, ${HOVER_COLORS[data.index]} 100%)` }}
+            />
+          </motion.div>
+        </motion.div>
+      );
+    }
+    return null;
+  };
+  
   if (loading) {
     return <SkeletonLoader />;
   }
@@ -427,64 +907,17 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
       transition={ANIMATIONS.easeOut}
-      style={{ minHeight: '500px' }}
+      style={{ minHeight: '550px' }}
     >
       {/* Header with improved animations */}
-      <motion.div 
-        className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-50"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, ...ANIMATIONS.easeOut }}
-      >
-        <div className="flex items-center">
-          <motion.div 
-            className="bg-indigo-600 p-2 rounded-md shadow-sm mr-3 flex items-center justify-center w-10 h-10"
-            initial={{ scale: 0.8, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.3, ...ANIMATIONS.spring }}
-            whileHover={{ rotate: 5, scale: 1.05 }}
-          >
-            <FiPieChart size={CHART_SIZES.iconSize.medium} className="text-white" />
-          </motion.div>
-          <div>
-            <motion.h3 
-              className="font-bold text-gray-800 text-lg"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, ...ANIMATIONS.easeOut }}
-            >
-              Tingkat Keparahan
-            </motion.h3>
-            <motion.p 
-              className="text-xs text-gray-500"
-              initial={{ opacity: 0, x: -5 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, ...ANIMATIONS.easeOut }}
-            >
-              Distribusi berdasarkan tingkat keparahan pasien
-            </motion.p>
-          </div>
-        </div>
-        <motion.button
-          className="flex items-center text-xs bg-white px-3 py-1.5 rounded-md border border-indigo-200 shadow-sm text-indigo-700 font-medium"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.6, ...ANIMATIONS.spring }}
-          whileHover={{ scale: 1.05, backgroundColor: '#EEF2FF' }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowDetails(!showDetails)}
-        >
-          <FiEye size={CHART_SIZES.iconSize.small} className="mr-1.5" />
-          {showDetails ? 'Sembunyikan' : 'Detail'}
-        </motion.button>
-      </motion.div>
+      <AnimatedHeader showDetails={showDetails} setShowDetails={setShowDetails} />
       
       {/* Total Badge with improved animations */}
       <TotalBadge total={totalPatients} />
       
       {/* Chart Container with improved interactions */}
       <div className="flex-grow p-4 relative">
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={CHART_SIZES.chartHeight}>
           <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
             <defs>
               {COLORS.map((color, index) => (
@@ -535,53 +968,7 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
               ))}
             </Pie>
             <Tooltip 
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload;
-                  const patientCount = calculatePatientCount(data.value);
-                  
-                  return (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={ANIMATIONS.spring}
-                      className="bg-white p-4 rounded-lg shadow-lg border border-gray-100 max-w-xs"
-                    >
-                      <div className="flex items-center border-b border-gray-100 pb-2 mb-2">
-                        <div 
-                          className="w-4 h-4 rounded-full mr-2 border border-white shadow-sm" 
-                          style={{ backgroundColor: COLORS[data.index] }}
-                        />
-                        <span className="font-bold text-gray-800 text-lg">{data.name}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{data.description}</p>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-semibold text-gray-700">Persentase:</span>
-                        <span className="text-sm font-bold" style={{ color: COLORS[data.index] }}>{`${data.value}%`}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-semibold text-gray-700">Jumlah Pasien:</span>
-                        <span className="text-sm font-bold text-indigo-600">{patientCount} pasien</span>
-                      </div>
-                      <motion.div 
-                        className="w-full bg-gray-200 rounded-full h-2 mt-3 overflow-hidden"
-                        initial={{ width: 0 }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <motion.div 
-                          className="h-2 rounded-full" 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${data.value}%` }}
-                          transition={{ delay: 0.2, duration: 0.5 }}
-                          style={{ backgroundColor: COLORS[data.index] }}
-                        />
-                      </motion.div>
-                    </motion.div>
-                  );
-                }
-                return null;
-              }}
+              content={renderTooltip}
               animationDuration={300}
               coordinate={{ x: 5, y: 5 }} // Small offset for a nicer appearance
             />
@@ -592,84 +979,19 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center pointer-events-none">
           <AnimatePresence mode="wait">
             {activeIndex !== null ? (
-              <motion.div
-                key={`active-info-${activeIndex}`}
-                initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                exit={{ opacity: 0, scale: 0.8, rotate: 5 }}
-                transition={ANIMATIONS.spring}
-                className="w-36 h-36 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
-              >
-                {hoverInfo && (
-                  <>
-                    <motion.div 
-                      className="w-8 h-8 rounded-full mb-1 flex items-center justify-center"
-                      style={{ backgroundColor: hoverInfo.color }}
-                      initial={{ scale: 0.8 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.1, ...ANIMATIONS.spring }}
-                    >
-                      <span className="text-white text-xs font-bold">{hoverInfo.value}%</span>
-                    </motion.div>
-                    <motion.p 
-                      className="font-bold text-base mb-1" 
-                      style={{ color: hoverInfo.color }}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2, ...ANIMATIONS.easeOut }}
-                    >
-                      {hoverInfo.name}
-                    </motion.p>
-                    <motion.p 
-                      className="text-xs text-gray-500"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3, ...ANIMATIONS.easeOut }}
-                    >
-                      {calculatePatientCount(hoverInfo.value)} pasien
-                    </motion.p>
-                  </>
-                )}
-              </motion.div>
+              <CenterInfo 
+                isHovering={true}
+                hoverInfo={hoverInfo}
+                hasAnimated={hasAnimated}
+                calculatePatientCount={calculatePatientCount}
+              />
             ) : (
-              <motion.div
-                key="center-info"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1,
-                  rotate: [0, 2, 0, -2, 0],
-                }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{
-                  ...ANIMATIONS.easeInOut,
-                  rotate: {
-                    repeat: hasAnimated ? 0 : Infinity,
-                    repeatType: "loop",
-                    duration: 5,
-                    ease: "easeInOut"
-                  }
-                }}
-                className="w-32 h-32 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
-              >
-                <motion.div 
-                  className="bg-indigo-100 p-2 rounded-full mb-2"
-                  whileHover={{ rotate: 15, scale: 1.1 }}
-                  animate={{ 
-                    rotate: hasAnimated ? 0 : [0, 10, 0, -10, 0],
-                    scale: hasAnimated ? 1 : [1, 1.05, 1, 1.05, 1]
-                  }}
-                  transition={{ 
-                    repeat: hasAnimated ? 0 : Infinity, 
-                    repeatType: "loop", 
-                    duration: 6 
-                  }}
-                >
-                  <FiAlertTriangle size={CHART_SIZES.iconSize.medium} className="text-indigo-600" />
-                </motion.div>
-                <p className="text-gray-800 font-bold text-sm">Tingkat</p>
-                <p className="text-gray-800 font-bold text-sm">Keparahan</p>
-              </motion.div>
+              <CenterInfo 
+                isHovering={false}
+                hoverInfo={null}
+                hasAnimated={hasAnimated}
+                calculatePatientCount={calculatePatientCount}
+              />
             )}
           </AnimatePresence>
         </div>
@@ -683,16 +1005,16 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={ANIMATIONS.easeInOut}
-            className="border-t border-gray-200 bg-gray-50 overflow-hidden"
+            className="border-t border-gray-200 bg-gradient-to-b from-gray-50 to-white overflow-hidden"
           >
             <motion.div 
-              className="p-4"
+              className="p-5"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, ...ANIMATIONS.easeOut }}
             >
               <motion.h4 
-                className="text-sm font-bold text-gray-700 mb-3 flex items-center"
+                className="text-sm font-bold text-gray-700 mb-4 flex items-center"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3, ...ANIMATIONS.easeOut }}
@@ -700,7 +1022,7 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
                 <FiInfo size={CHART_SIZES.iconSize.small} className="mr-1.5 text-indigo-500" />
                 Detail Tingkat Keparahan
               </motion.h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {transformedData.map((item, index) => (
                   <motion.div
                     key={`info-card-container-${index}`}
@@ -729,52 +1051,32 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
       
       {/* Compact Legend with improved animations */}
       <motion.div 
-        className="p-3 border-t border-gray-200 bg-gray-50"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="p-4 border-t border-gray-200 bg-gradient-to-b from-gray-100 to-gray-50"
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: { opacity: 1, y: 0 }
+        }}
+        initial="hidden"
+        animate="visible"
         transition={{ delay: 0.7, ...ANIMATIONS.easeOut }}
       >
-        <div className="flex flex-wrap justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-3">
           {LABELS.map((label, index) => {
             const matchingData = transformedData.find(item => item.name === label);
             const value = matchingData ? matchingData.value : 0;
             
             return (
-              <motion.div
+              <AnimatedLegendItem
                 key={`legend-${index}`}
-                className="flex items-center px-3 py-1.5 rounded-full cursor-pointer"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ 
-                  opacity: 1, 
-                  scale: 1,
-                  x: [0, 0], // Force GPU acceleration for smoother transitions
-                }}
-                transition={{ 
-                  delay: 0.8 + (index * 0.05),
-                  ...ANIMATIONS.spring
-                }}
-                style={{ 
-                  backgroundColor: activeIndex === index ? `${COLORS[index]}15` : 'white',
-                  border: `1px solid ${activeIndex === index ? COLORS[index] : '#e5e7eb'}`
-                }}
-                whileHover={{ 
-                  scale: 1.05, 
-                  backgroundColor: `${COLORS[index]}10`,
-                  border: `1px solid ${COLORS[index]}` 
-                }}
-                whileTap={{ scale: 0.95 }}
+                label={label}
+                index={index}
+                value={value}
+                color={COLORS[index]}
+                hoverColor={HOVER_COLORS[index]}
+                isActive={activeIndex === index}
                 onMouseEnter={() => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(null)}
-              >
-                <motion.span 
-                  className="w-3 h-3 rounded-full mr-2 border border-white" 
-                  style={{ backgroundColor: COLORS[index] }}
-                  whileHover={{ scale: 1.2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                />
-                <span className="text-xs font-medium text-gray-700">{label}</span>
-                <span className="text-xs ml-1.5 px-1.5 py-0.5 bg-gray-100 rounded-full font-semibold" style={{ color: COLORS[index] }}>{value}%</span>
-              </motion.div>
+              />
             );
           })}
         </div>
