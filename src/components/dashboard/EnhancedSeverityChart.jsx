@@ -308,7 +308,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
       <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center">
           <FiPieChart className="text-blue-600 mr-2" />
-          <h3 className="font-semibold text-gray-800">Distribusi Tingkat Keparahan</h3>
+          <h3 className="font-semibold text-gray-800">Tingkat Keparahan</h3>
         </div>
         <motion.button
           className="flex items-center text-xs bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm"
@@ -317,7 +317,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
           onClick={() => setShowDetails(!showDetails)}
         >
           <FiInfo className="mr-1 text-blue-500" />
-          {showDetails ? 'Sembunyikan Detail' : 'Lihat Detail'}
+          {showDetails ? 'Sembunyikan' : 'Detail'}
         </motion.button>
       </div>
       
@@ -418,43 +418,21 @@ const EnhancedSeverityChart = ({ data, loading }) => {
           </PieChart>
         </ResponsiveContainer>
         
-        {/* Info di tengah chart */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center pointer-events-none">
-          <AnimatePresence mode="wait">
-            {activeIndex !== null ? (
-              <motion.div
-                key={`info-${activeIndex}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
-              >
-                <p className="font-semibold text-sm" style={{ color: COLORS[activeIndex] }}>
-                  {transformedData[activeIndex]?.name}
-                </p>
-                <p className="text-xl font-bold" style={{ color: COLORS[activeIndex] }}>
-                  {transformedData[activeIndex]?.value}%
-                </p>
-                <p className="text-xs text-gray-500">
-                  {calculatePatientCount(transformedData[activeIndex]?.value)} pasien
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-32 h-32 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
-              >
-                <FiAlertTriangle className="text-blue-500 mb-1" />
-                <p className="text-gray-800 font-bold text-base">Tingkat</p>
-                <p className="text-gray-800 font-bold text-base">Keparahan</p>
-                <div className="w-10 h-0.5 bg-gray-200 my-1"></div>
-                <p className="text-xs text-blue-500 font-medium">{totalPatients} Pasien</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Info di tengah chart - hanya tampilkan jika tidak ada segment yang aktif */}
+        {activeIndex === null && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-24 h-24 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+            >
+              <FiAlertTriangle className="text-blue-500 mb-1" />
+              <p className="text-gray-800 font-bold text-sm">Tingkat</p>
+              <p className="text-gray-800 font-bold text-sm">Keparahan</p>
+            </motion.div>
+          </div>
+        )}
       </div>
       
       {/* Detail Panel - Conditional Rendering */}
