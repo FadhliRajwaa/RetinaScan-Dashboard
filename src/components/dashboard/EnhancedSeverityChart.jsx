@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import {
   PieChart, Pie, Cell, Sector,
-  ResponsiveContainer, Tooltip
+  ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
-import { FiPieChart, FiUsers } from 'react-icons/fi';
+import { FiPieChart, FiUsers, FiInfo, FiAlertTriangle } from 'react-icons/fi';
 
 // Komponen untuk loading state
 const SkeletonLoader = ({ height = 300 }) => (
@@ -19,11 +19,55 @@ const SkeletonLoader = ({ height = 300 }) => (
   />
 );
 
+// Komponen badge untuk menampilkan total pasien
+const TotalBadge = ({ total }) => (
+  <motion.div 
+    className="absolute top-0 right-0 mt-2 mr-2 z-10"
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: 0.5, duration: 0.3 }}
+  >
+    <div className="flex items-center bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-3 py-1.5 rounded-full shadow-lg">
+      <FiUsers className="mr-1.5" />
+      <span className="font-semibold">{total}</span>
+      <span className="ml-1 text-blue-100">Pasien</span>
+    </div>
+  </motion.div>
+);
+
+// Komponen info card untuk detail severity
+const SeverityInfoCard = ({ severity, color, description, percent, count }) => (
+  <motion.div
+    className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+  >
+    <div className="p-3 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+      <div className="flex items-center">
+        <div 
+          className="w-3 h-3 rounded-full mr-2" 
+          style={{ backgroundColor: color }}
+        />
+        <h3 className="font-medium text-gray-800">{severity}</h3>
+        <div className="ml-auto flex items-center">
+          <span className="text-sm font-bold">{percent}%</span>
+          <span className="text-xs text-gray-500 ml-1">({count} pasien)</span>
+        </div>
+      </div>
+    </div>
+    <div className="p-2 text-xs text-gray-600">
+      <p>{description}</p>
+    </div>
+  </motion.div>
+);
+
 const EnhancedSeverityChart = ({ data, loading }) => {
   const { theme } = useTheme();
   const [activeIndex, setActiveIndex] = useState(null);
   const [rotation, setRotation] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   
   // Colors with more clinical-focused gradient - dari hijau ke merah
   const COLORS = ['#3B82F6', '#10B981', '#FBBF24', '#F59E0B', '#EF4444'];
@@ -39,9 +83,8 @@ const EnhancedSeverityChart = ({ data, loading }) => {
     'Neovaskularisasi dan risiko tinggi kebutaan'
   ];
   
-  // Efek untuk animasi rotasi chart dan entrance animation
+  // Efek untuk animasi entrance
   useEffect(() => {
-    // Set chart to visible with delay for entrance animation
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 300);
@@ -158,22 +201,13 @@ const EnhancedSeverityChart = ({ data, loading }) => {
 
   // Custom active shape that expands on hover with more detail
   const renderActiveShape = (props) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
     
     // Expanded radius for active segment
     const expandedOuterRadius = outerRadius * 1.1;
     
     return (
       <g>
-        <text x={cx} y={cy - 25} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
-          {payload.name}
-        </text>
-        <text x={cx} y={cy} textAnchor="middle" fill="#888" className="text-sm">
-          {`${(percent * 100).toFixed(0)}%`}
-        </text>
-        <text x={cx} y={cy + 20} textAnchor="middle" fill="#666" className="text-xs">
-          {`dari total pasien`}
-        </text>
         <Sector
           cx={cx}
           cy={cy}
@@ -191,7 +225,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
   };
   
   // Render labels inside each segment of the pie chart
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
     // Jika persentase sangat kecil, jangan tampilkan label
     if (percent < 0.03) return null;
     
@@ -265,30 +299,35 @@ const EnhancedSeverityChart = ({ data, loading }) => {
   
   return (
     <motion.div 
-      className="relative h-full flex flex-col"
+      className="relative h-full flex flex-col bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      {/* Header with total indicator */}
-      <div className="flex items-center justify-between mb-2 px-2">
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
         <div className="flex items-center">
-          <FiPieChart className="text-blue-500 mr-2" />
-          <h3 className="text-sm font-semibold text-gray-700">Distribusi Tingkat Keparahan</h3>
+          <FiPieChart className="text-blue-600 mr-2" />
+          <h3 className="font-semibold text-gray-800">Distribusi Tingkat Keparahan</h3>
         </div>
-        <motion.div 
-          className="flex items-center px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full shadow-sm"
+        <motion.button
+          className="flex items-center text-xs bg-white px-2 py-1 rounded-md border border-gray-200 shadow-sm"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => setShowDetails(!showDetails)}
         >
-          <FiUsers className="text-white mr-1 text-xs" />
-          <span className="text-white text-xs font-semibold">Total: {totalPatients} Pasien</span>
-        </motion.div>
+          <FiInfo className="mr-1 text-blue-500" />
+          {showDetails ? 'Sembunyikan Detail' : 'Lihat Detail'}
+        </motion.button>
       </div>
       
-      <div className="flex-grow">
-        <ResponsiveContainer width="100%" height="80%">
-          <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+      {/* Total Badge */}
+      <TotalBadge total={totalPatients} />
+      
+      {/* Chart Container */}
+      <div className="flex-grow p-2">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
             <defs>
               {COLORS.map((color, index) => (
                 <radialGradient key={`radialGradient-${index}`} id={`severity-gradient-${index}`} cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
@@ -309,7 +348,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
               cx="50%"
               cy="50%"
               innerRadius={60}
-              outerRadius={90} // Sedikit lebih besar agar label terlihat jelas
+              outerRadius={90} 
               dataKey="value"
               paddingAngle={4}
               cornerRadius={3}
@@ -349,14 +388,25 @@ const EnhancedSeverityChart = ({ data, loading }) => {
                       transition={{ duration: 0.2 }}
                       className="bg-white p-3 rounded-lg shadow-lg border border-gray-100 max-w-xs"
                     >
-                      <p className="font-bold text-gray-800">{data.name}</p>
+                      <div className="flex items-center">
+                        <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[data.index] }}></span>
+                        <span className="font-bold text-gray-800">{data.name}</span>
+                      </div>
                       <p className="text-sm text-gray-600 mt-1">{data.description}</p>
                       <div className="mt-2 pt-2 border-t border-gray-100">
-                        <p className="text-sm font-semibold">
-                          <span className="inline-block w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[data.index] }}></span>
-                          <span>{`${(payload[0].percent * 100).toFixed(0)}%`}</span>
-                          <span className="text-gray-500 ml-1">({patientCount} pasien)</span>
-                        </p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-semibold">{`${data.value}%`}</span>
+                          <span className="text-xs text-gray-500">{patientCount} pasien</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                          <div 
+                            className="h-1.5 rounded-full" 
+                            style={{ 
+                              width: `${data.value}%`, 
+                              backgroundColor: COLORS[data.index]
+                            }}
+                          ></div>
+                        </div>
                       </div>
                     </motion.div>
                   );
@@ -367,86 +417,110 @@ const EnhancedSeverityChart = ({ data, loading }) => {
             />
           </PieChart>
         </ResponsiveContainer>
+        
+        {/* Info di tengah chart */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center pointer-events-none">
+          <AnimatePresence mode="wait">
+            {activeIndex !== null ? (
+              <motion.div
+                key={`info-${activeIndex}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+              >
+                <p className="font-semibold text-sm" style={{ color: COLORS[activeIndex] }}>
+                  {transformedData[activeIndex]?.name}
+                </p>
+                <p className="text-xl font-bold" style={{ color: COLORS[activeIndex] }}>
+                  {transformedData[activeIndex]?.value}%
+                </p>
+                <p className="text-xs text-gray-500">
+                  {calculatePatientCount(transformedData[activeIndex]?.value)} pasien
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-32 h-32 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+              >
+                <FiAlertTriangle className="text-blue-500 mb-1" />
+                <p className="text-gray-800 font-bold text-base">Tingkat</p>
+                <p className="text-gray-800 font-bold text-base">Keparahan</p>
+                <div className="w-10 h-0.5 bg-gray-200 my-1"></div>
+                <p className="text-xs text-blue-500 font-medium">{totalPatients} Pasien</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       
-      {/* Info di tengah chart */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center pointer-events-none">
-        <AnimatePresence mode="wait">
-          {activeIndex !== null ? (
-            <motion.div
-              key={`info-${activeIndex}`}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
-            >
-              <p className="font-semibold text-sm" style={{ color: COLORS[activeIndex] }}>
-                {transformedData[activeIndex]?.name}
-              </p>
-              <p className="text-xl font-bold" style={{ color: COLORS[activeIndex] }}>
-                {transformedData[activeIndex]?.value}%
-              </p>
-              <p className="text-xs text-gray-500">
-                {calculatePatientCount(transformedData[activeIndex]?.value)} pasien
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-32 h-32 flex flex-col items-center justify-center bg-white bg-opacity-90 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
-            >
-              <p className="text-gray-600 text-xs font-medium">Distribusi</p>
-              <p className="text-gray-800 font-bold text-base">Tingkat</p>
-              <p className="text-gray-800 font-bold text-base">Keparahan</p>
-              <div className="w-10 h-0.5 bg-gray-200 my-1"></div>
-              <p className="text-xs text-blue-500 font-medium">{totalPatients} Pasien</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      {/* Detail Panel - Conditional Rendering */}
+      <AnimatePresence>
+        {showDetails && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="border-t border-gray-100 bg-gray-50 overflow-hidden"
+          >
+            <div className="p-3">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Detail Tingkat Keparahan</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                {transformedData.map((item, index) => (
+                  <SeverityInfoCard 
+                    key={`info-card-${index}`}
+                    severity={item.name}
+                    color={COLORS[index]}
+                    description={item.description}
+                    percent={item.value}
+                    count={calculatePatientCount(item.value)}
+                  />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      {/* Legend dengan tampilan yang lebih menarik */}
-      <motion.div 
-        className="flex flex-wrap justify-center gap-2 mt-2 bg-gradient-to-r from-blue-50 to-indigo-50 py-2 px-2 rounded-lg border border-blue-100 shadow-sm"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
-        {LABELS.map((label, index) => {
-          const matchingData = transformedData.find(item => item.name === label);
-          const value = matchingData ? matchingData.value : 0;
-          const count = calculatePatientCount(value);
-          
-          return (
-            <motion.div
-              key={`legend-${index}`}
-              className="flex items-center px-2 py-1 rounded-full cursor-pointer"
-              style={{ 
-                backgroundColor: activeIndex === index ? `${COLORS[index]}20` : 'transparent',
-                border: `1px solid ${activeIndex === index ? COLORS[index] : 'transparent'}`
-              }}
-              whileHover={{ 
-                scale: 1.05, 
-                backgroundColor: `${COLORS[index]}10`,
-                border: `1px solid ${COLORS[index]}` 
-              }}
-              whileTap={{ scale: 0.95 }}
-              onMouseEnter={() => setActiveIndex(index)}
-              onMouseLeave={() => setActiveIndex(null)}
-            >
-              <span 
-                className="w-3 h-3 rounded-full mr-1" 
-                style={{ backgroundColor: COLORS[index] }}
-              />
-              <span className="text-xs font-semibold">{label}</span>
-              <span className="text-xs ml-1 text-gray-600 font-medium">({value}%)</span>
-              <span className="text-xs ml-1 text-gray-500 hidden sm:inline-block">• {count} pasien</span>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+      {/* Compact Legend */}
+      <div className="p-2 border-t border-gray-100">
+        <div className="flex flex-wrap justify-center gap-2">
+          {LABELS.map((label, index) => {
+            const matchingData = transformedData.find(item => item.name === label);
+            const value = matchingData ? matchingData.value : 0;
+            
+            return (
+              <motion.div
+                key={`legend-${index}`}
+                className="flex items-center px-2 py-1 rounded-full cursor-pointer"
+                style={{ 
+                  backgroundColor: activeIndex === index ? `${COLORS[index]}20` : 'transparent',
+                  border: `1px solid ${activeIndex === index ? COLORS[index] : 'transparent'}`
+                }}
+                whileHover={{ 
+                  scale: 1.05, 
+                  backgroundColor: `${COLORS[index]}10`,
+                  border: `1px solid ${COLORS[index]}` 
+                }}
+                whileTap={{ scale: 0.95 }}
+                onMouseEnter={() => setActiveIndex(index)}
+                onMouseLeave={() => setActiveIndex(null)}
+              >
+                <span 
+                  className="w-3 h-3 rounded-full mr-1" 
+                  style={{ backgroundColor: COLORS[index] }}
+                />
+                <span className="text-xs font-semibold">{label}</span>
+                <span className="text-xs ml-1 text-gray-600 font-medium">({value}%)</span>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
     </motion.div>
   );
 };
