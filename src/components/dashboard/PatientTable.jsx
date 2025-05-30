@@ -108,11 +108,16 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
   };
 
   const getGenderLabel = (gender) => {
-    switch (gender) {
-      case 'male': return 'Laki-laki';
-      case 'female': return 'Perempuan';
-      default: return '-';
-    }
+    if (!gender) return '-';
+    
+    // Untuk nilai format lama
+    if (gender === 'male') return 'Laki-laki';
+    if (gender === 'female') return 'Perempuan';
+    
+    // Untuk nilai format baru yang sudah disimpan dalam bahasa Indonesia
+    if (gender === 'Laki-laki' || gender === 'Perempuan') return gender;
+    
+    return '-';
   };
 
   const handleEditPatient = (patient) => {
@@ -355,9 +360,9 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        patient.gender === 'male' 
+                        patient.gender === 'male' || patient.gender === 'Laki-laki'
                           ? 'bg-blue-100 text-blue-800' 
-                          : patient.gender === 'female'
+                          : patient.gender === 'female' || patient.gender === 'Perempuan'
                           ? 'bg-pink-100 text-pink-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}>

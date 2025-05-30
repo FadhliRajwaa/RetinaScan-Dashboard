@@ -89,6 +89,14 @@ export const getSeverityBadge = (severity) => {
 export const normalizeGender = (gender) => {
   if (!gender) return 'Tidak Diketahui';
   
+  // Sudah dalam format yang benar
+  if (gender === 'Laki-laki' || gender === 'Perempuan') return gender;
+  
+  // Format eksak bahasa Inggris
+  if (gender === 'male') return 'Laki-laki';
+  if (gender === 'female') return 'Perempuan';
+  
+  // Proses normalisasi untuk variasi lainnya
   const genderLower = gender.toLowerCase().trim();
   if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
     return 'Laki-laki';

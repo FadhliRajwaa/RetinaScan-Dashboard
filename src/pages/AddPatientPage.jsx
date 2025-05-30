@@ -329,9 +329,9 @@ const AddPatientPage = () => {
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center">
-                            {formData.gender === 'male' ? (
+                            {formData.gender === 'Laki-laki' ? (
                               <FaMale className="mr-1.5 text-blue-500" />
-                            ) : formData.gender === 'female' ? (
+                            ) : formData.gender === 'Perempuan' ? (
                               <FaFemale className="mr-1.5 text-pink-500" />
                             ) : (
                               <span className="text-blue-500 mr-1.5">👤</span>
@@ -341,16 +341,16 @@ const AddPatientPage = () => {
                           <div className="grid grid-cols-2 gap-3">
                             <motion.button
                               type="button"
-                              onClick={() => setFormData({...formData, gender: 'male'})}
+                              onClick={() => setFormData({...formData, gender: 'Laki-laki'})}
                               className={`relative p-3 border rounded-lg flex items-center justify-center transition-all overflow-hidden ${
-                                formData.gender === 'male' 
+                                formData.gender === 'Laki-laki' 
                                   ? 'border-blue-500 text-blue-700 font-medium' 
                                   : 'border-gray-300 hover:bg-gray-50 text-gray-700'
                               }`}
                               whileHover={{ scale: 1.03 }}
                               whileTap={{ scale: 0.98 }}
                             >
-                              {formData.gender === 'male' && (
+                              {formData.gender === 'Laki-laki' && (
                                 <motion.div
                                   className="absolute inset-0 bg-blue-50"
                                   initial={{ scale: 0 }}
@@ -359,22 +359,22 @@ const AddPatientPage = () => {
                                 />
                               )}
                               <span className="relative z-10 flex items-center text-base">
-                                <FaMale className={`mr-2 ${formData.gender === 'male' ? 'text-blue-500' : 'text-gray-500'}`} /> 
+                                <FaMale className={`mr-2 ${formData.gender === 'Laki-laki' ? 'text-blue-500' : 'text-gray-500'}`} /> 
                                 Laki-laki
                               </span>
                             </motion.button>
                             <motion.button
                               type="button"
-                              onClick={() => setFormData({...formData, gender: 'female'})}
+                              onClick={() => setFormData({...formData, gender: 'Perempuan'})}
                               className={`relative p-3 border rounded-lg flex items-center justify-center transition-all overflow-hidden ${
-                                formData.gender === 'female' 
+                                formData.gender === 'Perempuan' 
                                   ? 'border-pink-500 text-pink-700 font-medium' 
                                   : 'border-gray-300 hover:bg-gray-50 text-gray-700'
                               }`}
                               whileHover={{ scale: 1.03 }}
                               whileTap={{ scale: 0.98 }}
                             >
-                              {formData.gender === 'female' && (
+                              {formData.gender === 'Perempuan' && (
                                 <motion.div
                                   className="absolute inset-0 bg-pink-50"
                                   initial={{ scale: 0 }}
@@ -383,7 +383,7 @@ const AddPatientPage = () => {
                                 />
                               )}
                               <span className="relative z-10 flex items-center text-base">
-                                <FaFemale className={`mr-2 ${formData.gender === 'female' ? 'text-pink-500' : 'text-gray-500'}`} /> 
+                                <FaFemale className={`mr-2 ${formData.gender === 'Perempuan' ? 'text-pink-500' : 'text-gray-500'}`} /> 
                                 Perempuan
                               </span>
                             </motion.button>

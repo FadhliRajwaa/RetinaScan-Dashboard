@@ -45,12 +45,17 @@ function EditPatientPageComponent() {
         const patient = response.data;
         setPatientName(patient.fullName || patient.name || 'Pasien');
         
+        // Konversi gender jika dalam format lama
+        let formattedGender = patient.gender || '';
+        if (formattedGender === 'male') formattedGender = 'Laki-laki';
+        if (formattedGender === 'female') formattedGender = 'Perempuan';
+        
         // Mengisi form data
         setFormData({
           fullName: patient.fullName || '',
           dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth).toISOString().split('T')[0] : '',
           age: patient.age ? patient.age.toString() : '',
-          gender: patient.gender || '',
+          gender: formattedGender,
           phone: patient.phone || '',
           address: patient.address || '',
           bloodType: patient.bloodType || '',
@@ -297,9 +302,9 @@ function EditPatientPageComponent() {
                 
                 <div className="mt-5">
                   <label className="block text-sm font-medium text-gray-700 mb-1.5 flex items-center">
-                    {formData.gender === 'male' ? (
+                    {formData.gender === 'Laki-laki' ? (
                       <FaMale className="mr-1.5 text-blue-500" />
-                    ) : formData.gender === 'female' ? (
+                    ) : formData.gender === 'Perempuan' ? (
                       <FaFemale className="mr-1.5 text-pink-500" />
                     ) : (
                       <span className="text-blue-500 mr-1.5">👤</span>
@@ -311,8 +316,8 @@ function EditPatientPageComponent() {
                       <input
                         type="radio"
                         name="gender"
-                        value="male"
-                        checked={formData.gender === 'male'}
+                        value="Laki-laki"
+                        checked={formData.gender === 'Laki-laki'}
                         onChange={handleChange}
                         className="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
                         required
@@ -323,8 +328,8 @@ function EditPatientPageComponent() {
                       <input
                         type="radio"
                         name="gender"
-                        value="female"
-                        checked={formData.gender === 'female'}
+                        value="Perempuan"
+                        checked={formData.gender === 'Perempuan'}
                         onChange={handleChange}
                         className="h-5 w-5 text-pink-600 border-gray-300 focus:ring-pink-500"
                       />
