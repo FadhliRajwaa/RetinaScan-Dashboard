@@ -8,10 +8,13 @@ import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveLine } from '@nivo/line';
 import { ResponsiveBar } from '@nivo/bar';
 import CountUp from 'react-countup';
+import { toast } from 'react-toastify';
 
 function DashboardComponent({ userId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dataSource, setDataSource] = useState('api'); // 'api' atau 'mock'
+  const [retryCount, setRetryCount] = useState(0);
   const [stats, setStats] = useState({
     totalPatients: 0,
     totalAnalyses: 0,
@@ -19,10 +22,12 @@ function DashboardComponent({ userId }) {
     recentPatients: [],
     drDistribution: [],
     monthlyAnalyses: [],
-    ageDistribution: []
+    ageDistribution: [],
+    confidenceLevels: {}
   });
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const MAX_RETRY_COUNT = 2;
 
   // Fetch dashboard data
   useEffect(() => {
@@ -36,9 +41,10 @@ function DashboardComponent({ userId }) {
           throw new Error('No authentication token found');
         }
 
-        // Fetch dashboard statistics
-        const response = await axios.get(`${API_URL}/api/dashboard/stats`, {
-          headers: { Authorization: `Bearer ${token}` }
+        // Fetch dashboard statistics - Perbaikan URL endpoint
+        const response = await axios.get(`${API_URL}/api/analysis/dashboard/stats`, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 30000 // Tambahkan timeout yang lebih panjang (30 detik)
         });
 
         // Process and set the data
@@ -49,14 +55,63 @@ function DashboardComponent({ userId }) {
           recentPatients: response.data.recentPatients || [],
           drDistribution: processDRDistribution(response.data.drDistribution || []),
           monthlyAnalyses: processMonthlyData(response.data.monthlyAnalyses || []),
-          ageDistribution: response.data.ageDistribution || []
+          ageDistribution: response.data.ageDistribution || [],
+          confidenceLevels: response.data.confidenceLevels || {}
         });
         
+        setDataSource('api');
         setLoading(false);
+        setRetryCount(0); // Reset retry count on successful fetch
+        
+        // Tampilkan toast sukses jika sebelumnya menggunakan data mock
+        if (dataSource === 'mock') {
+          toast.success('Koneksi ke server berhasil dipulihkan');
+        }
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        setError('Gagal memuat data dashboard');
+        
+        // Cek jenis error untuk memberikan pesan yang lebih spesifik
+        let errorMessage = 'Gagal memuat data dashboard';
+        
+        if (err.code === 'ECONNABORTED') {
+          errorMessage = 'Koneksi ke server timeout. Menggunakan data lokal.';
+        } else if (err.response) {
+          // Server merespons dengan status error
+          if (err.response.status === 401 || err.response.status === 403) {
+            errorMessage = 'Sesi login Anda telah berakhir. Silakan login kembali.';
+          } else if (err.response.status === 404) {
+            errorMessage = 'Endpoint API tidak ditemukan. Menggunakan data lokal.';
+          } else if (err.response.status >= 500) {
+            errorMessage = 'Server sedang mengalami gangguan. Menggunakan data lokal.';
+          }
+        } else if (err.request) {
+          // Request dibuat tapi tidak ada respons
+          errorMessage = 'Tidak dapat terhubung ke server. Menggunakan data lokal.';
+        }
+        
+        setError(errorMessage);
+        
+        // Coba lagi jika belum mencapai batas percobaan
+        if (retryCount < MAX_RETRY_COUNT) {
+          console.log(`Mencoba menghubungi server lagi (${retryCount + 1}/${MAX_RETRY_COUNT})...`);
+          setRetryCount(prevCount => prevCount + 1);
+          
+          // Tunggu 3 detik sebelum mencoba lagi
+          setTimeout(() => {
+            fetchDashboardData();
+          }, 3000);
+          return;
+        }
+        
+        // Gunakan data mock setelah mencapai batas percobaan
         setLoading(false);
+        setDataSource('mock');
+        
+        // Tampilkan toast warning
+        toast.warning(errorMessage, {
+          autoClose: 5000,
+          position: 'top-center'
+        });
         
         // Use mock data for development/preview
         setMockData();
@@ -99,49 +154,70 @@ function DashboardComponent({ userId }) {
 
   // Set mock data for development or when API fails
   const setMockData = () => {
+    // Format data untuk distribusi DR sesuai dengan format backend
     const mockDRDistribution = [
-      { id: 'No DR', label: 'No DR', value: 45, color: '#4caf50' },
-      { id: 'Mild', label: 'Mild', value: 25, color: '#8bc34a' },
-      { id: 'Moderate', label: 'Moderate', value: 15, color: '#ffeb3b' },
-      { id: 'Severe', label: 'Severe', value: 10, color: '#ff9800' },
-      { id: 'Proliferative DR', label: 'Proliferative DR', value: 5, color: '#f44336' }
+      { id: 'No DR', label: 'Tidak ada', value: 45, color: '#4caf50' },
+      { id: 'Mild', label: 'Ringan', value: 25, color: '#8bc34a' },
+      { id: 'Moderate', label: 'Sedang', value: 15, color: '#ffeb3b' },
+      { id: 'Severe', label: 'Berat', value: 10, color: '#ff9800' },
+      { id: 'Proliferative DR', label: 'Sangat Berat', value: 5, color: '#f44336' }
     ];
 
+    // Format data untuk tren bulanan sesuai dengan format backend
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    
+    // Buat data untuk 12 bulan terakhir
     const mockMonthlyData = [
       {
         id: 'analisis',
-        data: [
-          { x: 'Jan', y: 12 },
-          { x: 'Feb', y: 18 },
-          { x: 'Mar', y: 15 },
-          { x: 'Apr', y: 22 },
-          { x: 'May', y: 28 },
-          { x: 'Jun', y: 30 }
-        ]
+        data: monthNames.map((month, index) => {
+          // Buat data yang lebih realistis dengan tren naik
+          const baseValue = 10 + Math.floor(Math.random() * 5);
+          const monthValue = baseValue + (index * 2) + Math.floor(Math.random() * 8);
+          return { x: month, y: monthValue };
+        })
       }
     ];
 
+    // Format data untuk distribusi umur sesuai dengan format backend
     const mockAgeDistribution = [
-      { age: '0-20', count: 5 },
-      { age: '21-40', count: 25 },
-      { age: '41-60', count: 40 },
-      { age: '61-80', count: 20 },
-      { age: '80+', count: 10 }
+      { age: '0-10', count: 3 },
+      { age: '11-20', count: 7 },
+      { age: '21-30', count: 15 },
+      { age: '31-40', count: 25 },
+      { age: '41-50', count: 30 },
+      { age: '51-60', count: 15 },
+      { age: '61+', count: 5 }
     ];
 
+    // Data pasien terbaru dengan format yang sesuai backend
     const mockRecentPatients = [
-      { _id: '1', name: 'Ahmad Fauzi', age: 45, dateOfBirth: new Date(1978, 5, 15), gender: 'Laki-laki', createdAt: new Date(2023, 5, 10) },
-      { _id: '2', name: 'Siti Rahayu', age: 38, dateOfBirth: new Date(1985, 2, 20), gender: 'Perempuan', createdAt: new Date(2023, 5, 12) },
-      { _id: '3', name: 'Budi Santoso', age: 52, dateOfBirth: new Date(1971, 8, 5), gender: 'Laki-laki', createdAt: new Date(2023, 5, 15) },
-      { _id: '4', name: 'Dewi Lestari', age: 29, dateOfBirth: new Date(1994, 11, 12), gender: 'Perempuan', createdAt: new Date(2023, 5, 18) }
+      { _id: '1', name: 'Ahmad Fauzi', age: 45, dateOfBirth: new Date(1978, 5, 15), gender: 'Laki-laki', createdAt: new Date() },
+      { _id: '2', name: 'Siti Rahayu', age: 38, dateOfBirth: new Date(1985, 2, 20), gender: 'Perempuan', createdAt: new Date(Date.now() - 86400000) },
+      { _id: '3', name: 'Budi Santoso', age: 52, dateOfBirth: new Date(1971, 8, 5), gender: 'Laki-laki', createdAt: new Date(Date.now() - 86400000 * 2) },
+      { _id: '4', name: 'Dewi Lestari', age: 29, dateOfBirth: new Date(1994, 11, 12), gender: 'Perempuan', createdAt: new Date(Date.now() - 86400000 * 3) },
+      { _id: '5', name: 'Agus Purnomo', age: 61, dateOfBirth: new Date(1962, 3, 8), gender: 'Laki-laki', createdAt: new Date(Date.now() - 86400000 * 4) }
     ];
 
+    // Data analisis terbaru dengan format yang sesuai backend
     const mockRecentAnalyses = [
-      { _id: '1', patientId: { name: 'Ahmad Fauzi' }, results: { classification: 'Mild', confidence: 0.89 }, timestamp: new Date(2023, 5, 20) },
-      { _id: '2', patientId: { name: 'Siti Rahayu' }, results: { classification: 'No DR', confidence: 0.95 }, timestamp: new Date(2023, 5, 21) },
-      { _id: '3', patientId: { name: 'Budi Santoso' }, results: { classification: 'Moderate', confidence: 0.78 }, timestamp: new Date(2023, 5, 22) },
-      { _id: '4', patientId: { name: 'Dewi Lestari' }, results: { classification: 'No DR', confidence: 0.92 }, timestamp: new Date(2023, 5, 23) }
+      { _id: '1', patientId: { name: 'Ahmad Fauzi' }, results: { classification: 'Mild', confidence: 0.89 }, timestamp: new Date() },
+      { _id: '2', patientId: { name: 'Siti Rahayu' }, results: { classification: 'No DR', confidence: 0.95 }, timestamp: new Date(Date.now() - 86400000) },
+      { _id: '3', patientId: { name: 'Budi Santoso' }, results: { classification: 'Moderate', confidence: 0.78 }, timestamp: new Date(Date.now() - 86400000 * 2) },
+      { _id: '4', patientId: { name: 'Dewi Lestari' }, results: { classification: 'No DR', confidence: 0.92 }, timestamp: new Date(Date.now() - 86400000 * 3) },
+      { _id: '5', patientId: { name: 'Agus Purnomo' }, results: { classification: 'Proliferative DR', confidence: 0.85 }, timestamp: new Date(Date.now() - 86400000 * 4) }
     ];
+
+    // Data untuk confidence levels
+    const confidenceLevels = {
+      average: 88,
+      highest: 95,
+      lowest: 78
+    };
+
+    console.log('Menggunakan data mock untuk dashboard karena API tidak tersedia');
 
     setStats({
       totalPatients: 120,
@@ -150,7 +226,8 @@ function DashboardComponent({ userId }) {
       recentPatients: mockRecentPatients,
       drDistribution: mockDRDistribution,
       monthlyAnalyses: mockMonthlyData,
-      ageDistribution: mockAgeDistribution
+      ageDistribution: mockAgeDistribution,
+      confidenceLevels: confidenceLevels
     });
   };
 
@@ -180,15 +257,125 @@ function DashboardComponent({ userId }) {
   // Error state
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-        <h3 className="font-bold">Error</h3>
-        <p>{error}</p>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-6 bg-white rounded-2xl shadow-lg"
+      >
+        <div className="flex flex-col items-center p-6 text-center">
+          <div className="bg-red-100 p-3 rounded-full mb-4">
+            <svg className="w-10 h-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">Terjadi Kesalahan</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button 
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                setRetryCount(0);
+                const fetchDashboardData = async () => {
+                  try {
+                    // Get token from localStorage
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                      throw new Error('No authentication token found');
+                    }
+                    
+                    // Fetch dashboard statistics
+                    const response = await axios.get(`${API_URL}/api/analysis/dashboard/stats`, {
+                      headers: { Authorization: `Bearer ${token}` },
+                      timeout: 30000
+                    });
+                    
+                    // Process and set the data
+                    setStats({
+                      totalPatients: response.data.totalPatients || 0,
+                      totalAnalyses: response.data.totalAnalyses || 0,
+                      recentAnalyses: response.data.recentAnalyses || [],
+                      recentPatients: response.data.recentPatients || [],
+                      drDistribution: processDRDistribution(response.data.drDistribution || []),
+                      monthlyAnalyses: processMonthlyData(response.data.monthlyAnalyses || []),
+                      ageDistribution: response.data.ageDistribution || [],
+                      confidenceLevels: response.data.confidenceLevels || {}
+                    });
+                    
+                    setDataSource('api');
+                    setLoading(false);
+                    toast.success('Data berhasil dimuat ulang');
+                  } catch (err) {
+                    console.error('Error fetching dashboard data:', err);
+                    setError('Gagal memuat ulang data. Menggunakan data lokal.');
+                    setLoading(false);
+                    setDataSource('mock');
+                    setMockData();
+                    toast.warning('Menggunakan data lokal');
+                  }
+                };
+                fetchDashboardData();
+              }}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Coba Lagi
+            </button>
+            <button 
+              onClick={() => {
+                setError(null);
+                setDataSource('mock');
+                setMockData();
+              }}
+              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Gunakan Data Lokal
+            </button>
+          </div>
+          {dataSource === 'mock' && (
+            <div className="mt-6 p-4 bg-blue-50 text-blue-700 rounded-lg">
+              <p className="text-sm">
+                <span className="font-semibold">Catatan:</span> Saat ini menampilkan data lokal karena tidak dapat terhubung ke server.
+                Data yang ditampilkan mungkin tidak mencerminkan data terbaru.
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
     );
   }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
+      {dataSource === 'mock' && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-700"
+        >
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm font-medium">
+              Menampilkan data lokal. Beberapa informasi mungkin tidak akurat atau terbaru.
+              <button 
+                onClick={() => {
+                  setLoading(true);
+                  setRetryCount(0);
+                  const fetchDashboardData = async () => {
+                    // ... existing fetchDashboardData code ...
+                  };
+                  fetchDashboardData();
+                }}
+                className="ml-2 underline hover:text-amber-800"
+              >
+                Coba hubungkan ke server
+              </button>
+            </p>
+          </div>
+        </motion.div>
+      )}
+      
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <motion.div 

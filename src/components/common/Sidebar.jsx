@@ -10,7 +10,7 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
   const { isMobile } = useTheme();
   const [activeMenu, setActiveMenu] = useState('');
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
-
+  
   useEffect(() => {
     // Set active menu based on current path
     const path = location.pathname;
@@ -25,10 +25,10 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
 
   // Animation variants
   const sidebarVariants = {
-    open: {
-      x: 0,
-      opacity: 1,
-      transition: {
+    open: { 
+      x: 0, 
+      opacity: 1, 
+      transition: { 
         type: "spring",
         stiffness: 300,
         damping: 30,
@@ -39,7 +39,7 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
     closed: {
       x: isMobile ? "-100%" : 0,
       opacity: isMobile ? 0 : 1,
-      transition: {
+      transition: { 
         type: "spring",
         stiffness: 300,
         damping: 30,
@@ -47,14 +47,14 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
         staggerDirection: -1,
         when: "afterChildren"
       }
-    }
+      } 
   };
 
   const menuItemVariants = {
     open: {
       y: 0,
       opacity: 1,
-      transition: {
+      transition: { 
         type: "spring",
         stiffness: 300,
         damping: 20
@@ -88,18 +88,18 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
     <>
       {/* Mobile overlay */}
       {isMobile && (
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="fixed inset-0 bg-black bg-opacity-50 z-20"
-              onClick={toggleMobileMenu}
-            />
-          )}
-        </AnimatePresence>
+            onClick={toggleMobileMenu}
+          />
+        )}
+      </AnimatePresence>
       )}
 
       {/* Sidebar */}
@@ -110,7 +110,7 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
         className={`fixed lg:sticky top-0 left-0 h-screen bg-white shadow-lg z-30 lg:z-10 overflow-hidden transition-all duration-300 ${
           isMobile ? 'w-64' : 'w-20 lg:w-64'
         }`}
-        style={{
+        style={{ 
           background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
@@ -120,10 +120,10 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100">
-            <motion.div 
+          <motion.div 
               className="flex items-center space-x-2"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
@@ -140,14 +140,14 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
             </motion.div>
             
             {isMobile && (
-              <motion.button 
+            <motion.button
                 className="text-gray-500 hover:text-gray-800 focus:outline-none"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={toggleMobileMenu}
+              onClick={toggleMobileMenu}
               >
                 <FiX size={24} />
-              </motion.button>
+            </motion.button>
             )}
           </div>
 
@@ -158,13 +158,13 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
                 const isActive = activeMenu === item.id;
                 
                 return (
-                  <motion.div
+                <motion.div
                     key={item.id}
-                    variants={menuItemVariants}
+                  variants={menuItemVariants}
                     className="relative"
                   >
                     <Link to={item.path}>
-                      <motion.div
+                    <motion.div
                         className={`flex items-center px-4 py-3 rounded-xl mb-1 group relative overflow-hidden ${
                           isActive
                             ? 'text-white'
@@ -217,13 +217,13 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
                           </motion.span>
                         )}
                       </motion.div>
-                    </Link>
-                  </motion.div>
+                      </Link>
+                    </motion.div>
                 );
               })}
-            </nav>
+          </nav>
           </div>
-
+          
           {/* Logout Button */}
           <div className="p-4 border-t border-gray-100">
             <motion.button
@@ -237,21 +237,21 @@ const Sidebar = ({ toggleMobileMenu, isMobileMenuOpen }) => {
             </motion.button>
           </div>
         </div>
-      </motion.div>
+              </motion.div>
 
       {/* Mobile menu toggle button */}
       {isMobile && !isMobileMenuOpen && (
         <motion.button
           className="fixed top-4 left-4 z-20 p-2 rounded-full bg-white shadow-lg text-gray-600"
           onClick={toggleMobileMenu}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
         >
           <FiMenu size={24} />
-        </motion.button>
-      )}
+            </motion.button>
+        )}
     </>
   );
 };
