@@ -39,24 +39,25 @@ const EnhancedSeverityChart = ({ data, loading }) => {
     'Neovaskularisasi dan risiko tinggi kebutaan'
   ];
   
+  // Efek untuk animasi rotasi chart dan entrance animation
   useEffect(() => {
-    // Rotate chart slightly on data change for animation effect
-    if (data && data.length > 0) {
-      setRotation(prev => prev + 15);
-      
-      // Reset rotation after 360 degrees
-      if (rotation >= 360) {
-        setRotation(0);
-      }
-    }
-    
     // Set chart to visible with delay for entrance animation
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 300);
     
     return () => clearTimeout(timer);
-  }, [data, rotation]);
+  }, []);
+  
+  // Efek terpisah untuk rotasi chart saat data berubah
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setRotation(prevRotation => {
+        const newRotation = prevRotation + 15;
+        return newRotation >= 360 ? 0 : newRotation;
+      });
+    }
+  }, [data]);
   
   const onPieEnter = (_, index) => {
     setActiveIndex(index);
@@ -68,6 +69,11 @@ const EnhancedSeverityChart = ({ data, loading }) => {
   
   // Dynamic data transformation with proper fallbacks
   const transformedData = useMemo(() => {
+    // Debug: log incoming data
+    if (data) {
+      console.log('Raw severity data received:', data);
+    }
+    
     // Default data jika tidak ada data
     if (!data || data.length === 0) {
       return LABELS.map((label, index) => ({
@@ -78,8 +84,15 @@ const EnhancedSeverityChart = ({ data, loading }) => {
       }));
     }
     
-    // Debug: log incoming data
-    console.log('Raw severity data received:', data);
+    // Jika data adalah array of numbers (severityDistribution), konversi ke format yang benar
+    if (Array.isArray(data) && data.every(item => typeof item === 'number')) {
+      return LABELS.map((label, index) => ({
+        name: label,
+        value: data[index] || 0,
+        index: index,
+        description: DESCRIPTIONS[index]
+      }));
+    }
     
     // Jika data kurang dari 5 item, tambahkan items yang hilang
     if (data.length < 5) {
@@ -121,16 +134,25 @@ const EnhancedSeverityChart = ({ data, loading }) => {
 
   // Hitung total pasien untuk ditampilkan
   const totalPatients = useMemo(() => {
-    if (!data || data.length === 0) return 100; // Default jika tidak ada data
+    // Default value jika tidak ada data
+    if (!data) return 100;
     
-    // Jika data.count atau data.total tersedia, gunakan itu
-    const firstItem = data[0];
-    if (firstItem && (firstItem.count !== undefined || firstItem.total !== undefined)) {
-      const countField = firstItem.count !== undefined ? 'count' : 'total';
-      return data.reduce((sum, item) => sum + (item[countField] || 0), 0);
+    // Jika data adalah array of numbers (severityDistribution), cari total dari patients di parent component
+    if (Array.isArray(data) && data.every(item => typeof item === 'number')) {
+      // Jika total tidak diberikan, asumsikan data adalah persentase yang totalnya 100
+      return 100;
     }
     
-    // Jika tidak, asumsikan nilai adalah persentase, dan total adalah 100
+    // Jika data memiliki properti count atau total, gunakan untuk menghitung total
+    if (data && data.length > 0) {
+      const firstItem = data[0];
+      if (firstItem && (firstItem.count !== undefined || firstItem.total !== undefined)) {
+        const countField = firstItem.count !== undefined ? 'count' : 'total';
+        return data.reduce((sum, item) => sum + (item[countField] || 0), 0);
+      }
+    }
+    
+    // Fallback ke 100 (asumsi persentase)
     return 100;
   }, [data]);
 
@@ -236,6 +258,11 @@ const EnhancedSeverityChart = ({ data, loading }) => {
     return <SkeletonLoader />;
   }
   
+  // Hitung jumlah pasien per kategori
+  const calculatePatientCount = (value) => {
+    return Math.round((value / 100) * totalPatients);
+  };
+  
   return (
     <motion.div 
       className="relative h-full flex flex-col"
@@ -313,6 +340,8 @@ const EnhancedSeverityChart = ({ data, loading }) => {
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
+                  const patientCount = calculatePatientCount(data.value);
+                  
                   return (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -326,7 +355,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
                         <p className="text-sm font-semibold">
                           <span className="inline-block w-3 h-3 rounded-full mr-1" style={{ backgroundColor: COLORS[data.index] }}></span>
                           <span>{`${(payload[0].percent * 100).toFixed(0)}%`}</span>
-                          <span className="text-gray-500 ml-1">({Math.round(totalPatients * payload[0].percent)} pasien)</span>
+                          <span className="text-gray-500 ml-1">({patientCount} pasien)</span>
                         </p>
                       </div>
                     </motion.div>
@@ -358,7 +387,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
                 {transformedData[activeIndex]?.value}%
               </p>
               <p className="text-xs text-gray-500">
-                {Math.round(totalPatients * transformedData[activeIndex]?.value / 100)} pasien
+                {calculatePatientCount(transformedData[activeIndex]?.value)} pasien
               </p>
             </motion.div>
           ) : (
@@ -388,7 +417,7 @@ const EnhancedSeverityChart = ({ data, loading }) => {
         {LABELS.map((label, index) => {
           const matchingData = transformedData.find(item => item.name === label);
           const value = matchingData ? matchingData.value : 0;
-          const count = Math.round(totalPatients * value / 100);
+          const count = calculatePatientCount(value);
           
           return (
             <motion.div
