@@ -144,6 +144,73 @@ const EnhancedSeverityChart = ({ data, loading }) => {
     );
   };
   
+  // Render labels inside each segment of the pie chart
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
+    // Adjust radial position of label based on segment size
+    const adjustedRadius = percent < 0.05 ? outerRadius * 1.3 : (outerRadius + innerRadius) / 2;
+    
+    // Calculate position
+    const RADIAN = Math.PI / 180;
+    const radius = adjustedRadius;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    // Adjust position for very small slices to avoid overlap
+    let textAnchor;
+    let labelX = x;
+    let offsetY = 0;
+    
+    if (x < cx) {
+      textAnchor = "end";
+      if (percent < 0.05) labelX -= 10;
+    } else {
+      textAnchor = "start";
+      if (percent < 0.05) labelX += 10;
+    }
+    
+    if (Math.abs(y - cy) < 10) {
+      offsetY = y < cy ? -5 : 15;
+    }
+    
+    return (
+      <g>
+        {/* Show value (percentage) for all segments */}
+        <text 
+          x={labelX} 
+          y={y + offsetY} 
+          fill={percent < 0.05 ? COLORS[index] : "#fff"} 
+          textAnchor={textAnchor} 
+          dominantBaseline="central"
+          className="text-xs font-semibold"
+          style={{ 
+            filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5))',
+            textShadow: '0px 0px 3px rgba(0, 0, 0, 0.5)'
+          }}
+        >
+          {`${(percent * 100).toFixed(0)}%`}
+        </text>
+        
+        {/* Show label for larger segments only to avoid clutter */}
+        {percent > 0.08 && (
+          <text 
+            x={labelX} 
+            y={y + offsetY + 15} 
+            fill="#fff" 
+            textAnchor={textAnchor} 
+            dominantBaseline="central"
+            className="text-xs"
+            style={{ 
+              filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.5))',
+              textShadow: '0px 0px 3px rgba(0, 0, 0, 0.5)'
+            }}
+          >
+            {name}
+          </text>
+        )}
+      </g>
+    );
+  };
+  
   // Animation configuration for chart
   const animationProps = {
     isAnimationActive: true,
@@ -191,6 +258,8 @@ const EnhancedSeverityChart = ({ data, loading }) => {
             activeShape={renderActiveShape}
             onMouseEnter={onPieEnter}
             onMouseLeave={onPieLeave}
+            label={renderCustomizedLabel}
+            labelLine={false}
           >
             {transformedData.map((entry, index) => (
               <Cell 
@@ -233,6 +302,39 @@ const EnhancedSeverityChart = ({ data, loading }) => {
           />
         </PieChart>
       </ResponsiveContainer>
+      
+      {/* Info di tengah chart */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-center pointer-events-none">
+        <AnimatePresence mode="wait">
+          {activeIndex !== null ? (
+            <motion.div
+              key={`info-${activeIndex}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+            >
+              <p className="font-semibold text-sm" style={{ color: COLORS[activeIndex] }}>
+                {transformedData[activeIndex]?.name}
+              </p>
+              <p className="text-xl font-bold" style={{ color: COLORS[activeIndex] }}>
+                {transformedData[activeIndex]?.value}%
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-28 h-28 flex flex-col items-center justify-center bg-white bg-opacity-80 backdrop-filter backdrop-blur-sm rounded-full shadow-lg"
+            >
+              <p className="text-gray-600 text-sm">Distribusi</p>
+              <p className="text-gray-800 font-bold text-sm">Tingkat</p>
+              <p className="text-gray-800 font-bold text-sm">Keparahan</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
       
       {/* Legend dengan tampilan yang lebih menarik */}
       <div className="flex flex-wrap justify-center gap-2 mt-4">

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getHistory, deleteAnalysis } from '../../services/api';
 import { FiCalendar, FiAlertTriangle, FiPercent, FiFileText, FiSearch, FiChevronLeft, FiChevronRight, FiFilter, FiEye, FiUser, FiList, FiClock, FiTrash } from 'react-icons/fi';
 import axios from 'axios';
+import { getPatientInfo, getSeverityBadge, normalizePatientData } from '../../utils/severityUtils';
 
 function History() {
   // State management
@@ -29,10 +30,25 @@ function History() {
       try {
         setIsLoading(true);
         const data = await getHistory();
+        console.log('Data history dari API:', data.slice(0, 3)); // Log sampel data
+        
+        // Periksa data pasien dalam history
+        data.forEach((item, index) => {
+          if (index < 3) { // Hanya log beberapa item pertama
+            console.log(`Patient ${index} info:`, {
+              id: item.patientId?._id,
+              name: item.patientId?.fullName || item.patientId?.name,
+              gender: item.patientId?.gender,
+              age: item.patientId?.age
+            });
+          }
+        });
+        
         setAnalyses(data);
         
         // Kelompokkan analisis berdasarkan pasien
         const grouped = groupAnalysesByPatient(data);
+        console.log('Data yang dikelompokkan:', grouped.slice(0, 3)); // Log sampel data
         setGroupedAnalyses(grouped);
         setFilteredGroupedAnalyses(grouped);
         
@@ -52,8 +68,13 @@ function History() {
         const response = await axios.get(`${API_URL}/api/patients`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPatients(response.data);
-        console.log('Fetched patients:', response.data.length);
+        console.log('Data pasien dari API:', response.data.slice(0, 3)); // Log sampel data
+        
+        // Normalisasi data pasien sebelum disimpan ke state
+        const normalizedPatients = response.data.map(normalizePatientData);
+        
+        setPatients(normalizedPatients);
+        console.log('Fetched patients after normalization:', normalizedPatients.length);
       } catch (err) {
         console.error('Gagal memuat data pasien:', err);
       }
@@ -153,33 +174,6 @@ function History() {
     return new Date(dateString).toLocaleDateString('id-ID', options);
   };
 
-  // Get severity badge style
-  const getSeverityBadge = (severity) => {
-    const severityLower = severity?.toLowerCase() || '';
-    if (severityLower === 'tidak ada' || severityLower === 'normal') {
-      return 'bg-blue-100 text-blue-800';
-    } else if (severityLower === 'ringan' || severityLower === 'rendah') {
-      return 'bg-green-100 text-green-800';
-    } else if (severityLower === 'sedang') {
-      return 'bg-yellow-100 text-yellow-800';
-    } else if (severityLower === 'berat' || severityLower === 'parah') {
-      return 'bg-orange-100 text-orange-800';
-    } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
-      return 'bg-red-100 text-red-800';
-    } else {
-      // Fallback berdasarkan severityLevel jika ada
-      const level = parseInt(severity);
-      if (!isNaN(level)) {
-        if (level === 0) return 'bg-blue-100 text-blue-800';
-        if (level === 1) return 'bg-green-100 text-green-800';
-        if (level === 2) return 'bg-yellow-100 text-yellow-800';
-        if (level === 3) return 'bg-orange-100 text-orange-800';
-        if (level === 4) return 'bg-red-100 text-red-800';
-      }
-      return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   // Get patient name
   const getPatientName = (item) => {
     if (item.patientId) {
@@ -191,57 +185,6 @@ function History() {
     return 'Pasien Tidak Tersedia';
   };
 
-  // Get patient gender and age dengan validasi lebih baik
-  const getPatientInfo = (item) => {
-    try {
-      if (!item || !item.patientId) {
-        return 'Data Tidak Tersedia';
-      }
-      
-      // Normalisasi nilai gender dengan validasi ketat
-      let genderText = '';
-      const gender = item.patientId.gender;
-      
-      if (gender) {
-        const genderLower = gender.toLowerCase().trim();
-        if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
-          genderText = 'Laki-laki';
-        } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
-          genderText = 'Perempuan';
-        } else {
-          // Default jika format tidak dikenali
-          genderText = gender;
-        }
-      }
-      
-      // Validasi umur - pastikan nilai numerik
-      let ageText = '';
-      const age = item.patientId.age;
-      if (age !== undefined && age !== null) {
-        // Konversi ke angka dan validasi
-        const ageNum = parseInt(age, 10);
-        if (!isNaN(ageNum)) {
-          ageText = `${ageNum} tahun`;
-        }
-      }
-      
-      // Jika salah satu tidak tersedia, tampilkan yang tersedia saja
-      if (!genderText && !ageText) {
-        return 'Data Tidak Tersedia';
-      } else if (!genderText) {
-        return ageText;
-      } else if (!ageText) {
-        return genderText;
-      }
-      
-      // Jika keduanya tersedia
-      return `${genderText}, ${ageText}`;
-    } catch (error) {
-      console.error('Error formatting patient info:', error);
-      return 'Error Saat Memuat Data';
-    }
-  };
-
   // Fungsi untuk mendapatkan info pasien pada bagian pengelompokan data
   const getPatientDetails = (patient) => {
     try {
@@ -250,45 +193,10 @@ function History() {
       // Nama pasien
       const name = patient.fullName || patient.name || 'Pasien Tidak Tersedia';
       
-      // Gender pasien dengan validasi lebih ketat
-      let genderText = '';
-      if (patient.gender) {
-        const genderLower = patient.gender.toLowerCase().trim();
-        if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
-          genderText = 'Laki-laki';
-        } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
-          genderText = 'Perempuan';
-        } else {
-          // Default jika format tidak dikenali
-          genderText = patient.gender;
-        }
-      }
+      // Info pasien (gender, umur) menggunakan util function
+      const info = getPatientInfo(patient);
       
-      // Umur pasien dengan validasi lebih ketat
-      let ageText = '';
-      if (patient.age !== undefined && patient.age !== null) {
-        // Pastikan umur adalah angka valid
-        const ageNum = parseInt(patient.age, 10);
-        if (!isNaN(ageNum)) {
-          ageText = `${ageNum} tahun`;
-        }
-      }
-      
-      // Gabungkan info dengan lebih baik - tampilkan data yang tersedia saja
-      let info = 'Data Tidak Tersedia';
-      
-      if (genderText && ageText) {
-        info = `${genderText}, ${ageText}`;
-      } else if (genderText) {
-        info = genderText;
-      } else if (ageText) {
-        info = ageText;
-      }
-      
-      return {
-        name,
-        info
-      };
+      return { name, info };
     } catch (error) {
       console.error('Error getting patient details:', error);
       return { name: 'Error', info: 'Error Saat Memuat Data' };
@@ -302,12 +210,16 @@ function History() {
 
   // Fungsi untuk mengelompokkan analisis berdasarkan pasien
   const groupAnalysesByPatient = (analyses) => {
+    try {
     // Buat objek untuk menyimpan analisis dikelompokkan berdasarkan patientId
     const groupedByPatient = {};
     
     // Iterasi melalui semua analisis
     analyses.forEach(analysis => {
-      if (!analysis.patientId) return;
+        if (!analysis.patientId) {
+          console.warn('Analysis without patientId:', analysis);
+          return;
+        }
       
       // Handle kasus di mana patientId bisa berupa objek atau string
       const patientId = typeof analysis.patientId === 'object' ? analysis.patientId._id : analysis.patientId;
@@ -317,10 +229,15 @@ function History() {
         ? (analysis.patientId.fullName || analysis.patientId.name) 
         : analysis.patientName || 'Pasien Tidak Diketahui';
       
+      // Normalisasi data pasien jika tersedia
+      let patientData = typeof analysis.patientId === 'object' 
+        ? normalizePatientData(analysis.patientId)
+        : { _id: patientId, name: patientName };
+      
       // Jika pasien belum ada di objek, tambahkan
       if (!groupedByPatient[patientId]) {
         groupedByPatient[patientId] = {
-          patient: typeof analysis.patientId === 'object' ? analysis.patientId : { _id: patientId, name: patientName },
+          patient: patientData,
           analyses: [analysis],
           latestAnalysis: analysis,
           totalAnalyses: 1
@@ -341,9 +258,16 @@ function History() {
     Object.values(groupedByPatient).forEach(group => {
       group.analyses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     });
+      
+    // Log for debugging
+    console.log('Grouped patient data sample:', Object.values(groupedByPatient).slice(0, 2));
     
     // Konversi objek menjadi array
     return Object.values(groupedByPatient);
+    } catch (error) {
+      console.error('Error grouping analyses by patient:', error);
+      return [];
+    }
   };
 
   return (

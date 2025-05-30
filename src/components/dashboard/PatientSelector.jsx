@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { FiUsers, FiUser, FiCheck, FiSearch } from 'react-icons/fi';
+import { normalizeGender, normalizePatientData } from '../../utils/severityUtils';
 
 const PatientSelector = ({ onSelectPatient, selectedPatient }) => {
   const [patients, setPatients] = useState([]);
@@ -22,7 +23,10 @@ const PatientSelector = ({ onSelectPatient, selectedPatient }) => {
       const response = await axios.get(`${API_URL}/api/patients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPatients(response.data);
+      
+      // Normalisasi data pasien sebelum disimpan ke state
+      const normalizedPatients = response.data.map(normalizePatientData);
+      setPatients(normalizedPatients);
       setError('');
     } catch (err) {
       console.error('Gagal memuat data pasien:', err);
@@ -63,7 +67,7 @@ const PatientSelector = ({ onSelectPatient, selectedPatient }) => {
               <div>
                 <p className="font-medium">{selectedPatient.fullName || selectedPatient.name}</p>
                 <p className="text-xs text-gray-500">
-                  {selectedPatient.gender === 'male' ? 'Laki-laki' : 'Perempuan'} • {selectedPatient.age} tahun
+                  {normalizeGender(selectedPatient.gender)} • {selectedPatient.age} tahun
                 </p>
               </div>
             </div>
@@ -149,7 +153,7 @@ const PatientSelector = ({ onSelectPatient, selectedPatient }) => {
                         )}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'} • {patient.age} tahun
+                        {normalizeGender(patient.gender)} • {patient.age} tahun
                       </p>
                     </div>
                   </div>

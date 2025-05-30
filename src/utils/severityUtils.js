@@ -83,4 +83,78 @@ export const getSeverityBadge = (severity) => {
   
   // Default fallback
   return 'bg-gray-100 text-gray-800';
+};
+
+// Fungsi normalisasi gender
+export const normalizeGender = (gender) => {
+  if (!gender) return 'Tidak Diketahui';
+  
+  const genderLower = gender.toLowerCase().trim();
+  if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+    return 'Laki-laki';
+  } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+    return 'Perempuan';
+  }
+  
+  return gender;
+};
+
+// Fungsi normalisasi umur
+export const normalizeAge = (age) => {
+  if (age === undefined || age === null) return null;
+  
+  // Konversi ke angka dan validasi
+  const ageNum = parseInt(age, 10);
+  if (isNaN(ageNum)) return null;
+  
+  return ageNum;
+};
+
+// Fungsi untuk mendapatkan teks info pasien (gender, umur)
+export const getPatientInfo = (patient) => {
+  if (!patient) return 'Data Tidak Tersedia';
+  
+  const gender = normalizeGender(patient.gender);
+  
+  let ageText = '';
+  const age = normalizeAge(patient.age);
+  if (age !== null) {
+    ageText = `${age} tahun`;
+  }
+  
+  // Jika salah satu tidak tersedia, tampilkan yang tersedia saja
+  if (gender === 'Tidak Diketahui' && !ageText) {
+    return 'Data Tidak Tersedia';
+  } else if (gender === 'Tidak Diketahui') {
+    return ageText;
+  } else if (!ageText) {
+    return gender;
+  }
+  
+  // Jika keduanya tersedia
+  return `${gender}, ${ageText}`;
+};
+
+// Fungsi untuk normalisasi data pasien
+export const normalizePatientData = (patient) => {
+  if (!patient) return null;
+  
+  // Clone pasien untuk menghindari mutasi objek asli
+  const normalizedPatient = { ...patient };
+  
+  // Normalisasi gender
+  normalizedPatient.gender = normalizeGender(patient.gender);
+  
+  // Normalisasi umur
+  const age = normalizeAge(patient.age);
+  if (age !== null) {
+    normalizedPatient.age = age;
+  }
+  
+  // Pastikan nama lengkap tersedia
+  if (!normalizedPatient.fullName && normalizedPatient.name) {
+    normalizedPatient.fullName = normalizedPatient.name;
+  }
+  
+  return normalizedPatient;
 }; 
