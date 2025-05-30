@@ -364,6 +364,83 @@ export const getDashboardData = async () => {
       analysesCount: response.data.analyses?.length || 0
     });
     
+    // Normalisasi data severityDistribution untuk memastikan 5 kategori
+    if (response.data.severityDistribution) {
+      console.log('Raw severityDistribution:', response.data.severityDistribution);
+      
+      // Pastikan array severityDistribution memiliki tepat 5 elemen
+      if (response.data.severityDistribution.length !== 5) {
+        console.warn(`severityDistribution length mismatch: expected 5, got ${response.data.severityDistribution.length}`);
+        
+        // Jika kurang dari 5, tambahkan elemen yang hilang dengan nilai 0
+        const normalizedDistribution = [...response.data.severityDistribution];
+        while (normalizedDistribution.length < 5) {
+          normalizedDistribution.push(0);
+          console.warn(`Added missing severity category at index ${normalizedDistribution.length - 1}`);
+        }
+        
+        // Jika lebih dari 5, potong kelebihan
+        if (normalizedDistribution.length > 5) {
+          console.warn(`Trimming excess severity categories from ${normalizedDistribution.length} to 5`);
+          normalizedDistribution.length = 5;
+        }
+        
+        // Update data yang akan dikembalikan
+        response.data.severityDistribution = normalizedDistribution;
+        console.log('Normalized severityDistribution:', normalizedDistribution);
+      }
+      
+      // Validasi setiap nilai dalam array untuk memastikan tidak ada nilai NaN atau undefined
+      response.data.severityDistribution = response.data.severityDistribution.map((value, index) => {
+        if (isNaN(value) || value === undefined || value === null) {
+          console.warn(`Invalid value at severityDistribution[${index}]: ${value}, replacing with 0`);
+          return 0;
+        }
+        return value;
+      });
+    } else {
+      // Jika tidak ada severityDistribution sama sekali, buat array default
+      console.warn('severityDistribution missing, creating default distribution');
+      response.data.severityDistribution = [20, 20, 20, 20, 20]; // Distribusi default yang seimbang
+    }
+    
+    // Pastikan genderDistribution valid
+    if (response.data.genderDistribution) {
+      console.log('Raw genderDistribution:', response.data.genderDistribution);
+      
+      // Pastikan array genderDistribution memiliki tepat 2 elemen (Laki-laki, Perempuan)
+      if (response.data.genderDistribution.length !== 2) {
+        console.warn(`genderDistribution length mismatch: expected 2, got ${response.data.genderDistribution.length}`);
+        
+        // Normalisasi menjadi 2 elemen
+        const normalizedGender = response.data.genderDistribution.slice(0, 2);
+        while (normalizedGender.length < 2) {
+          normalizedGender.push(0);
+        }
+        
+        response.data.genderDistribution = normalizedGender;
+      }
+      
+      // Validasi nilai dalam array
+      response.data.genderDistribution = response.data.genderDistribution.map((value, index) => {
+        if (isNaN(value) || value === undefined || value === null) {
+          return index === 0 ? 50 : 50; // Default 50/50
+        }
+        return value;
+      });
+      
+      // Pastikan total adalah 100%
+      const total = response.data.genderDistribution.reduce((sum, val) => sum + val, 0);
+      if (total !== 100) {
+        const ratio = 100 / (total || 1);
+        response.data.genderDistribution = response.data.genderDistribution.map(value => Math.round(value * ratio));
+        console.log('Normalized genderDistribution to 100%:', response.data.genderDistribution);
+      }
+    } else {
+      // Jika tidak ada genderDistribution sama sekali, buat array default
+      response.data.genderDistribution = [50, 50]; // Default 50/50
+    }
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);

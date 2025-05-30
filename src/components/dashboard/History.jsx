@@ -193,68 +193,84 @@ function History() {
 
   // Get patient gender and age dengan validasi lebih baik
   const getPatientInfo = (item) => {
-    if (!item || !item.patientId) {
-      return 'Data Tidak Tersedia';
-    }
-    
-    // Normalisasi nilai gender dengan validasi ketat
-    let genderText = 'Tidak Tersedia';
-    const gender = item.patientId.gender;
-    
-    if (gender) {
-      const genderLower = gender.toLowerCase().trim();
-      if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
-        genderText = 'Laki-laki';
-      } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
-        genderText = 'Perempuan';
+    try {
+      if (!item || !item.patientId) {
+        return 'Data Tidak Tersedia';
       }
-    }
-    
-    // Validasi umur - pastikan nilai numerik
-    let ageText = 'Usia Tidak Tersedia';
-    const age = item.patientId.age;
-    if (age !== undefined && age !== null) {
-      // Konversi ke angka dan validasi
-      const ageNum = parseInt(age, 10);
-      if (!isNaN(ageNum)) {
-        ageText = `${ageNum} tahun`;
+      
+      // Normalisasi nilai gender dengan validasi ketat
+      let genderText = 'Tidak Tersedia';
+      const gender = item.patientId.gender;
+      
+      if (gender) {
+        const genderLower = gender.toLowerCase().trim();
+        if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+          genderText = 'Laki-laki';
+        } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+          genderText = 'Perempuan';
+        }
       }
+      
+      // Validasi umur - pastikan nilai numerik
+      let ageText = 'Usia Tidak Tersedia';
+      const age = item.patientId.age;
+      if (age !== undefined && age !== null) {
+        // Konversi ke angka dan validasi
+        const ageNum = parseInt(age, 10);
+        if (!isNaN(ageNum)) {
+          ageText = `${ageNum} tahun`;
+        }
+      }
+      
+      return `${genderText}, ${ageText}`;
+    } catch (error) {
+      console.error('Error formatting patient info:', error);
+      return 'Error Saat Memuat Data';
     }
-    
-    return `${genderText}, ${ageText}`;
   };
 
   // Fungsi untuk mendapatkan info pasien pada bagian pengelompokan data
   const getPatientDetails = (patient) => {
-    if (!patient) return { name: 'Pasien Tidak Tersedia', info: 'Data Tidak Tersedia' };
-    
-    // Nama pasien
-    const name = patient.fullName || patient.name || 'Pasien Tidak Tersedia';
-    
-    // Gender pasien
-    let genderText = 'Tidak Tersedia';
-    if (patient.gender) {
-      const genderLower = patient.gender.toLowerCase().trim();
-      if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
-        genderText = 'Laki-laki';
-      } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
-        genderText = 'Perempuan';
+    try {
+      if (!patient) return { name: 'Pasien Tidak Tersedia', info: 'Data Tidak Tersedia' };
+      
+      // Nama pasien
+      const name = patient.fullName || patient.name || 'Pasien Tidak Tersedia';
+      
+      // Gender pasien dengan validasi lebih ketat
+      let genderText = 'Tidak Tersedia';
+      if (patient.gender) {
+        const genderLower = patient.gender.toLowerCase().trim();
+        if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+          genderText = 'Laki-laki';
+        } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+          genderText = 'Perempuan';
+        }
       }
-    }
-    
-    // Umur pasien
-    let ageText = 'Usia Tidak Tersedia';
-    if (patient.age !== undefined && patient.age !== null) {
-      const ageNum = parseInt(patient.age, 10);
-      if (!isNaN(ageNum)) {
-        ageText = `${ageNum} tahun`;
+      
+      // Umur pasien dengan validasi lebih ketat
+      let ageText = 'Usia Tidak Tersedia';
+      if (patient.age !== undefined && patient.age !== null) {
+        // Pastikan umur adalah angka valid
+        const ageNum = parseInt(patient.age, 10);
+        if (!isNaN(ageNum)) {
+          ageText = `${ageNum} tahun`;
+        }
       }
+      
+      // Gabungkan info dengan lebih baik
+      const info = (genderText !== 'Tidak Tersedia' || ageText !== 'Usia Tidak Tersedia') 
+        ? `${genderText}${genderText !== 'Tidak Tersedia' && ageText !== 'Usia Tidak Tersedia' ? ', ' : ''}${ageText !== 'Usia Tidak Tersedia' ? ageText : ''}`
+        : 'Data Tidak Tersedia';
+      
+      return {
+        name,
+        info
+      };
+    } catch (error) {
+      console.error('Error getting patient details:', error);
+      return { name: 'Error', info: 'Error Saat Memuat Data' };
     }
-    
-    return {
-      name,
-      info: `${genderText}, ${ageText}`
-    };
   };
   
   // Helper untuk menangani gambar yang dapat dimuat

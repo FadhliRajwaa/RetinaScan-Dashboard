@@ -846,7 +846,7 @@ const DashboardCharts = ({ dashboardData, loading, error }) => {
     try {
       if (!dashboardData) {
         console.warn('Dashboard data is null or undefined');
-        return [];
+        return createDefaultSeverityData();
       }
 
       if (!dashboardData.severityDistribution || !Array.isArray(dashboardData.severityDistribution)) {
@@ -856,24 +856,31 @@ const DashboardCharts = ({ dashboardData, loading, error }) => {
       
       const labels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
       
+      // Debug: log nilai yang diterima dari backend
+      console.log('Received severityDistribution from backend:', dashboardData.severityDistribution);
+      
       // Pastikan array memiliki 5 elemen (termasuk "Sangat Berat")
       if (dashboardData.severityDistribution.length !== 5) {
-        console.warn(`severityDistribution length mismatch. Expected 5, got ${dashboardData.severityDistribution.length}`);
-        // Tambahkan zeros jika kurang dari 5 elemen
-        const paddedData = [...dashboardData.severityDistribution];
-        while (paddedData.length < 5) {
-          paddedData.push(0);
-        }
-        return paddedData.slice(0, 5).map((value, index) => ({
-          name: labels[index],
-          value: isNaN(value) ? 0 : value
-        }));
+        console.warn(`severityDistribution length mismatch in component. Expected 5, got ${dashboardData.severityDistribution.length}`);
+        
+        // Jika ada masalah dengan panjang array, gunakan data default
+        return createDefaultSeverityData();
       }
       
-      return dashboardData.severityDistribution.map((value, index) => ({
-        name: labels[index],
-        value: isNaN(value) ? 0 : value
-      }));
+      // Validasi setiap nilai dan memetakan ke object untuk chart
+      const mappedData = dashboardData.severityDistribution.map((value, index) => {
+        // Pastikan nilai valid, jika tidak ganti dengan 0
+        const safeValue = (isNaN(value) || value === null || value === undefined) ? 0 : value;
+        return {
+          name: labels[index],
+          value: safeValue
+        };
+      });
+      
+      // Debug: log data yang telah ditransformasikan
+      console.log('Transformed severityData for chart:', mappedData);
+      
+      return mappedData;
     } catch (error) {
       console.error('Error transforming severity data:', error);
       setDataError('Gagal memproses data distribusi tingkat keparahan');
