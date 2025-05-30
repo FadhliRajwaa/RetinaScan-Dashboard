@@ -199,7 +199,7 @@ function History() {
       }
       
       // Normalisasi nilai gender dengan validasi ketat
-      let genderText = 'Tidak Tersedia';
+      let genderText = '';
       const gender = item.patientId.gender;
       
       if (gender) {
@@ -208,11 +208,14 @@ function History() {
           genderText = 'Laki-laki';
         } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
           genderText = 'Perempuan';
+        } else {
+          // Default jika format tidak dikenali
+          genderText = gender;
         }
       }
       
       // Validasi umur - pastikan nilai numerik
-      let ageText = 'Usia Tidak Tersedia';
+      let ageText = '';
       const age = item.patientId.age;
       if (age !== undefined && age !== null) {
         // Konversi ke angka dan validasi
@@ -222,6 +225,16 @@ function History() {
         }
       }
       
+      // Jika salah satu tidak tersedia, tampilkan yang tersedia saja
+      if (!genderText && !ageText) {
+        return 'Data Tidak Tersedia';
+      } else if (!genderText) {
+        return ageText;
+      } else if (!ageText) {
+        return genderText;
+      }
+      
+      // Jika keduanya tersedia
       return `${genderText}, ${ageText}`;
     } catch (error) {
       console.error('Error formatting patient info:', error);
@@ -238,18 +251,21 @@ function History() {
       const name = patient.fullName || patient.name || 'Pasien Tidak Tersedia';
       
       // Gender pasien dengan validasi lebih ketat
-      let genderText = 'Tidak Tersedia';
+      let genderText = '';
       if (patient.gender) {
         const genderLower = patient.gender.toLowerCase().trim();
         if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
           genderText = 'Laki-laki';
         } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
           genderText = 'Perempuan';
+        } else {
+          // Default jika format tidak dikenali
+          genderText = patient.gender;
         }
       }
       
       // Umur pasien dengan validasi lebih ketat
-      let ageText = 'Usia Tidak Tersedia';
+      let ageText = '';
       if (patient.age !== undefined && patient.age !== null) {
         // Pastikan umur adalah angka valid
         const ageNum = parseInt(patient.age, 10);
@@ -258,10 +274,16 @@ function History() {
         }
       }
       
-      // Gabungkan info dengan lebih baik
-      const info = (genderText !== 'Tidak Tersedia' || ageText !== 'Usia Tidak Tersedia') 
-        ? `${genderText}${genderText !== 'Tidak Tersedia' && ageText !== 'Usia Tidak Tersedia' ? ', ' : ''}${ageText !== 'Usia Tidak Tersedia' ? ageText : ''}`
-        : 'Data Tidak Tersedia';
+      // Gabungkan info dengan lebih baik - tampilkan data yang tersedia saja
+      let info = 'Data Tidak Tersedia';
+      
+      if (genderText && ageText) {
+        info = `${genderText}, ${ageText}`;
+      } else if (genderText) {
+        info = genderText;
+      } else if (ageText) {
+        info = ageText;
+      }
       
       return {
         name,

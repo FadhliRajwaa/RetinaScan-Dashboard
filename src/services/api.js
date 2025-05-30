@@ -404,6 +404,40 @@ export const getDashboardData = async () => {
       response.data.severityDistribution = [20, 20, 20, 20, 20]; // Distribusi default yang seimbang
     }
     
+    // Normalisasi data pasien untuk memastikan gender dan umur valid
+    if (response.data.patients && Array.isArray(response.data.patients)) {
+      console.log('Normalizing patient data...');
+      
+      response.data.patients = response.data.patients.map(patient => {
+        // Clone pasien untuk menghindari mutasi objek asli
+        const normalizedPatient = { ...patient };
+        
+        // Normalisasi gender
+        if (normalizedPatient.gender) {
+          const genderLower = normalizedPatient.gender.toLowerCase().trim();
+          if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+            normalizedPatient.gender = 'Laki-laki';
+          } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+            normalizedPatient.gender = 'Perempuan';
+          }
+        }
+        
+        // Normalisasi umur - pastikan nilainya numerik
+        if (normalizedPatient.age !== undefined && normalizedPatient.age !== null) {
+          const ageNum = parseInt(normalizedPatient.age, 10);
+          if (!isNaN(ageNum)) {
+            normalizedPatient.age = ageNum;
+          } else {
+            // Jika bukan angka valid, hapus
+            console.warn(`Invalid age value: ${normalizedPatient.age}, removing from patient data`);
+            delete normalizedPatient.age;
+          }
+        }
+        
+        return normalizedPatient;
+      });
+    }
+    
     // Pastikan genderDistribution valid
     if (response.data.genderDistribution) {
       console.log('Raw genderDistribution:', response.data.genderDistribution);
