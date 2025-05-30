@@ -183,32 +183,78 @@ function History() {
   // Get patient name
   const getPatientName = (item) => {
     if (item.patientId) {
-      return item.patientId.fullName || item.patientId.name || 'Pasien Tidak Diketahui';
+      // Gunakan fullName jika tersedia, jika tidak gunakan name
+      // Dan pastikan mengembalikan string yang valid
+      const name = item.patientId.fullName || item.patientId.name;
+      return name || 'Pasien Tidak Tersedia';
     }
-    return 'Pasien Tidak Diketahui';
+    return 'Pasien Tidak Tersedia';
   };
 
-  // Get patient gender and age
+  // Get patient gender and age dengan validasi lebih baik
   const getPatientInfo = (item) => {
-    if (item.patientId) {
-      // Normalisasi nilai gender dengan mempertimbangkan berbagai kemungkinan format dari backend
-      let genderText = 'Tidak Diketahui';
-      const gender = item.patientId.gender;
-      
-      // Periksa nilai gender secara case-insensitive dan lebih fleksibel
-      if (gender) {
-        const genderLower = gender.toLowerCase();
-        if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
-          genderText = 'Laki-laki';
-        } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
-          genderText = 'Perempuan';
-        }
-      }
-      
-      const age = item.patientId.age || '-';
-      return `${genderText}, ${age} tahun`;
+    if (!item || !item.patientId) {
+      return 'Data Tidak Tersedia';
     }
-    return '-';
+    
+    // Normalisasi nilai gender dengan validasi ketat
+    let genderText = 'Tidak Tersedia';
+    const gender = item.patientId.gender;
+    
+    if (gender) {
+      const genderLower = gender.toLowerCase().trim();
+      if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+        genderText = 'Laki-laki';
+      } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+        genderText = 'Perempuan';
+      }
+    }
+    
+    // Validasi umur - pastikan nilai numerik
+    let ageText = 'Usia Tidak Tersedia';
+    const age = item.patientId.age;
+    if (age !== undefined && age !== null) {
+      // Konversi ke angka dan validasi
+      const ageNum = parseInt(age, 10);
+      if (!isNaN(ageNum)) {
+        ageText = `${ageNum} tahun`;
+      }
+    }
+    
+    return `${genderText}, ${ageText}`;
+  };
+
+  // Fungsi untuk mendapatkan info pasien pada bagian pengelompokan data
+  const getPatientDetails = (patient) => {
+    if (!patient) return { name: 'Pasien Tidak Tersedia', info: 'Data Tidak Tersedia' };
+    
+    // Nama pasien
+    const name = patient.fullName || patient.name || 'Pasien Tidak Tersedia';
+    
+    // Gender pasien
+    let genderText = 'Tidak Tersedia';
+    if (patient.gender) {
+      const genderLower = patient.gender.toLowerCase().trim();
+      if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+        genderText = 'Laki-laki';
+      } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+        genderText = 'Perempuan';
+      }
+    }
+    
+    // Umur pasien
+    let ageText = 'Usia Tidak Tersedia';
+    if (patient.age !== undefined && patient.age !== null) {
+      const ageNum = parseInt(patient.age, 10);
+      if (!isNaN(ageNum)) {
+        ageText = `${ageNum} tahun`;
+      }
+    }
+    
+    return {
+      name,
+      info: `${genderText}, ${ageText}`
+    };
   };
   
   // Helper untuk menangani gambar yang dapat dimuat
@@ -375,23 +421,12 @@ function History() {
                           <FiUser className="text-blue-500 mt-0.5" />
                           <div>
                             <p className="text-xs font-medium text-gray-500">Pasien</p>
-                            <p className="text-sm font-medium">{item.patient.fullName || item.patient.name || 'Pasien Tidak Diketahui'}</p>
+                            <p className="text-sm font-medium">{item.patient.fullName || item.patient.name || 'Pasien Tidak Tersedia'}</p>
                             <p className="text-xs text-gray-500">
                               {(() => {
-                                // Fungsi untuk normalisasi gender
-                                const gender = item.patient.gender;
-                                let genderText = 'Tidak Diketahui';
-                                
-                                if (gender) {
-                                  const genderLower = gender.toLowerCase();
-                                  if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
-                                    genderText = 'Laki-laki';
-                                  } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
-                                    genderText = 'Perempuan';
-                                  }
-                                }
-                                
-                                return `${genderText}, ${item.patient.age || '-'} tahun`;
+                                // Gunakan fungsi getPatientDetails yang lebih robust
+                                const patientInfo = getPatientDetails(item.patient);
+                                return patientInfo.info;
                               })()}
                             </p>
                           </div>

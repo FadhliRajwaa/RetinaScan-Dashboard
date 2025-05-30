@@ -8,6 +8,7 @@ import {
   LineChart, Line, Sector, ComposedChart, ReferenceLine, Rectangle, RadialBarChart, RadialBar
 } from 'recharts';
 import { FiUsers, FiActivity, FiTrendingUp, FiShield } from 'react-icons/fi';
+import EnhancedSeverityChart from './EnhancedSeverityChart';
 
 // Komponen custom untuk skeleton loading
 const SkeletonLoader = ({ height = 300 }) => (
@@ -1187,35 +1188,46 @@ const DashboardCharts = ({ dashboardData, loading, error }) => {
         // Hitung jumlah laki-laki dan perempuan dari data pasien
         let maleCount = 0;
         let femaleCount = 0;
+        let totalWithGender = 0;
         
         dashboardData.patients.forEach(patient => {
-          const gender = patient.gender ? patient.gender.toLowerCase() : '';
-          if (gender === 'laki-laki' || gender === 'male') {
-            maleCount++;
-          } else if (gender === 'perempuan' || gender === 'female') {
-            femaleCount++;
+          // Periksa apakah gender ada dan normalisasi
+          if (patient.gender) {
+            totalWithGender++;
+            const genderLower = patient.gender.toLowerCase();
+            if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+              maleCount++;
+            } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+              femaleCount++;
+            }
           }
         });
         
-        const total = maleCount + femaleCount || 1; // Hindari pembagian dengan nol
+        // Hindari pembagian dengan nol
+        const totalForCalculation = totalWithGender || 1;
         
         return [
-          { name: 'Laki-laki', value: Math.round((maleCount / total) * 100) },
-          { name: 'Perempuan', value: Math.round((femaleCount / total) * 100) }
+          { name: 'Laki-laki', value: Math.round((maleCount / totalForCalculation) * 100) },
+          { name: 'Perempuan', value: Math.round((femaleCount / totalForCalculation) * 100) }
         ];
       }
 
       // Gunakan data genderDistribution yang sudah diolah dari backend jika tersedia
       if (dashboardData.genderDistribution && Array.isArray(dashboardData.genderDistribution)) {
-        // Pastikan array memiliki 2 elemen
-        if (dashboardData.genderDistribution.length !== 2) {
-          console.warn(`genderDistribution length mismatch. Expected 2, got ${dashboardData.genderDistribution.length}`);
+        // Validasi nilai dalam array
+        const maleValue = isNaN(dashboardData.genderDistribution[0]) ? 50 : dashboardData.genderDistribution[0];
+        const femaleValue = isNaN(dashboardData.genderDistribution[1]) ? 50 : dashboardData.genderDistribution[1];
+        
+        // Pastikan total adalah 100%
+        const total = maleValue + femaleValue;
+        if (total === 0) {
           return createDefaultGenderData();
         }
         
+        // Normalisasi untuk memastikan total 100%
         return [
-          { name: 'Laki-laki', value: isNaN(dashboardData.genderDistribution[0]) ? 50 : dashboardData.genderDistribution[0] },
-          { name: 'Perempuan', value: isNaN(dashboardData.genderDistribution[1]) ? 50 : dashboardData.genderDistribution[1] }
+          { name: 'Laki-laki', value: Math.round((maleValue / total) * 100) },
+          { name: 'Perempuan', value: Math.round((femaleValue / total) * 100) }
         ];
       }
       
