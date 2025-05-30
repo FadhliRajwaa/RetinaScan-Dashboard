@@ -191,9 +191,22 @@ function History() {
   // Get patient gender and age
   const getPatientInfo = (item) => {
     if (item.patientId) {
-      const gender = item.patientId.gender === 'male' ? 'Laki-laki' : 'Perempuan';
+      // Normalisasi nilai gender dengan mempertimbangkan berbagai kemungkinan format dari backend
+      let genderText = 'Tidak Diketahui';
+      const gender = item.patientId.gender;
+      
+      // Periksa nilai gender secara case-insensitive dan lebih fleksibel
+      if (gender) {
+        const genderLower = gender.toLowerCase();
+        if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+          genderText = 'Laki-laki';
+        } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+          genderText = 'Perempuan';
+        }
+      }
+      
       const age = item.patientId.age || '-';
-      return `${gender}, ${age} tahun`;
+      return `${genderText}, ${age} tahun`;
     }
     return '-';
   };
@@ -364,7 +377,22 @@ function History() {
                             <p className="text-xs font-medium text-gray-500">Pasien</p>
                             <p className="text-sm font-medium">{item.patient.fullName || item.patient.name || 'Pasien Tidak Diketahui'}</p>
                             <p className="text-xs text-gray-500">
-                              {item.patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {item.patient.age || '-'} tahun
+                              {(() => {
+                                // Fungsi untuk normalisasi gender
+                                const gender = item.patient.gender;
+                                let genderText = 'Tidak Diketahui';
+                                
+                                if (gender) {
+                                  const genderLower = gender.toLowerCase();
+                                  if (genderLower === 'laki-laki' || genderLower === 'male' || genderLower === 'l' || genderLower === 'm') {
+                                    genderText = 'Laki-laki';
+                                  } else if (genderLower === 'perempuan' || genderLower === 'female' || genderLower === 'p' || genderLower === 'f') {
+                                    genderText = 'Perempuan';
+                                  }
+                                }
+                                
+                                return `${genderText}, ${item.patient.age || '-'} tahun`;
+                              })()}
                             </p>
                           </div>
                         </div>

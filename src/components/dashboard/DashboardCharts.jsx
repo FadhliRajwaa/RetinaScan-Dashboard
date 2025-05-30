@@ -1049,7 +1049,7 @@ const DashboardCharts = ({ dashboardData, loading, error }) => {
       
       const labels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
       
-      // Pastikan array memiliki 5 elemen
+      // Pastikan array memiliki 5 elemen (termasuk "Sangat Berat")
       if (dashboardData.severityDistribution.length !== 5) {
         console.warn(`severityDistribution length mismatch. Expected 5, got ${dashboardData.severityDistribution.length}`);
         // Tambahkan zeros jika kurang dari 5 elemen
@@ -1180,21 +1180,47 @@ const DashboardCharts = ({ dashboardData, loading, error }) => {
         return createDefaultGenderData();
       }
 
-      if (!dashboardData.genderDistribution || !Array.isArray(dashboardData.genderDistribution)) {
-        console.warn('genderDistribution is missing or not an array:', dashboardData.genderDistribution);
-        return createDefaultGenderData();
+      // Jika kita memiliki data pasien langsung, gunakan itu untuk menghitung distribusi gender
+      if (dashboardData.patients && Array.isArray(dashboardData.patients) && dashboardData.patients.length > 0) {
+        console.log('Menggunakan data pasien untuk distribusi gender');
+        
+        // Hitung jumlah laki-laki dan perempuan dari data pasien
+        let maleCount = 0;
+        let femaleCount = 0;
+        
+        dashboardData.patients.forEach(patient => {
+          const gender = patient.gender ? patient.gender.toLowerCase() : '';
+          if (gender === 'laki-laki' || gender === 'male') {
+            maleCount++;
+          } else if (gender === 'perempuan' || gender === 'female') {
+            femaleCount++;
+          }
+        });
+        
+        const total = maleCount + femaleCount || 1; // Hindari pembagian dengan nol
+        
+        return [
+          { name: 'Laki-laki', value: Math.round((maleCount / total) * 100) },
+          { name: 'Perempuan', value: Math.round((femaleCount / total) * 100) }
+        ];
+      }
+
+      // Gunakan data genderDistribution yang sudah diolah dari backend jika tersedia
+      if (dashboardData.genderDistribution && Array.isArray(dashboardData.genderDistribution)) {
+        // Pastikan array memiliki 2 elemen
+        if (dashboardData.genderDistribution.length !== 2) {
+          console.warn(`genderDistribution length mismatch. Expected 2, got ${dashboardData.genderDistribution.length}`);
+          return createDefaultGenderData();
+        }
+        
+        return [
+          { name: 'Laki-laki', value: isNaN(dashboardData.genderDistribution[0]) ? 50 : dashboardData.genderDistribution[0] },
+          { name: 'Perempuan', value: isNaN(dashboardData.genderDistribution[1]) ? 50 : dashboardData.genderDistribution[1] }
+        ];
       }
       
-      // Pastikan array memiliki 2 elemen
-      if (dashboardData.genderDistribution.length !== 2) {
-        console.warn(`genderDistribution length mismatch. Expected 2, got ${dashboardData.genderDistribution.length}`);
-        return createDefaultGenderData();
-      }
-      
-      return [
-        { name: 'Laki-laki', value: isNaN(dashboardData.genderDistribution[0]) ? 50 : dashboardData.genderDistribution[0] },
-        { name: 'Perempuan', value: isNaN(dashboardData.genderDistribution[1]) ? 50 : dashboardData.genderDistribution[1] }
-      ];
+      console.warn('Tidak ada data gender yang valid tersedia');
+      return createDefaultGenderData();
     } catch (error) {
       console.error('Error transforming gender data:', error);
       setDataError('Gagal memproses data distribusi gender');
