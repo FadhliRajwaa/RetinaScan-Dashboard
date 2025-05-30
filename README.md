@@ -110,3 +110,44 @@ SIMULATION_MODE_ENABLED=true python app.py
 ```
 
 Dalam mode ini, API akan memberikan prediksi acak tetapi masih dapat digunakan untuk pengembangan UI.
+
+## Real-Time Data dengan WebSocket
+
+Dashboard RetinaScan mendukung pembaruan data secara real-time menggunakan WebSocket. Ini memungkinkan dashboard untuk menampilkan data terbaru tanpa perlu me-refresh halaman.
+
+### Fitur Real-Time
+
+- **Indikator Koneksi Real-Time**: Menampilkan status koneksi WebSocket (online/offline)
+- **Pembaruan Otomatis**: Data diperbarui secara otomatis saat ada perubahan di server
+- **Fallback ke Polling**: Jika koneksi WebSocket tidak tersedia, sistem akan menggunakan polling setiap 30 detik
+- **Pembaruan Manual**: Tombol refresh pada chart untuk meminta pembaruan data terbaru secara manual
+
+### Event WebSocket yang Didukung
+
+- `dashboard_update`: Memperbarui seluruh data dashboard
+- `severity_update`: Memperbarui data distribusi tingkat keparahan
+- `analysis_complete`: Memicu pembaruan dashboard saat analisis baru selesai
+
+### Implementasi WebSocket
+
+WebSocket diimplementasikan menggunakan socket.io-client dan tersedia melalui context API:
+
+```jsx
+import { useWebSocket } from '../../context/WebSocketContext';
+
+function MyComponent() {
+  const { connected, lastUpdate, requestUpdate } = useWebSocket();
+  
+  // Meminta pembaruan data secara manual
+  const handleRefresh = () => {
+    requestUpdate('dashboard');
+  };
+  
+  return (
+    <div>
+      {connected ? 'Real-time aktif' : 'Offline'}
+      <button onClick={handleRefresh}>Refresh</button>
+    </div>
+  );
+}
+```
