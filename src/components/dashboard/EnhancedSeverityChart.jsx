@@ -11,19 +11,19 @@ import CountUp from 'react-countup';
 // Konstanta untuk ukuran yang konsisten
 const CHART_SIZES = {
   // Radius chart 
-  innerRadius: 80,     // Meningkatkan sedikit untuk area tengah yang lebih besar
-  outerRadius: 130,    // Meningkatkan untuk pie chart yang lebih besar
-  activeOuterRadius: 138, // Radius ketika segment aktif (hovered)
+  innerRadius: 90,     // Meningkatkan agar area tengah lebih besar
+  outerRadius: 150,    // Meningkatkan untuk pie chart yang lebih besar
+  activeOuterRadius: 158, // Radius ketika segment aktif (hovered)
   
   // Tebal stroke dan padding
   strokeWidth: 2,
-  padding: 16, // 1rem
-
+  padding: 20, // Meningkatkan padding
+  
   // Ketebalan garis hover pada bagian dalam
   innerHoverStrokeWidth: 4,
   
   // Height untuk responsive container
-  chartHeight: 400,
+  chartHeight: 450, // Meningkatkan tinggi chart
   
   // Ukuran ikon
   iconSize: {
@@ -277,57 +277,6 @@ const ANIMATIONS = {
   }
 };
 
-// Komponen legend item dengan animasi bertahap
-const AnimatedLegendItem = ({ label, index, value, color, hoverColor, isActive, onMouseEnter, onMouseLeave }) => {
-  return (
-    <motion.div
-      key={`legend-${index}`}
-      className="flex items-center px-3 py-2 rounded-full cursor-pointer"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ 
-        opacity: 1, 
-        scale: 1,
-        x: [0, 0], // Force GPU acceleration for smoother transitions
-      }}
-      transition={{ 
-        delay: 0.8 + (index * 0.05),
-        ...ANIMATIONS.spring
-      }}
-      style={{ 
-        backgroundColor: isActive ? `${color}15` : 'white',
-        border: `1px solid ${isActive ? color : '#e5e7eb'}`
-      }}
-      whileHover={{ 
-        scale: 1.05, 
-        backgroundColor: `${color}10`,
-        border: `1px solid ${color}`,
-        boxShadow: `0 4px 12px ${color}25`
-      }}
-      whileTap={ANIMATIONS.tap}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      <motion.span 
-        className="w-4 h-4 rounded-full mr-2 border border-white" 
-        style={{ backgroundColor: color }}
-        whileHover={{ scale: 1.2 }}
-        transition={ANIMATIONS.gentleBounce}
-      />
-      <span className="text-sm font-medium text-gray-700">{label}</span>
-      <motion.span 
-        className="text-xs ml-2 px-2 py-0.5 rounded-full font-semibold" 
-        style={{ 
-          backgroundColor: isActive ? `${color}15` : '#f3f4f6',
-          color: color
-        }}
-        whileHover={{ backgroundColor: `${color}20` }}
-      >
-        {value}%
-      </motion.span>
-    </motion.div>
-  );
-};
-
 // Komponen untuk animasi di tengah chart saat hover
 const CenterInfo = ({ isHovering, hoverInfo, hasAnimated, calculatePatientCount }) => {
   if (isHovering && hoverInfo) {
@@ -527,10 +476,50 @@ const AnimatedHeader = ({ showDetails, setShowDetails }) => {
   );
 };
 
+// Compact Legend item component for better styling
+const LegendItem = ({ label, index, value, isActive, onMouseEnter, onMouseLeave }) => {
+  return (
+    <motion.div
+      className="flex items-center px-3 py-2 rounded-full cursor-pointer"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        x: [0, 0], // Force GPU acceleration for smoother transitions
+      }}
+      transition={{ 
+        delay: 0.8 + (index * 0.05),
+        ...ANIMATIONS.spring
+      }}
+      style={{ 
+        backgroundColor: isActive ? `${COLORS[index]}15` : 'white',
+        border: `1px solid ${isActive ? COLORS[index] : '#e5e7eb'}`
+      }}
+      whileHover={{ 
+        scale: 1.05, 
+        backgroundColor: `${COLORS[index]}10`,
+        border: `1px solid ${COLORS[index]}`,
+        boxShadow: `0 4px 12px ${COLORS[index]}25`
+      }}
+      whileTap={{ scale: 0.95 }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <motion.span 
+        className="w-4 h-4 rounded-full mr-2 border border-white" 
+        style={{ backgroundColor: COLORS[index] }}
+        whileHover={{ scale: 1.2 }}
+        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+      />
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-xs ml-2 px-2 py-0.5 bg-gray-100 rounded-full font-semibold" style={{ color: COLORS[index] }}>{value}%</span>
+    </motion.div>
+  );
+};
+
 const EnhancedSeverityChart = ({ data, loading, props }) => {
   const { theme } = useTheme();
   const [activeIndex, setActiveIndex] = useState(null);
-  const [rotation, setRotation] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [hoverInfo, setHoverInfo] = useState(null);
@@ -563,16 +552,6 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
     
     return () => clearTimeout(timer);
   }, []);
-  
-  // Efek terpisah untuk rotasi chart saat data berubah
-  useEffect(() => {
-    if (data && data.length > 0) {
-      setRotation(prevRotation => {
-        const newRotation = prevRotation + 15;
-        return newRotation >= 360 ? 0 : newRotation;
-      });
-    }
-  }, [data]);
   
   const onPieEnter = (_, index) => {
     setActiveIndex(index);
@@ -769,10 +748,10 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
   // Render labels inside each segment of the pie chart
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
     // Jika persentase sangat kecil, jangan tampilkan label
-    if (percent < 0.03) return null;
+    if (percent < 0.05) return null;
     
     // Adjust radial position of label based on segment size
-    const adjustedRadius = outerRadius * 0.75; // Posisikan label lebih ke dalam
+    const adjustedRadius = outerRadius * 0.82; // Posisikan label lebih ke luar
     
     // Calculate position
     const RADIAN = Math.PI / 180;
@@ -796,17 +775,17 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
           style={{ 
             textShadow: '-1px -1px 0 rgba(0,0,0,0.7), 1px -1px 0 rgba(0,0,0,0.7), -1px 1px 0 rgba(0,0,0,0.7), 1px 1px 0 rgba(0,0,0,0.7)',
             fontWeight: 800,
-            fontSize: CHART_SIZES.fontSize.base
+            fontSize: percent > 0.2 ? CHART_SIZES.fontSize.lg : CHART_SIZES.fontSize.base
           }}
         >
           {`${(percent * 100).toFixed(0)}%`}
         </text>
         
-        {/* Show label for larger segments only */}
-        {percent > 0.1 && (
+        {/* Show label for larger segments only with better spacing */}
+        {percent > 0.15 && (
           <text 
             x={x} 
-            y={y + 18} 
+            y={y + 24} 
             fill="#FFFFFF" 
             textAnchor={textAnchor} 
             dominantBaseline="central"
@@ -831,7 +810,7 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
     animationEasing: "ease-out"
   };
   
-  // Custom tooltip with improved animations
+  // Custom tooltip content with improved styling
   const renderTooltip = (props) => {
     const { active, payload } = props;
     
@@ -850,7 +829,7 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
         >
           <div className="flex items-center border-b border-gray-100 pb-2 mb-2">
             <motion.div 
-              className="w-4 h-4 rounded-full mr-2 border border-white shadow-sm" 
+              className="w-5 h-5 rounded-full mr-2 border border-white shadow-sm flex items-center justify-center" 
               style={{ 
                 backgroundColor: COLORS[data.index],
                 boxShadow: `0 0 0 2px white, 0 0 0 3px ${COLORS[data.index]}40`
@@ -865,7 +844,9 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
                 repeatType: "loop",
                 ease: "easeInOut"
               }}
-            />
+            >
+              <span className="text-white text-xs font-bold">{data.value}%</span>
+            </motion.div>
             <span className="font-bold text-gray-800 text-lg">{data.name}</span>
           </div>
           <p className="text-sm text-gray-600 mb-3">{data.description}</p>
@@ -907,7 +888,7 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
       transition={ANIMATIONS.easeOut}
-      style={{ minHeight: '550px' }}
+      style={{ minHeight: '600px' }}
     >
       {/* Header with improved animations */}
       <AnimatedHeader showDetails={showDetails} setShowDetails={setShowDetails} />
@@ -916,9 +897,9 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
       <TotalBadge total={totalPatients} />
       
       {/* Chart Container with improved interactions */}
-      <div className="flex-grow p-4 relative">
+      <div className="flex-grow p-6 relative">
         <ResponsiveContainer width="100%" height={CHART_SIZES.chartHeight}>
-          <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <PieChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
             <defs>
               {COLORS.map((color, index) => (
                 <radialGradient key={`radialGradient-${index}`} id={`severity-gradient-${index}`} cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
@@ -941,10 +922,10 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
               innerRadius={CHART_SIZES.innerRadius}
               outerRadius={CHART_SIZES.outerRadius}
               dataKey="value"
-              paddingAngle={4}
+              paddingAngle={6}
               cornerRadius={5}
-              startAngle={90 + rotation}
-              endAngle={-270 + rotation}
+              startAngle={90}
+              endAngle={-270}
               {...animationProps}
               activeIndex={activeIndex}
               activeShape={renderActiveShape}
@@ -1066,13 +1047,11 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
             const value = matchingData ? matchingData.value : 0;
             
             return (
-              <AnimatedLegendItem
+              <LegendItem
                 key={`legend-${index}`}
                 label={label}
                 index={index}
                 value={value}
-                color={COLORS[index]}
-                hoverColor={HOVER_COLORS[index]}
                 isActive={activeIndex === index}
                 onMouseEnter={() => setActiveIndex(index)}
                 onMouseLeave={() => setActiveIndex(null)}
