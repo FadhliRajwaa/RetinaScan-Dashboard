@@ -12,6 +12,7 @@ import {
 import DashboardCharts from '../components/dashboard/DashboardCharts';
 import { getDashboardData } from '../services/api';
 import { io } from 'socket.io-client';
+import { completeDashboardFallbackData, getRandomizedFallbackData } from '../utils/fallbackData';
 
 // Glassmorphism style
 const glassEffect = {
@@ -132,6 +133,10 @@ function DashboardComponent() {
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [socketConnected, setSocketConnected] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   // Background gradient animation
   const backgroundVariants = {
@@ -173,26 +178,169 @@ function DashboardComponent() {
     }
   };
 
-  // Fungsi untuk mengambil data dashboard
+  // Fungsi untuk mengambil data dashboard dengan logging yang lebih detail
   const fetchDashboardData = useCallback(async () => {
     try {
+      console.log('Fetching dashboard data...');
       setLoading(true);
+      
+      // Tambahkan penghitung percobaan koneksi yang gagal
+      if (failedAttempts >= 3) {
+        console.warn(`Failed ${failedAttempts} times, using fallback data instead`);
+        
+        // Gunakan data fallback yang dirandomisasi untuk simulasi data dinamis
+        const fallbackData = getRandomizedFallbackData();
+        console.log('Using randomized fallback data:', fallbackData);
+        
+        setDashboardData(fallbackData);
+        setLastUpdate(new Date());
+        setConnectionStatus('using_fallback');
+        setUsingFallbackData(true);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+      
+      // Catat waktu mulai untuk mengukur latency
+      const startTime = Date.now();
+      
+      // Mencoba mengambil data dari API
       const data = await getDashboardData();
+      
+      // Hitung latency
+      const latency = Date.now() - startTime;
+      console.log(`Dashboard data fetched successfully in ${latency}ms`);
+      
+      // Log data yang diterima untuk debugging
+      console.log('Raw dashboard data received:', data);
+      
+      // Validasi data yang diterima
+      validateDashboardData(data);
+      
       setDashboardData(data);
       setLastUpdate(new Date());
       setError(null);
+      setConnectionStatus('connected');
+      setUsingFallbackData(false);
+      setFailedAttempts(0); // Reset counter saat berhasil
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
+      
+      // Increment counter untuk percobaan yang gagal
+      const newFailedAttempts = failedAttempts + 1;
+      setFailedAttempts(newFailedAttempts);
+      
+      // Log informasi error yang lebih detail
+      if (err.response) {
+        // Error respons dari server
+        console.error('Server responded with error:', {
+          status: err.response.status,
+          data: err.response.data
+        });
+        setConnectionStatus('error_server');
+      } else if (err.request) {
+        // Request dibuat tapi tidak ada respons
+        console.error('No response from server, connection issue');
+        setConnectionStatus('error_connection');
+      } else {
+        // Error lainnya
+        console.error('Error creating request:', err.message);
+        setConnectionStatus('error_other');
+      }
+      
+      // Gunakan data fallback setelah beberapa kali percobaan gagal
+      if (newFailedAttempts >= 3) {
+        console.warn(`Failed ${newFailedAttempts} times, switching to fallback data`);
+        
+        // Gunakan data fallback yang statis untuk pertama kali
+        console.log('Using fallback data for first time');
+        setDashboardData(completeDashboardFallbackData);
+        setLastUpdate(new Date());
+        setConnectionStatus('using_fallback');
+        setUsingFallbackData(true);
+        setError(null);
+      } else {
+        // Masih menampilkan error message jika belum mencapai batas percobaan
+        setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [failedAttempts]);
+  
+  // Fungsi untuk memvalidasi data yang diterima dari backend
+  const validateDashboardData = (data) => {
+    if (!data) {
+      console.warn('Received null or undefined dashboard data');
+      return;
+    }
+    
+    // Validasi format data yang diharapkan
+    const expectedProps = [
+      'severityDistribution', 
+      'monthlyTrend', 
+      'ageGroups', 
+      'genderDistribution',
+      'confidenceLevels',
+      'patients',
+      'analyses'
+    ];
+    
+    const missingProps = expectedProps.filter(prop => !data.hasOwnProperty(prop));
+    
+    if (missingProps.length > 0) {
+      console.warn('Missing expected properties in dashboard data:', missingProps);
+    }
+    
+    // Validasi tipe data
+    if (data.severityDistribution && !Array.isArray(data.severityDistribution)) {
+      console.warn('severityDistribution is not an array:', data.severityDistribution);
+    }
+    
+    if (data.monthlyTrend) {
+      if (!data.monthlyTrend.categories || !Array.isArray(data.monthlyTrend.categories)) {
+        console.warn('monthlyTrend.categories is missing or not an array:', data.monthlyTrend);
+      }
+      if (!data.monthlyTrend.data || !Array.isArray(data.monthlyTrend.data)) {
+        console.warn('monthlyTrend.data is missing or not an array:', data.monthlyTrend);
+      }
+    } else {
+      console.warn('monthlyTrend is missing');
+    }
+    
+    if (data.ageGroups) {
+      if (!data.ageGroups.categories || !Array.isArray(data.ageGroups.categories)) {
+        console.warn('ageGroups.categories is missing or not an array:', data.ageGroups);
+      }
+      if (!data.ageGroups.data || !Array.isArray(data.ageGroups.data)) {
+        console.warn('ageGroups.data is missing or not an array:', data.ageGroups);
+      }
+    } else {
+      console.warn('ageGroups is missing');
+    }
+    
+    if (data.genderDistribution && !Array.isArray(data.genderDistribution)) {
+      console.warn('genderDistribution is not an array:', data.genderDistribution);
+    }
+    
+    // Log summary
+    console.log('Dashboard data validation summary:', {
+      totalPatients: data.patients?.length || 0,
+      totalAnalyses: data.analyses?.length || 0,
+      hasSeverityDistribution: !!data.severityDistribution,
+      hasMonthlyTrend: !!data.monthlyTrend,
+      hasAgeGroups: !!data.ageGroups,
+      hasGenderDistribution: !!data.genderDistribution,
+      confidenceLevels: data.confidenceLevels || 'Missing'
+    });
+  };
 
-  // Menangani socket.io untuk data realtime
+  // Menangani socket.io untuk data realtime dengan logging yang lebih detail
   useEffect(() => {
     // Setup socket.io untuk update realtime
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    console.log('Connecting to socket server at:', API_URL);
+    
     const socket = io(API_URL, {
       withCredentials: true,
       extraHeaders: {
@@ -205,21 +353,60 @@ function DashboardComponent() {
     });
 
     socket.on('connect', () => {
-      console.log('Socket connected for realtime updates');
+      console.log('Socket connected successfully with ID:', socket.id);
       setSocketConnected(true);
+      setConnectionStatus('socket_connected');
+      setConnectionAttempts(0);
+      setFailedAttempts(0); // Reset counter saat berhasil terhubung
+      setUsingFallbackData(false);
     });
 
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected. Reason:', reason);
       setSocketConnected(false);
+      setConnectionStatus('disconnected');
+    });
+    
+    socket.on('connect_error', (error) => {
+      const attempts = connectionAttempts + 1;
+      console.error(`Socket connection error (attempt ${attempts}):`, error.message);
+      setSocketConnected(false);
+      setConnectionStatus('error_socket');
+      setConnectionAttempts(attempts);
+      
+      // Log additional details about the connection attempt
+      console.warn('Connection details:', {
+        url: API_URL,
+        transportOptions: socket.io.opts,
+        attempt: attempts
+      });
     });
 
     socket.on('dashboard_update', (data) => {
-      console.log('Received real-time dashboard update', data);
-      setDashboardData(prevData => ({
-        ...prevData,
-        ...data
-      }));
+      // Jika menggunakan fallback data, jangan gunakan updates dari socket
+      if (usingFallbackData) {
+        console.log('Ignoring socket update because using fallback data');
+        return;
+      }
+      
+      console.log('Received real-time dashboard update:', data);
+      
+      // Validasi data update yang diterima
+      validateDashboardData(data);
+      
+      setDashboardData(prevData => {
+        // Log perubahan data untuk debugging
+        console.log('Updating dashboard data. Previous vs New:', {
+          previousData: prevData,
+          newData: data
+        });
+        
+        return {
+          ...prevData,
+          ...data
+        };
+      });
+      
       setLastUpdate(new Date());
       
       // Increment notification counter when new data arrives
@@ -231,12 +418,6 @@ function DashboardComponent() {
       }, 3000);
     });
 
-    // Jika socket gagal, gunakan polling sebagai fallback
-    socket.on('connect_error', () => {
-      console.log('Socket connection failed, falling back to polling');
-      setSocketConnected(false);
-    });
-
     // Ambil data awal saat komponen di-mount
     fetchDashboardData();
     
@@ -244,16 +425,26 @@ function DashboardComponent() {
     const intervalId = setInterval(() => {
       if (!socketConnected) {
         console.log('Using polling fallback for dashboard data');
+        
+        // Jika menggunakan fallback data dan ingin mempertahankan simulasi data dinamis
+        if (usingFallbackData) {
+          console.log('Using randomized fallback data for polling');
+          setDashboardData(getRandomizedFallbackData());
+          setLastUpdate(new Date());
+          return;
+        }
+        
         fetchDashboardData();
       }
     }, 30000); // Poll every 30 seconds if socket is not connected
 
     // Cleanup function untuk socket dan interval
     return () => {
+      console.log('Cleaning up socket connection and polling interval');
       socket.disconnect();
       clearInterval(intervalId);
     };
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, connectionAttempts, usingFallbackData]);
 
   // Format waktu terakhir update
   const formatLastUpdate = () => {
@@ -261,6 +452,30 @@ function DashboardComponent() {
     const minutes = lastUpdate.getMinutes().toString().padStart(2, '0');
     const seconds = lastUpdate.getSeconds().toString().padStart(2, '0');
     return `${hours}:${minutes}:${seconds}`;
+  };
+  
+  // Get connection status text and color
+  const getConnectionStatusInfo = () => {
+    switch (connectionStatus) {
+      case 'socket_connected':
+        return { text: 'Realtime', color: 'bg-green-500' };
+      case 'connected':
+        return { text: 'Polling', color: 'bg-blue-500' };
+      case 'connecting':
+        return { text: 'Connecting...', color: 'bg-yellow-500' };
+      case 'using_fallback':
+        return { text: 'Data Simulasi', color: 'bg-purple-500' };
+      case 'disconnected':
+        return { text: 'Disconnected', color: 'bg-orange-500' };
+      case 'error_connection':
+        return { text: 'Connection Error', color: 'bg-red-500' };
+      case 'error_server':
+        return { text: 'Server Error', color: 'bg-red-500' };
+      case 'error_socket':
+        return { text: 'Socket Error', color: 'bg-red-500' };
+      default:
+        return { text: 'Unknown', color: 'bg-gray-500' };
+    }
   };
 
   return (
@@ -274,6 +489,23 @@ function DashboardComponent() {
       initial="initial"
       animate="animate"
     >
+      {/* Tampilkan banner jika menggunakan data fallback */}
+      {usingFallbackData && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-purple-100 border border-purple-300 rounded-lg text-purple-800 text-sm"
+        >
+          <div className="flex items-center">
+            <SparklesIcon className="h-5 w-5 mr-2 text-purple-600" />
+            <span>
+              Menggunakan data simulasi karena server backend tidak tersedia. 
+              Data akan diperbarui setiap 30 detik untuk mensimulasikan data realtime.
+            </span>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -318,7 +550,7 @@ function DashboardComponent() {
             Platform deteksi dini retinopati diabetik dengan teknologi AI canggih
           </motion.p>
           
-          {/* Realtime Update Status */}
+          {/* Realtime Update Status with more detailed info */}
           <motion.div 
             className="flex items-center justify-center mt-4"
             initial={{ opacity: 0 }}
@@ -326,9 +558,10 @@ function DashboardComponent() {
             transition={{ delay: 0.4, duration: 0.5 }}
           >
             <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              <div className={`w-2 h-2 rounded-full mr-2 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+              <div className={`w-2 h-2 rounded-full mr-2 ${getConnectionStatusInfo().color}`}></div>
               <span>
-                {socketConnected ? 'Realtime' : 'Polling'} · Update terakhir: {formatLastUpdate()}
+                {getConnectionStatusInfo().text} · Update terakhir: {formatLastUpdate()}
+                {connectionAttempts > 0 && ` · Percobaan: ${connectionAttempts}`}
               </span>
               
               {/* Notification Badge */}

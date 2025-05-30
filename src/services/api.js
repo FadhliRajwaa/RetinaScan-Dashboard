@@ -329,20 +329,73 @@ export const getDashboardData = async () => {
     const token = localStorage.getItem('token');
     console.log('Attempting to fetch dashboard data from API...');
     
+    // Start time untuk perhitungan latency
+    const startTime = performance.now();
+    
     // Menggunakan endpoint yang benar: /api/analysis/dashboard/stats
     const response = await axios.get(`${API_URL}/api/analysis/dashboard/stats`, {
       headers: {
         Authorization: `Bearer ${token}`
-      }
+      },
+      // Menambahkan timeout untuk menghindari request menggantung terlalu lama
+      timeout: 10000
     });
     
-    console.log('Dashboard data API response:', response.status);
+    // Hitung latency request
+    const latency = Math.round(performance.now() - startTime);
+    
+    // Log status respon dan latency
+    console.log(`Dashboard data API response: ${response.status} (${latency}ms)`);
+    
+    // Validasi data yang diterima
+    if (!response.data) {
+      console.warn('Dashboard API returned empty data');
+      return null;
+    }
+    
+    // Log struktur data untuk debugging
+    console.log('Dashboard data structure:', {
+      hasSeverityDistribution: !!response.data.severityDistribution,
+      hasMonthlyTrend: !!response.data.monthlyTrend,
+      hasAgeGroups: !!response.data.ageGroups,
+      hasGenderDistribution: !!response.data.genderDistribution,
+      hasConfidenceLevels: !!response.data.confidenceLevels,
+      patientsCount: response.data.patients?.length || 0,
+      analysesCount: response.data.analyses?.length || 0
+    });
+    
     return response.data;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
+    
+    // Log informasi error yang lebih detail
     if (error.response) {
-      console.error('Error response:', error.response.status, error.response.data);
+      // Server merespons dengan kode status error
+      console.error('Server error response:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    } else if (error.request) {
+      // Request dibuat tapi tidak ada respons dari server
+      console.error('No response received:', {
+        request: error.request,
+        message: 'The request was made but no response was received. Server might be down or unreachable.'
+      });
+    } else {
+      // Error saat setup request
+      console.error('Request setup error:', {
+        message: error.message,
+        config: error.config
+      });
     }
+    
+    if (error.code === 'ECONNABORTED') {
+      console.error('Request timed out. Server might be slow or unreachable.');
+    }
+    
+    // Re-throw error untuk handling di komponen
     throw error;
   }
 };

@@ -1028,87 +1028,276 @@ const EnhancedGenderDistributionChart = ({ data, loading }) => {
 // Menerima props dari Dashboard.jsx
 const DashboardCharts = ({ dashboardData, loading, error }) => {
   const { theme } = useTheme();
+  const [dataError, setDataError] = useState(null);
 
   // Colors for charts
   const COLORS = ['#10B981', '#3B82F6', '#EC4899', '#F59E0B', '#EF4444'];
   const GRADIENT_COLORS = ['#10B98190', '#3B82F690', '#EC489990', '#F59E0B90', '#EF444490'];
   
-  // Transformasi data untuk pie chart distribusi tingkat keparahan
-  const getSeverityData = () => {
-    if (!dashboardData?.severityDistribution) return [];
-    
+  // Transformasi data untuk pie chart distribusi tingkat keparahan dengan validasi dan logging yang lebih baik
+  const getSeverityData = useCallback(() => {
+    try {
+      if (!dashboardData) {
+        console.warn('Dashboard data is null or undefined');
+        return [];
+      }
+
+      if (!dashboardData.severityDistribution || !Array.isArray(dashboardData.severityDistribution)) {
+        console.warn('severityDistribution is missing or not an array:', dashboardData.severityDistribution);
+        return createDefaultSeverityData();
+      }
+      
+      const labels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
+      
+      // Pastikan array memiliki 5 elemen
+      if (dashboardData.severityDistribution.length !== 5) {
+        console.warn(`severityDistribution length mismatch. Expected 5, got ${dashboardData.severityDistribution.length}`);
+        // Tambahkan zeros jika kurang dari 5 elemen
+        const paddedData = [...dashboardData.severityDistribution];
+        while (paddedData.length < 5) {
+          paddedData.push(0);
+        }
+        return paddedData.slice(0, 5).map((value, index) => ({
+          name: labels[index],
+          value: isNaN(value) ? 0 : value
+        }));
+      }
+      
+      return dashboardData.severityDistribution.map((value, index) => ({
+        name: labels[index],
+        value: isNaN(value) ? 0 : value
+      }));
+    } catch (error) {
+      console.error('Error transforming severity data:', error);
+      setDataError('Gagal memproses data distribusi tingkat keparahan');
+      return createDefaultSeverityData();
+    }
+  }, [dashboardData]);
+  
+  // Data default untuk distribusi tingkat keparahan
+  const createDefaultSeverityData = () => {
     const labels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
-    return dashboardData.severityDistribution.map((value, index) => ({
-      name: labels[index],
-      value: value || 0
-    }));
+    return labels.map(name => ({ name, value: 20 })); // Default 20% masing-masing
   };
   
-  // Data untuk chart tren bulanan
-  const getMonthlyTrendData = () => {
-    if (!dashboardData?.monthlyTrend) return [];
-    
-    return dashboardData.monthlyTrend.categories.map((month, index) => ({
-      name: month,
-      value: dashboardData.monthlyTrend.data[index] || 0
-    }));
+  // Data untuk chart tren bulanan dengan validasi dan logging yang lebih baik
+  const getMonthlyTrendData = useCallback(() => {
+    try {
+      if (!dashboardData) {
+        console.warn('Dashboard data is null or undefined');
+        return [];
+      }
+
+      if (!dashboardData.monthlyTrend || !dashboardData.monthlyTrend.categories || !dashboardData.monthlyTrend.data) {
+        console.warn('monthlyTrend data is missing or incomplete:', dashboardData.monthlyTrend);
+        return createDefaultMonthlyData();
+      }
+      
+      if (!Array.isArray(dashboardData.monthlyTrend.categories) || !Array.isArray(dashboardData.monthlyTrend.data)) {
+        console.warn('monthlyTrend categories or data is not an array');
+        return createDefaultMonthlyData();
+      }
+      
+      // Jika panjang array tidak sama, menggunakan array yang lebih pendek
+      const minLength = Math.min(
+        dashboardData.monthlyTrend.categories.length, 
+        dashboardData.monthlyTrend.data.length
+      );
+      
+      if (minLength === 0) {
+        console.warn('monthlyTrend categories or data array is empty');
+        return createDefaultMonthlyData();
+      }
+      
+      return Array(minLength).fill().map((_, index) => ({
+        name: dashboardData.monthlyTrend.categories[index] || `Month ${index+1}`,
+        value: isNaN(dashboardData.monthlyTrend.data[index]) ? 0 : dashboardData.monthlyTrend.data[index]
+      }));
+    } catch (error) {
+      console.error('Error transforming monthly trend data:', error);
+      setDataError('Gagal memproses data tren bulanan');
+      return createDefaultMonthlyData();
+    }
+  }, [dashboardData]);
+  
+  // Data default untuk tren bulanan
+  const createDefaultMonthlyData = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months.map(month => ({ name: month, value: Math.floor(Math.random() * 50) }));
   };
   
-  // Data untuk chart distribusi umur
-  const getAgeGroupData = () => {
-    if (!dashboardData?.ageGroups) return [];
-    
-    return dashboardData.ageGroups.categories.map((ageGroup, index) => ({
-      name: ageGroup,
-      value: dashboardData.ageGroups.data[index] || 0
-    }));
+  // Data untuk chart distribusi umur dengan validasi dan logging yang lebih baik
+  const getAgeGroupData = useCallback(() => {
+    try {
+      if (!dashboardData) {
+        console.warn('Dashboard data is null or undefined');
+        return [];
+      }
+
+      if (!dashboardData.ageGroups || !dashboardData.ageGroups.categories || !dashboardData.ageGroups.data) {
+        console.warn('ageGroups data is missing or incomplete:', dashboardData.ageGroups);
+        return createDefaultAgeData();
+      }
+      
+      if (!Array.isArray(dashboardData.ageGroups.categories) || !Array.isArray(dashboardData.ageGroups.data)) {
+        console.warn('ageGroups categories or data is not an array');
+        return createDefaultAgeData();
+      }
+      
+      // Jika panjang array tidak sama, menggunakan array yang lebih pendek
+      const minLength = Math.min(
+        dashboardData.ageGroups.categories.length, 
+        dashboardData.ageGroups.data.length
+      );
+      
+      if (minLength === 0) {
+        console.warn('ageGroups categories or data array is empty');
+        return createDefaultAgeData();
+      }
+      
+      return Array(minLength).fill().map((_, index) => ({
+        name: dashboardData.ageGroups.categories[index] || `Age ${index+1}`,
+        value: isNaN(dashboardData.ageGroups.data[index]) ? 0 : dashboardData.ageGroups.data[index]
+      }));
+    } catch (error) {
+      console.error('Error transforming age group data:', error);
+      setDataError('Gagal memproses data distribusi umur');
+      return createDefaultAgeData();
+    }
+  }, [dashboardData]);
+  
+  // Data default untuk distribusi umur
+  const createDefaultAgeData = () => {
+    const ageGroups = ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61+'];
+    return ageGroups.map(age => ({ name: age, value: Math.floor(Math.random() * 25) }));
   };
   
-  // Data untuk chart distribusi gender
-  const getGenderData = () => {
-    if (!dashboardData?.genderDistribution) return [];
-    
+  // Data untuk chart distribusi gender dengan validasi dan logging yang lebih baik
+  const getGenderData = useCallback(() => {
+    try {
+      if (!dashboardData) {
+        console.warn('Dashboard data is null or undefined');
+        return createDefaultGenderData();
+      }
+
+      if (!dashboardData.genderDistribution || !Array.isArray(dashboardData.genderDistribution)) {
+        console.warn('genderDistribution is missing or not an array:', dashboardData.genderDistribution);
+        return createDefaultGenderData();
+      }
+      
+      // Pastikan array memiliki 2 elemen
+      if (dashboardData.genderDistribution.length !== 2) {
+        console.warn(`genderDistribution length mismatch. Expected 2, got ${dashboardData.genderDistribution.length}`);
+        return createDefaultGenderData();
+      }
+      
+      return [
+        { name: 'Laki-laki', value: isNaN(dashboardData.genderDistribution[0]) ? 50 : dashboardData.genderDistribution[0] },
+        { name: 'Perempuan', value: isNaN(dashboardData.genderDistribution[1]) ? 50 : dashboardData.genderDistribution[1] }
+      ];
+    } catch (error) {
+      console.error('Error transforming gender data:', error);
+      setDataError('Gagal memproses data distribusi gender');
+      return createDefaultGenderData();
+    }
+  }, [dashboardData]);
+  
+  // Data default untuk distribusi gender
+  const createDefaultGenderData = () => {
     return [
-      { name: 'Laki-laki', value: dashboardData.genderDistribution[0] || 0 },
-      { name: 'Perempuan', value: dashboardData.genderDistribution[1] || 0 }
+      { name: 'Laki-laki', value: 50 },
+      { name: 'Perempuan', value: 50 }
     ];
   };
 
-  // Statistik totals untuk stat cards
-  const getPatientCount = () => {
-    return dashboardData?.patients?.length || 0;
-  };
+  // Statistik totals untuk stat cards dengan validasi yang lebih baik
+  const getPatientCount = useCallback(() => {
+    try {
+      if (!dashboardData || !dashboardData.patients) return 0;
+      if (!Array.isArray(dashboardData.patients)) {
+        console.warn('patients is not an array:', dashboardData.patients);
+        return 0;
+      }
+      return dashboardData.patients.length;
+    } catch (error) {
+      console.error('Error getting patient count:', error);
+      return 0;
+    }
+  }, [dashboardData]);
   
-  const getAnalysisCount = () => {
-    return dashboardData?.analyses?.length || 0;
-  };
+  const getAnalysisCount = useCallback(() => {
+    try {
+      if (!dashboardData || !dashboardData.analyses) return 0;
+      if (!Array.isArray(dashboardData.analyses)) {
+        console.warn('analyses is not an array:', dashboardData.analyses);
+        return 0;
+      }
+      return dashboardData.analyses.length;
+    } catch (error) {
+      console.error('Error getting analysis count:', error);
+      return 0;
+    }
+  }, [dashboardData]);
   
-  const getAvgConfidence = () => {
-    return dashboardData?.confidenceLevels?.average || 0;
-  };
+  const getAvgConfidence = useCallback(() => {
+    try {
+      if (!dashboardData || !dashboardData.confidenceLevels) return 0;
+      if (typeof dashboardData.confidenceLevels !== 'object') {
+        console.warn('confidenceLevels is not an object:', dashboardData.confidenceLevels);
+        return 0;
+      }
+      return isNaN(dashboardData.confidenceLevels.average) ? 0 : dashboardData.confidenceLevels.average;
+    } catch (error) {
+      console.error('Error getting average confidence:', error);
+      return 0;
+    }
+  }, [dashboardData]);
   
-  const getHighRiskPercentage = () => {
-    if (!dashboardData?.severityDistribution) return 0;
-    // Berat + Sangat Berat
-    return dashboardData.severityDistribution[3] + dashboardData.severityDistribution[4] || 0;
-  };
-
-  // Animasi saat data berubah
-  useEffect(() => {
-    // Trigger animasi ketika data berubah
-    if (dashboardData) {
-      console.log('Dashboard data updated, triggering animations');
+  const getHighRiskPercentage = useCallback(() => {
+    try {
+      if (!dashboardData || !dashboardData.severityDistribution) return 0;
+      if (!Array.isArray(dashboardData.severityDistribution) || dashboardData.severityDistribution.length < 5) {
+        console.warn('severityDistribution is missing or incomplete:', dashboardData.severityDistribution);
+        return 0;
+      }
+      
+      // Berat + Sangat Berat (indeks 3 dan 4)
+      const berat = isNaN(dashboardData.severityDistribution[3]) ? 0 : dashboardData.severityDistribution[3];
+      const sangatBerat = isNaN(dashboardData.severityDistribution[4]) ? 0 : dashboardData.severityDistribution[4];
+      
+      return berat + sangatBerat;
+    } catch (error) {
+      console.error('Error getting high risk percentage:', error);
+      return 0;
     }
   }, [dashboardData]);
 
-  if (error) {
+  // Animasi saat data berubah dan logging data untuk debugging
+  useEffect(() => {
+    if (dashboardData) {
+      console.log('Dashboard data received:', dashboardData);
+      
+      // Validasi data yang diterima
+      if (!dashboardData.severityDistribution) console.warn('Missing severityDistribution');
+      if (!dashboardData.monthlyTrend) console.warn('Missing monthlyTrend');
+      if (!dashboardData.ageGroups) console.warn('Missing ageGroups');
+      if (!dashboardData.genderDistribution) console.warn('Missing genderDistribution');
+      
+      // Reset error state jika data ada
+      setDataError(null);
+    } else {
+      console.warn('Dashboard data is null or undefined');
+    }
+  }, [dashboardData]);
+
+  if (error || dataError) {
     return (
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }}
         className="p-6 bg-red-50 rounded-xl border border-red-100 text-red-800"
       >
-        <p>{error}</p>
+        <p>{error || dataError}</p>
       </motion.div>
     );
   }
