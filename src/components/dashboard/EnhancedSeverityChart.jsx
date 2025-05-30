@@ -61,6 +61,20 @@ const CHART_SIZES = {
   }
 };
 
+// Colors dengan kontras yang lebih baik dan tema klinis - dipindahkan ke scope global
+const COLORS = ['#4F46E5', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444'];
+const HOVER_COLORS = ['#4338CA', '#0284C7', '#059669', '#D97706', '#B91C1C'];
+
+// Labels untuk tingkat keparahan dengan deskripsi yang lebih jelas - dipindahkan ke scope global
+const LABELS = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
+const DESCRIPTIONS = [
+  'Tidak ada tanda retinopati diabetik yang signifikan',
+  'Mikroaneurisma ringan terdeteksi pada retina',
+  'Perdarahan intraretinal dan eksudat keras terlihat',
+  'Banyak perdarahan dan cotton wool spots dengan iskemia',
+  'Neovaskularisasi dan risiko tinggi kebutaan'
+];
+
 // Komponen untuk loading state
 const SkeletonLoader = () => (
   <motion.div 
@@ -524,20 +538,6 @@ const EnhancedSeverityChart = ({ data, loading, props }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [hasAnimated, setHasAnimated] = useState(false);
-  
-  // Colors dengan kontras yang lebih baik dan tema klinis
-  const COLORS = ['#4F46E5', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444'];
-  const HOVER_COLORS = ['#4338CA', '#0284C7', '#059669', '#D97706', '#B91C1C'];
-  
-  // Labels untuk tingkat keparahan dengan deskripsi yang lebih jelas
-  const LABELS = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
-  const DESCRIPTIONS = [
-    'Tidak ada tanda retinopati diabetik yang signifikan',
-    'Mikroaneurisma ringan terdeteksi pada retina',
-    'Perdarahan intraretinal dan eksudat keras terlihat',
-    'Banyak perdarahan dan cotton wool spots dengan iskemia',
-    'Neovaskularisasi dan risiko tinggi kebutaan'
-  ];
   
   // Efek untuk animasi entrance
   useEffect(() => {
