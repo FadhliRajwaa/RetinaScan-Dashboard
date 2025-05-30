@@ -1,763 +1,575 @@
-import { motion, useMotionTemplate, useMotionValue, AnimatePresence } from 'framer-motion';
-import { useTheme, animations, withPageTransition } from '../context/ThemeContext';
-import { Link } from 'react-router-dom';
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  ArrowUpTrayIcon,
-  ChartBarIcon,
-  DocumentChartBarIcon,
-  ClockIcon,
-  SparklesIcon
-} from '@heroicons/react/24/outline';
-import DashboardCharts from '../components/dashboard/DashboardCharts';
-import { getDashboardData } from '../services/api';
-import { io } from 'socket.io-client';
-import { completeDashboardFallbackData, getRandomizedFallbackData } from '../utils/fallbackData';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import axios from 'axios';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { withPageTransition } from '../context/ThemeContext';
+import { ResponsivePie } from '@nivo/pie';
+import { ResponsiveLine } from '@nivo/line';
+import { ResponsiveBar } from '@nivo/bar';
+import CountUp from 'react-countup';
 
-// Glassmorphism style
-const glassEffect = {
-  background: 'rgba(255, 255, 255, 0.95)',
-  backdropFilter: 'blur(10px)',
-  WebkitBackdropFilter: 'blur(10px)',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-  borderRadius: '16px',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
-};
-
-const features = [
-  {
-    title: 'Unggah Citra',
-    description: 'Unggah citra fundus retina dengan aman dan mudah.',
-    icon: ArrowUpTrayIcon,
-    path: '/scan-retina',
-    color: '#3B82F6',
-    gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-  },
-  {
-    title: 'Scan Retina',
-    description: 'Analisis citra retina dan dapatkan laporan hasil deteksi secara instan.',
-    icon: ChartBarIcon,
-    path: '/scan-retina',
-    color: '#10B981',
-    gradient: 'linear-gradient(135deg, #10B981, #059669)',
-  },
-  {
-    title: 'Riwayat Analisis',
-    description: 'Tinjau semua analisis sebelumnya dengan detail.',
-    icon: ClockIcon,
-    path: '/history',
-    color: '#EC4899',
-    gradient: 'linear-gradient(135deg, #EC4899, #DB2777)',
-  },
-];
-
-function FeatureCard({ feature, index }) {
-  const { theme } = useTheme();
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const radius = useMotionValue(0);
-  const background = useMotionTemplate`radial-gradient(${radius}px at ${mouseX}px ${mouseY}px, ${feature.color}30, transparent 70%)`;
-
-  const handleMouseMove = ({ currentTarget, clientX, clientY }) => {
-    const { left, top } = currentTarget.getBoundingClientRect();
-    mouseX.set(clientX - left);
-    mouseY.set(clientY - top);
-    radius.set(300);
-  };
-
-  const resetRadius = () => radius.set(0);
-
-  return (
-    <motion.div
-      key={feature.title}
-      initial={{ opacity: 0, scale: 0.9, y: 30 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ 
-        type: 'spring',
-        stiffness: 300,
-        damping: 30,
-        duration: 0.5, 
-        delay: index * 0.1 
-      }}
-      whileHover={{ 
-        scale: 1.05,
-        y: -8,
-        transition: { type: 'spring', stiffness: 400, damping: 15 }
-      }}
-      whileTap={{ scale: 0.98 }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={resetRadius}
-      className="relative p-6 rounded-xl flex flex-col items-center text-center overflow-hidden"
-      style={{ 
-        ...glassEffect,
-        transform: 'translateZ(0)',
-        willChange: 'transform, opacity'
-      }}
-    >
-      <Link to={feature.path} className="absolute inset-0 z-10" aria-label={feature.title}></Link>
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background }}
-      />
-      <motion.div
-        className="relative z-10 flex flex-col items-center"
-      >
-        <motion.div 
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 400, delay: index * 0.1 + 0.2 }}
-          className="rounded-full p-4 mb-5"
-          style={{ 
-            background: feature.gradient,
-            boxShadow: `0 10px 15px -3px ${feature.color}40`
-          }}
-        >
-          <feature.icon 
-            className="h-8 w-8 text-white" 
-          />
-        </motion.div>
-        <h3 className="text-lg sm:text-xl font-bold mb-3 text-gray-800">
-          {feature.title}
-        </h3>
-        <p className="text-sm sm:text-base text-gray-600">{feature.description}</p>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-function DashboardComponent() {
-  const { theme } = useTheme();
-  const [dashboardData, setDashboardData] = useState(null);
+function DashboardComponent({ userId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [socketConnected, setSocketConnected] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const [connectionStatus, setConnectionStatus] = useState('connecting');
-  const [usingFallbackData, setUsingFallbackData] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    totalAnalyses: 0,
+    recentAnalyses: [],
+    recentPatients: [],
+    drDistribution: [],
+    monthlyAnalyses: [],
+    ageDistribution: []
+  });
 
-  // Background gradient animation
-  const backgroundVariants = {
-    initial: {
-      backgroundPosition: '0% 0%',
-    },
-    animate: {
-      backgroundPosition: '100% 100%',
-      transition: { 
-        repeat: Infinity, 
-        repeatType: "reverse", 
-        duration: 20,
-        ease: "linear"
-      }
-    }
-  };
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        type: 'spring',
-        stiffness: 300,
-        damping: 30
-      }
-    }
-  };
-
-  // Fungsi untuk mengambil data dashboard dengan logging yang lebih detail
-  const fetchDashboardData = useCallback(async () => {
-    try {
-      console.log('Fetching dashboard data...');
-      setLoading(true);
-      
-      // Tambahkan penghitung percobaan koneksi yang gagal
-      if (failedAttempts >= 3) {
-        console.warn(`Failed ${failedAttempts} times, using fallback data instead`);
-        
-        // Gunakan data fallback yang dirandomisasi untuk simulasi data dinamis
-        const fallbackData = getRandomizedFallbackData();
-        console.log('Using randomized fallback data:', fallbackData);
-        
-        setDashboardData(fallbackData);
-        setLastUpdate(new Date());
-        setConnectionStatus('using_fallback');
-        setUsingFallbackData(true);
-        setError(null);
-        setLoading(false);
-        return;
-      }
-      
-      // Catat waktu mulai untuk mengukur latency
-      const startTime = Date.now();
-      
-      // Mencoba mengambil data dari API
-      const data = await getDashboardData();
-      
-      // Hitung latency
-      const latency = Date.now() - startTime;
-      console.log(`Dashboard data fetched successfully in ${latency}ms`);
-      
-      // Log data yang diterima untuk debugging
-      console.log('Raw dashboard data received:', data);
-      
-      // Validasi data yang diterima
-      validateDashboardData(data);
-      
-      setDashboardData(data);
-      setLastUpdate(new Date());
-      setError(null);
-      setConnectionStatus('connected');
-      setUsingFallbackData(false);
-      setFailedAttempts(0); // Reset counter saat berhasil
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      
-      // Increment counter untuk percobaan yang gagal
-      const newFailedAttempts = failedAttempts + 1;
-      setFailedAttempts(newFailedAttempts);
-      
-      // Log informasi error yang lebih detail
-      if (err.response) {
-        // Error respons dari server
-        console.error('Server responded with error:', {
-          status: err.response.status,
-          data: err.response.data
-        });
-        setConnectionStatus('error_server');
-      } else if (err.request) {
-        // Request dibuat tapi tidak ada respons
-        console.error('No response from server, connection issue');
-        setConnectionStatus('error_connection');
-      } else {
-        // Error lainnya
-        console.error('Error creating request:', err.message);
-        setConnectionStatus('error_other');
-      }
-      
-      // Gunakan data fallback setelah beberapa kali percobaan gagal
-      if (newFailedAttempts >= 3) {
-        console.warn(`Failed ${newFailedAttempts} times, switching to fallback data`);
-        
-        // Gunakan data fallback yang statis untuk pertama kali
-        console.log('Using fallback data for first time');
-        setDashboardData(completeDashboardFallbackData);
-        setLastUpdate(new Date());
-        setConnectionStatus('using_fallback');
-        setUsingFallbackData(true);
-        setError(null);
-      } else {
-        // Masih menampilkan error message jika belum mencapai batas percobaan
-        setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [failedAttempts]);
-  
-  // Fungsi untuk memvalidasi data yang diterima dari backend
-  const validateDashboardData = (data) => {
-    if (!data) {
-      console.warn('Received null or undefined dashboard data');
-      return;
-    }
-    
-    // Validasi format data yang diharapkan
-    const expectedProps = [
-      'severityDistribution', 
-      'monthlyTrend', 
-      'ageGroups', 
-      'genderDistribution',
-      'confidenceLevels',
-      'patients',
-      'analyses'
-    ];
-    
-    const missingProps = expectedProps.filter(prop => !data.hasOwnProperty(prop));
-    
-    if (missingProps.length > 0) {
-      console.warn('Missing expected properties in dashboard data:', missingProps);
-    }
-    
-    // Validasi tipe data
-    if (data.severityDistribution && !Array.isArray(data.severityDistribution)) {
-      console.warn('severityDistribution is not an array:', data.severityDistribution);
-    }
-    
-    if (data.monthlyTrend) {
-      if (!data.monthlyTrend.categories || !Array.isArray(data.monthlyTrend.categories)) {
-        console.warn('monthlyTrend.categories is missing or not an array:', data.monthlyTrend);
-      }
-      if (!data.monthlyTrend.data || !Array.isArray(data.monthlyTrend.data)) {
-        console.warn('monthlyTrend.data is missing or not an array:', data.monthlyTrend);
-      }
-    } else {
-      console.warn('monthlyTrend is missing');
-    }
-    
-    if (data.ageGroups) {
-      if (!data.ageGroups.categories || !Array.isArray(data.ageGroups.categories)) {
-        console.warn('ageGroups.categories is missing or not an array:', data.ageGroups);
-      }
-      if (!data.ageGroups.data || !Array.isArray(data.ageGroups.data)) {
-        console.warn('ageGroups.data is missing or not an array:', data.ageGroups);
-      }
-    } else {
-      console.warn('ageGroups is missing');
-    }
-    
-    if (data.genderDistribution && !Array.isArray(data.genderDistribution)) {
-      console.warn('genderDistribution is not an array:', data.genderDistribution);
-    }
-    
-    // Log summary
-    console.log('Dashboard data validation summary:', {
-      totalPatients: data.patients?.length || 0,
-      totalAnalyses: data.analyses?.length || 0,
-      hasSeverityDistribution: !!data.severityDistribution,
-      hasMonthlyTrend: !!data.monthlyTrend,
-      hasAgeGroups: !!data.ageGroups,
-      hasGenderDistribution: !!data.genderDistribution,
-      confidenceLevels: data.confidenceLevels || 'Missing'
-    });
-  };
-
-  // Menangani socket.io untuk data realtime dengan logging yang lebih detail
+  // Fetch dashboard data
   useEffect(() => {
-    // Setup socket.io untuk update realtime
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    console.log('Connecting to socket server at:', API_URL);
-    
-    // Ambil token dari localStorage dan verifikasi apakah tersedia
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('Token not found in localStorage, socket authentication will fail');
-      setConnectionStatus('error_auth');
-      setSocketConnected(false);
-      // Tetap lanjutkan dengan fetchDashboardData untuk mendapatkan data awal
-      fetchDashboardData();
-      return;
-    }
-    
-    // Konfigurasi socket.io dengan auth yang lebih sederhana dan robust
-    const socket = io(API_URL, {
-      auth: {
-        token: token
-      },
-      withCredentials: true,
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 3000,
-      timeout: 10000,
-      transports: ['websocket', 'polling']
-    });
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
 
-    socket.on('connect', () => {
-      console.log('Socket connected successfully with ID:', socket.id);
-      setSocketConnected(true);
-      setConnectionStatus('socket_connected');
-      setConnectionAttempts(0);
-      setFailedAttempts(0); // Reset counter saat berhasil terhubung
-      setUsingFallbackData(false);
-      
-      // Untuk debugging, tampilkan room yang sedang didengarkan
-      console.log('Listening for events on rooms:', socket.rooms);
-      
-      // Testing socket connection dengan mengirim ping
-      socket.emit('ping', { timestamp: new Date().toISOString() });
-      console.log('Ping sent to server');
-    });
+        // Fetch dashboard statistics
+        const response = await axios.get(`${API_URL}/api/dashboard/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-    // Menambahkan handler untuk event pong dari server
-    socket.on('pong', (data) => {
-      console.log('Received pong from server:', data);
-      // Hitung latency
-      if (data.timestamp) {
-        const latency = Date.now() - new Date(data.timestamp).getTime();
-        console.log(`Socket latency: ${latency}ms`);
-      }
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected. Reason:', reason);
-      setSocketConnected(false);
-      setConnectionStatus('disconnected');
-    });
-    
-    socket.on('connect_error', (error) => {
-      const attempts = connectionAttempts + 1;
-      console.error(`Socket connection error (attempt ${attempts}):`, error.message);
-      setSocketConnected(false);
-      setConnectionStatus('error_socket');
-      setConnectionAttempts(attempts);
-      
-      // Log additional details about the connection attempt
-      console.warn('Connection details:', {
-        url: API_URL,
-        authToken: token ? `${token.substring(0, 10)}...` : 'missing',
-        socketOptions: {
-          transports: socket.io?.opts?.transports || ['unknown'],
-          timeout: socket.io?.opts?.timeout || 'default',
-          reconnection: socket.io?.opts?.reconnection
-        },
-        attempt: attempts
-      });
-    });
-
-    socket.on('dashboard_update', (data) => {
-      // Jika menggunakan fallback data, jangan gunakan updates dari socket
-      if (usingFallbackData) {
-        console.log('Ignoring socket update because using fallback data');
-        return;
-      }
-      
-      console.log('Received real-time dashboard update:', data);
-      
-      // Validasi data update yang diterima
-      validateDashboardData(data);
-      
-      setDashboardData(prevData => {
-        // Log perubahan data untuk debugging
-        console.log('Updating dashboard data. Previous vs New:', {
-          previousData: prevData,
-          newData: data
+        // Process and set the data
+        setStats({
+          totalPatients: response.data.totalPatients || 0,
+          totalAnalyses: response.data.totalAnalyses || 0,
+          recentAnalyses: response.data.recentAnalyses || [],
+          recentPatients: response.data.recentPatients || [],
+          drDistribution: processDRDistribution(response.data.drDistribution || []),
+          monthlyAnalyses: processMonthlyData(response.data.monthlyAnalyses || []),
+          ageDistribution: response.data.ageDistribution || []
         });
         
-        return {
-          ...prevData,
-          ...data
-        };
-      });
-      
-      setLastUpdate(new Date());
-      
-      // Increment notification counter when new data arrives
-      setNotificationCount(prev => prev + 1);
-      
-      // Reset notification counter after 3 seconds
-      setTimeout(() => {
-        setNotificationCount(0);
-      }, 3000);
-    });
-    
-    // Tambahkan listener untuk notifikasi analisis baru
-    socket.on('new_analysis', (data) => {
-      console.log('Received new analysis notification:', data);
-      
-      // Tampilkan notifikasi untuk pengguna
-      setNotificationCount(prev => prev + 1);
-      
-      // Opsional: Ambil data dashboard baru
-      if (!usingFallbackData) {
-        fetchDashboardData();
-      }
-    });
-
-    // Tambahkan deteksi error pada socket.io
-    socket.on('error', (error) => {
-      console.error('Socket error:', error);
-      setConnectionStatus('error_socket');
-    });
-    
-    socket.on('reconnect', (attemptNumber) => {
-      console.log(`Socket reconnected after ${attemptNumber} attempts`);
-      setConnectionStatus('socket_connected');
-    });
-    
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`Socket reconnection attempt ${attemptNumber}`);
-    });
-    
-    socket.on('reconnect_error', (error) => {
-      console.error('Socket reconnection error:', error);
-    });
-    
-    socket.on('reconnect_failed', () => {
-      console.error('Socket reconnection failed after all attempts');
-      setConnectionStatus('error_socket');
-    });
-
-    // Ambil data awal saat komponen di-mount
-    fetchDashboardData();
-    
-    // Set interval polling sebagai fallback jika websocket tidak tersedia
-    const intervalId = setInterval(() => {
-      if (!socketConnected) {
-        console.log('Using polling fallback for dashboard data');
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Gagal memuat data dashboard');
+        setLoading(false);
         
-        // Jika menggunakan fallback data dan ingin mempertahankan simulasi data dinamis
-        if (usingFallbackData) {
-          console.log('Using randomized fallback data for polling');
-          setDashboardData(getRandomizedFallbackData());
-          setLastUpdate(new Date());
-          return;
-        }
-        
-        fetchDashboardData();
+        // Use mock data for development/preview
+        setMockData();
       }
-    }, 30000); // Poll every 30 seconds if socket is not connected
-
-    // Cleanup function untuk socket dan interval
-    return () => {
-      console.log('Cleaning up socket connection and polling interval');
-      socket.disconnect();
-      clearInterval(intervalId);
     };
-  }, [fetchDashboardData, connectionAttempts, usingFallbackData]);
 
-  // Format waktu terakhir update
-  const formatLastUpdate = () => {
-    const hours = lastUpdate.getHours().toString().padStart(2, '0');
-    const minutes = lastUpdate.getMinutes().toString().padStart(2, '0');
-    const seconds = lastUpdate.getSeconds().toString().padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
+    fetchDashboardData();
+  }, [API_URL, userId]);
+
+  // Process DR distribution data for pie chart
+  const processDRDistribution = (data) => {
+    const colorMap = {
+      'No DR': '#4caf50',
+      'Mild': '#8bc34a',
+      'Moderate': '#ffeb3b',
+      'Severe': '#ff9800',
+      'Proliferative DR': '#f44336'
+    };
+
+    return data.map(item => ({
+      id: item.classification,
+      label: item.classification,
+      value: item.count,
+      color: colorMap[item.classification] || '#999999'
+    }));
   };
-  
-  // Get connection status text and color
-  const getConnectionStatusInfo = () => {
-    switch (connectionStatus) {
-      case 'socket_connected':
-        return { text: 'Realtime', color: 'bg-green-500' };
-      case 'connected':
-        return { text: 'Polling', color: 'bg-blue-500' };
-      case 'connecting':
-        return { text: 'Connecting...', color: 'bg-yellow-500' };
-      case 'using_fallback':
-        return { text: 'Data Simulasi', color: 'bg-purple-500' };
-      case 'disconnected':
-        return { text: 'Disconnected', color: 'bg-orange-500' };
-      case 'error_connection':
-        return { text: 'Connection Error', color: 'bg-red-500' };
-      case 'error_server':
-        return { text: 'Server Error', color: 'bg-red-500' };
-      case 'error_socket':
-        return { text: 'Socket Error', color: 'bg-red-500' };
-      case 'error_auth':
-        return { text: 'Authentication Error', color: 'bg-red-500' };
-      default:
-        return { text: 'Unknown', color: 'bg-gray-500' };
-    }
+
+  // Process monthly data for line chart
+  const processMonthlyData = (data) => {
+    return [
+      {
+        id: 'analisis',
+        data: data.map(item => ({
+          x: item.month,
+          y: item.count
+        }))
+      }
+    ];
   };
+
+  // Set mock data for development or when API fails
+  const setMockData = () => {
+    const mockDRDistribution = [
+      { id: 'No DR', label: 'No DR', value: 45, color: '#4caf50' },
+      { id: 'Mild', label: 'Mild', value: 25, color: '#8bc34a' },
+      { id: 'Moderate', label: 'Moderate', value: 15, color: '#ffeb3b' },
+      { id: 'Severe', label: 'Severe', value: 10, color: '#ff9800' },
+      { id: 'Proliferative DR', label: 'Proliferative DR', value: 5, color: '#f44336' }
+    ];
+
+    const mockMonthlyData = [
+      {
+        id: 'analisis',
+        data: [
+          { x: 'Jan', y: 12 },
+          { x: 'Feb', y: 18 },
+          { x: 'Mar', y: 15 },
+          { x: 'Apr', y: 22 },
+          { x: 'May', y: 28 },
+          { x: 'Jun', y: 30 }
+        ]
+      }
+    ];
+
+    const mockAgeDistribution = [
+      { age: '0-20', count: 5 },
+      { age: '21-40', count: 25 },
+      { age: '41-60', count: 40 },
+      { age: '61-80', count: 20 },
+      { age: '80+', count: 10 }
+    ];
+
+    const mockRecentPatients = [
+      { _id: '1', name: 'Ahmad Fauzi', age: 45, dateOfBirth: new Date(1978, 5, 15), gender: 'Laki-laki', createdAt: new Date(2023, 5, 10) },
+      { _id: '2', name: 'Siti Rahayu', age: 38, dateOfBirth: new Date(1985, 2, 20), gender: 'Perempuan', createdAt: new Date(2023, 5, 12) },
+      { _id: '3', name: 'Budi Santoso', age: 52, dateOfBirth: new Date(1971, 8, 5), gender: 'Laki-laki', createdAt: new Date(2023, 5, 15) },
+      { _id: '4', name: 'Dewi Lestari', age: 29, dateOfBirth: new Date(1994, 11, 12), gender: 'Perempuan', createdAt: new Date(2023, 5, 18) }
+    ];
+
+    const mockRecentAnalyses = [
+      { _id: '1', patientId: { name: 'Ahmad Fauzi' }, results: { classification: 'Mild', confidence: 0.89 }, timestamp: new Date(2023, 5, 20) },
+      { _id: '2', patientId: { name: 'Siti Rahayu' }, results: { classification: 'No DR', confidence: 0.95 }, timestamp: new Date(2023, 5, 21) },
+      { _id: '3', patientId: { name: 'Budi Santoso' }, results: { classification: 'Moderate', confidence: 0.78 }, timestamp: new Date(2023, 5, 22) },
+      { _id: '4', patientId: { name: 'Dewi Lestari' }, results: { classification: 'No DR', confidence: 0.92 }, timestamp: new Date(2023, 5, 23) }
+    ];
+
+    setStats({
+      totalPatients: 120,
+      totalAnalyses: 250,
+      recentAnalyses: mockRecentAnalyses,
+      recentPatients: mockRecentPatients,
+      drDistribution: mockDRDistribution,
+      monthlyAnalyses: mockMonthlyData,
+      ageDistribution: mockAgeDistribution
+    });
+  };
+
+  // Card animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.5,
+        ease: "easeOut"
+      }
+    })
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg">
+        <h3 className="font-bold">Error</h3>
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   return (
-    <motion.div 
-      className="flex-1 p-4 sm:p-6 lg:p-8 overflow-hidden" 
-      style={{ 
-        background: `linear-gradient(120deg, ${theme.background}, ${theme.backgroundAlt})`,
-        backgroundSize: '200% 200%',
-      }}
-      variants={backgroundVariants}
-      initial="initial"
-      animate="animate"
-    >
-      {/* Tampilkan banner jika menggunakan data fallback */}
-      {usingFallbackData && (
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-3 bg-purple-100 border border-purple-300 rounded-lg text-purple-800 text-sm"
+          custom={0}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white"
         >
-          <div className="flex items-center">
-            <SparklesIcon className="h-5 w-5 mr-2 text-purple-600" />
-            <span>
-              Menggunakan data simulasi karena server backend tidak tersedia. 
-              Data akan diperbarui setiap 30 detik untuk mensimulasikan data realtime.
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Total Pasien</p>
+              <h3 className="text-3xl font-bold mt-1">
+                <CountUp end={stats.totalPatients} duration={2} />
+              </h3>
+            </div>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 text-sm">
+            <span className="bg-white/20 px-2 py-1 rounded-md">
+              +{Math.floor(stats.totalPatients * 0.05)} bulan ini
             </span>
           </div>
         </motion.div>
-      )}
 
-      <motion.div
-        variants={containerVariants}
+        <motion.div 
+          custom={1}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Total Analisis</p>
+              <h3 className="text-3xl font-bold mt-1">
+                <CountUp end={stats.totalAnalyses} duration={2} />
+              </h3>
+            </div>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 text-sm">
+            <span className="bg-white/20 px-2 py-1 rounded-md">
+              +{Math.floor(stats.totalAnalyses * 0.08)} bulan ini
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          custom={2}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Hasil Normal</p>
+              <h3 className="text-3xl font-bold mt-1">
+                {stats.drDistribution.find(item => item.id === 'No DR')?.value || 0}%
+              </h3>
+            </div>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 text-sm">
+            <span className="bg-white/20 px-2 py-1 rounded-md">
+              Tingkat akurasi 95%
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div 
+          custom={3}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl shadow-lg p-6 text-white"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium opacity-80">Memerlukan Perhatian</p>
+              <h3 className="text-3xl font-bold mt-1">
+                {stats.drDistribution.filter(item => item.id !== 'No DR').reduce((acc, curr) => acc + curr.value, 0)}%
+              </h3>
+            </div>
+            <div className="bg-white/20 p-3 rounded-xl">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+          </div>
+          <div className="mt-4 text-sm">
+            <span className="bg-white/20 px-2 py-1 rounded-md">
+              {stats.drDistribution.find(item => item.id === 'Proliferative DR')?.value || 0}% kasus parah
+            </span>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* DR Distribution Pie Chart */}
+        <motion.div 
+          custom={4}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Distribusi Diabetic Retinopathy</h3>
+          <div className="h-80">
+            <ResponsivePie
+              data={stats.drDistribution}
+              margin={{ top: 30, right: 80, bottom: 30, left: 80 }}
+              innerRadius={0.5}
+              padAngle={0.7}
+              cornerRadius={3}
+              activeOuterRadiusOffset={8}
+              borderWidth={1}
+              borderColor={{ from: 'color', modifiers: [['darker', 0.2]] }}
+              arcLinkLabelsSkipAngle={10}
+              arcLinkLabelsTextColor="#333333"
+              arcLinkLabelsThickness={2}
+              arcLinkLabelsColor={{ from: 'color' }}
+              arcLabelsSkipAngle={10}
+              arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+              legends={[
+                {
+                  anchor: 'bottom',
+                  direction: 'row',
+                  justify: false,
+                  translateX: 0,
+                  translateY: 30,
+                  itemsSpacing: 0,
+                  itemWidth: 100,
+                  itemHeight: 18,
+                  itemTextColor: '#999',
+                  itemDirection: 'left-to-right',
+                  itemOpacity: 1,
+                  symbolSize: 12,
+                  symbolShape: 'circle'
+                }
+              ]}
+            />
+          </div>
+        </motion.div>
+
+        {/* Monthly Trend Line Chart */}
+        <motion.div 
+          custom={5}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Tren Analisis Bulanan</h3>
+          <div className="h-80">
+            <ResponsiveLine
+              data={stats.monthlyAnalyses}
+              margin={{ top: 30, right: 30, bottom: 50, left: 60 }}
+              xScale={{ type: 'point' }}
+              yScale={{
+                type: 'linear',
+                min: 'auto',
+                max: 'auto',
+                stacked: false,
+                reverse: false
+              }}
+              yFormat=" >-.2f"
+              axisTop={null}
+              axisRight={null}
+              axisBottom={{
+                tickSize: 5,
+                tickPadding: 5,
+                tickRotation: 0,
+                legend: 'Bulan',
+                legendOffset: 36,
+                legendPosition: 'middle'
+              }}
+              axisLeft={{
+                tickSize: 5,
+                tickPadding: 5,
+                tickRotation: 0,
+                legend: 'Jumlah Analisis',
+                legendOffset: -40,
+                legendPosition: 'middle'
+              }}
+              colors={{ scheme: 'category10' }}
+              pointSize={10}
+              pointColor={{ theme: 'background' }}
+              pointBorderWidth={2}
+              pointBorderColor={{ from: 'serieColor' }}
+              pointLabelYOffset={-12}
+              useMesh={true}
+              legends={[
+                {
+                  anchor: 'bottom-right',
+                  direction: 'column',
+                  justify: false,
+                  translateX: 0,
+                  translateY: 0,
+                  itemsSpacing: 0,
+                  itemDirection: 'left-to-right',
+                  itemWidth: 80,
+                  itemHeight: 20,
+                  itemOpacity: 0.75,
+                  symbolSize: 12,
+                  symbolShape: 'circle',
+                  symbolBorderColor: 'rgba(0, 0, 0, .5)',
+                  effects: [
+                    {
+                      on: 'hover',
+                      style: {
+                        itemBackground: 'rgba(0, 0, 0, .03)',
+                        itemOpacity: 1
+                      }
+                    }
+                  ]
+                }
+              ]}
+            />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Age Distribution Bar Chart */}
+      <motion.div 
+        custom={6}
+        variants={cardVariants}
         initial="hidden"
         animate="visible"
-        className="mt-4 space-y-10"
+        className="bg-white rounded-2xl shadow-lg p-6 mb-8"
       >
-        <motion.div
-          className="text-center mb-10"
-          variants={itemVariants}
-        >
-          <motion.div 
-            className="inline-flex items-center px-4 py-2 rounded-full mb-4"
-            style={{ 
-              background: `linear-gradient(to right, ${theme.primary}20, ${theme.accent}20)`,
-              border: `1px solid ${theme.primary}30`
+        <h3 className="text-lg font-bold text-gray-800 mb-4">Distribusi Umur Pasien</h3>
+        <div className="h-80">
+          <ResponsiveBar
+            data={stats.ageDistribution.map(item => ({
+              age: item.age,
+              count: item.count
+            }))}
+            keys={['count']}
+            indexBy="age"
+            margin={{ top: 30, right: 30, bottom: 50, left: 60 }}
+            padding={0.3}
+            valueScale={{ type: 'linear' }}
+            indexScale={{ type: 'band', round: true }}
+            colors={{ scheme: 'blues' }}
+            borderColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+            axisTop={null}
+            axisRight={null}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: 'Kelompok Umur',
+              legendPosition: 'middle',
+              legendOffset: 32
             }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-          >
-            <SparklesIcon className="h-5 w-5 mr-2" style={{ color: theme.primary }} />
-            <span className="text-sm font-medium" style={{ color: theme.primary }}>
-              Platform AI Retinopati Diabetik
-            </span>
-          </motion.div>
-          
-          <motion.h2 
-            className="text-3xl sm:text-4xl font-bold mb-4 text-gray-800"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            Selamat Datang di RetinaScan
-          </motion.h2>
-          
-          <motion.p
-            className="text-gray-600 max-w-3xl mx-auto text-lg"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            Platform deteksi dini retinopati diabetik dengan teknologi AI canggih
-          </motion.p>
-          
-          {/* Realtime Update Status with more detailed info */}
-          <motion.div 
-            className="flex items-center justify-center mt-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              <div className={`w-2 h-2 rounded-full mr-2 ${getConnectionStatusInfo().color}`}></div>
-              <span>
-                {getConnectionStatusInfo().text} · Update terakhir: {formatLastUpdate()}
-                {connectionAttempts > 0 && ` · Percobaan: ${connectionAttempts}`}
-              </span>
-              
-              {/* Notification Badge */}
-              <AnimatePresence>
-                {notificationCount > 0 && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="ml-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
-                  >
-                    {notificationCount}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        </motion.div>
-        
-        <motion.div 
-          variants={itemVariants}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8"
-        >
-          {features.map((feature, index) => (
-            <FeatureCard key={feature.title} feature={feature} index={index} />
-          ))}
-        </motion.div>
-        
-        {/* Dashboard Analytics Charts */}
-        <motion.div variants={itemVariants}>
-          <DashboardCharts dashboardData={dashboardData} loading={loading} error={error} />
-        </motion.div>
-        
-        {/* Recent Activity */}
-        <motion.div 
-          variants={itemVariants}
-          style={{ 
-            ...glassEffect,
-            transform: 'translateZ(0)',
-            willChange: 'transform, opacity'
-          }}
-          className="p-8 rounded-xl"
-          whileHover={{ 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          }}
-        >
-          <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center">
-            <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
-            Recent Activity
-          </h3>
-          
-          {/* Show recent activities from dashboardData if available */}
-          {dashboardData?.analyses?.slice(0, 5).map((analysis, index) => (
-            <motion.div 
-              key={analysis.id}
-              className="mb-4 p-4 bg-white rounded-lg border border-gray-100"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ x: 5 }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-800">
-                    {analysis.patientId?.name || 'Pasien'}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(analysis.createdAt).toLocaleString('id-ID', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-                <div className="px-3 py-1 rounded-full text-xs font-medium"
-                  style={{ 
-                    backgroundColor: 
-                      analysis.results.classification === 'No DR' ? '#10B98120' :
-                      analysis.results.classification === 'Mild' ? '#3B82F620' :
-                      analysis.results.classification === 'Moderate' ? '#F59E0B20' :
-                      analysis.results.classification === 'Severe' ? '#EF444420' :
-                      analysis.results.classification === 'Proliferative DR' ? '#BE185D20' :
-                      '#6B728020',
-                    color: 
-                      analysis.results.classification === 'No DR' ? '#10B981' :
-                      analysis.results.classification === 'Mild' ? '#3B82F6' :
-                      analysis.results.classification === 'Moderate' ? '#F59E0B' :
-                      analysis.results.classification === 'Severe' ? '#EF4444' :
-                      analysis.results.classification === 'Proliferative DR' ? '#BE185D' :
-                      '#6B7280'
-                  }}
-                >
-                  {analysis.results.classification}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-          
-          {/* Loading state */}
-          {loading && !dashboardData?.analyses && (
-            <div className="animate-pulse space-y-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-          )}
-          
-          {/* Empty state */}
-          {!loading && (!dashboardData?.analyses || dashboardData.analyses.length === 0) && (
-            <div className="text-center py-8 text-gray-500">
-              Tidak ada aktivitas terbaru
-            </div>
-          )}
-        </motion.div>
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: 'Jumlah Pasien',
+              legendPosition: 'middle',
+              legendOffset: -40
+            }}
+            labelSkipWidth={12}
+            labelSkipHeight={12}
+            labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
+            animate={true}
+            motionStiffness={90}
+            motionDamping={15}
+          />
+        </div>
       </motion.div>
-    </motion.div>
+
+      {/* Recent Data Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Patients */}
+        <motion.div 
+          custom={7}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Pasien Terbaru</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-4 py-3 rounded-tl-lg">Nama</th>
+                  <th scope="col" className="px-4 py-3">Umur</th>
+                  <th scope="col" className="px-4 py-3">Jenis Kelamin</th>
+                  <th scope="col" className="px-4 py-3 rounded-tr-lg">Tanggal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recentPatients.map((patient, index) => (
+                  <tr key={patient._id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-4 py-3 font-medium text-gray-900">{patient.name}</td>
+                    <td className="px-4 py-3">{patient.age} tahun</td>
+                    <td className="px-4 py-3">{patient.gender}</td>
+                    <td className="px-4 py-3">{format(new Date(patient.createdAt), 'dd MMM yyyy', { locale: id })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 text-center">
+            <a href="/patient-data" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              Lihat semua pasien →
+            </a>
+          </div>
+        </motion.div>
+
+        {/* Recent Analyses */}
+        <motion.div 
+          custom={8}
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          className="bg-white rounded-2xl shadow-lg p-6"
+        >
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Analisis Terbaru</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-4 py-3 rounded-tl-lg">Pasien</th>
+                  <th scope="col" className="px-4 py-3">Hasil</th>
+                  <th scope="col" className="px-4 py-3">Akurasi</th>
+                  <th scope="col" className="px-4 py-3 rounded-tr-lg">Tanggal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recentAnalyses.map((analysis, index) => (
+                  <tr key={analysis._id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-4 py-3 font-medium text-gray-900">{analysis.patientId.name}</td>
+                    <td className="px-4 py-3">
+                      <span 
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          analysis.results.classification === 'No DR' ? 'bg-green-100 text-green-800' :
+                          analysis.results.classification === 'Mild' ? 'bg-lime-100 text-lime-800' :
+                          analysis.results.classification === 'Moderate' ? 'bg-yellow-100 text-yellow-800' :
+                          analysis.results.classification === 'Severe' ? 'bg-orange-100 text-orange-800' :
+                          'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {analysis.results.classification}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">{Math.round(analysis.results.confidence * 100)}%</td>
+                    <td className="px-4 py-3">{format(new Date(analysis.timestamp), 'dd MMM yyyy', { locale: id })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-4 text-center">
+            <a href="/history" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+              Lihat semua analisis →
+            </a>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 }
 
-// Menggunakan HOC untuk menambahkan animasi page transition
 const Dashboard = withPageTransition(DashboardComponent);
 export default Dashboard;

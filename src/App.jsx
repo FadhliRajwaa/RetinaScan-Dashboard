@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Dashboard from './pages/Dashboard';
@@ -17,6 +16,7 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
+import { PageTransitionWrapper } from './context/ThemeContext';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -277,7 +277,7 @@ function App() {
           isMobileMenuOpen={isMobileMenuOpen}
         />
         
-        <AnimatePresence mode="wait" initial={false}>
+        <PageTransitionWrapper>
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Dashboard userId={userId} />} />
             <Route path="/dashboard" element={<Dashboard userId={userId} />} />
@@ -293,7 +293,7 @@ function App() {
             <Route path="/report" element={<ReportPage userId={userId} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </AnimatePresence>
+        </PageTransitionWrapper>
       </main>
     </div>
   );
