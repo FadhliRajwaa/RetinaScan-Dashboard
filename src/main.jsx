@@ -5,7 +5,6 @@ import App from './App';
 import './index.css';
 import './pdf-compat.css'; // Import CSS kompatibilitas PDF
 import { ThemeProvider } from './context/ThemeContext';
-import { WebSocketProvider } from './context/WebSocketContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -17,10 +16,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HashRouter>
       <ThemeProvider>
-        <WebSocketProvider>
-          <App />
-          <ToastContainer position="top-right" autoClose={3000} />
-        </WebSocketProvider>
+        <App />
+        <ToastContainer position="top-right" autoClose={3000} />
       </ThemeProvider>
     </HashRouter>
   </React.StrictMode>

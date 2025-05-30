@@ -1,6 +1,7 @@
 import { motion, useMotionTemplate, useMotionValue, AnimatePresence } from 'framer-motion';
 import { useTheme, animations, withPageTransition } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowUpTrayIcon,
   ChartBarIcon,
@@ -9,6 +10,8 @@ import {
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import DashboardCharts from '../components/dashboard/DashboardCharts';
+import { getDashboardData } from '../services/api';
+import { io } from 'socket.io-client';
 
 // Glassmorphism style
 const glassEffect = {
@@ -123,6 +126,12 @@ function FeatureCard({ feature, index }) {
 
 function DashboardComponent() {
   const { theme } = useTheme();
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   // Background gradient animation
   const backgroundVariants = {
@@ -162,6 +171,96 @@ function DashboardComponent() {
         damping: 30
       }
     }
+  };
+
+  // Fungsi untuk mengambil data dashboard
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getDashboardData();
+      setDashboardData(data);
+      setLastUpdate(new Date());
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Gagal memuat data dashboard. Silakan coba lagi nanti.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Menangani socket.io untuk data realtime
+  useEffect(() => {
+    // Setup socket.io untuk update realtime
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const socket = io(API_URL, {
+      withCredentials: true,
+      extraHeaders: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+
+    socket.on('connect', () => {
+      console.log('Socket connected for realtime updates');
+      setSocketConnected(true);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      setSocketConnected(false);
+    });
+
+    socket.on('dashboard_update', (data) => {
+      console.log('Received real-time dashboard update', data);
+      setDashboardData(prevData => ({
+        ...prevData,
+        ...data
+      }));
+      setLastUpdate(new Date());
+      
+      // Increment notification counter when new data arrives
+      setNotificationCount(prev => prev + 1);
+      
+      // Reset notification counter after 3 seconds
+      setTimeout(() => {
+        setNotificationCount(0);
+      }, 3000);
+    });
+
+    // Jika socket gagal, gunakan polling sebagai fallback
+    socket.on('connect_error', () => {
+      console.log('Socket connection failed, falling back to polling');
+      setSocketConnected(false);
+    });
+
+    // Ambil data awal saat komponen di-mount
+    fetchDashboardData();
+    
+    // Set interval polling sebagai fallback jika websocket tidak tersedia
+    const intervalId = setInterval(() => {
+      if (!socketConnected) {
+        console.log('Using polling fallback for dashboard data');
+        fetchDashboardData();
+      }
+    }, 30000); // Poll every 30 seconds if socket is not connected
+
+    // Cleanup function untuk socket dan interval
+    return () => {
+      socket.disconnect();
+      clearInterval(intervalId);
+    };
+  }, [fetchDashboardData]);
+
+  // Format waktu terakhir update
+  const formatLastUpdate = () => {
+    const hours = lastUpdate.getHours().toString().padStart(2, '0');
+    const minutes = lastUpdate.getMinutes().toString().padStart(2, '0');
+    const seconds = lastUpdate.getSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
   };
 
   return (
@@ -218,6 +317,35 @@ function DashboardComponent() {
           >
             Platform deteksi dini retinopati diabetik dengan teknologi AI canggih
           </motion.p>
+          
+          {/* Realtime Update Status */}
+          <motion.div 
+            className="flex items-center justify-center mt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <div className="flex items-center text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              <div className={`w-2 h-2 rounded-full mr-2 ${socketConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+              <span>
+                {socketConnected ? 'Realtime' : 'Polling'} · Update terakhir: {formatLastUpdate()}
+              </span>
+              
+              {/* Notification Badge */}
+              <AnimatePresence>
+                {notificationCount > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="ml-2 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                  >
+                    {notificationCount}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
         </motion.div>
         
         <motion.div 
@@ -231,10 +359,8 @@ function DashboardComponent() {
         
         {/* Dashboard Analytics Charts */}
         <motion.div variants={itemVariants}>
-          <DashboardCharts />
+          <DashboardCharts dashboardData={dashboardData} loading={loading} error={error} />
         </motion.div>
-        
-        {/* Statistik Pengguna sudah dipindahkan ke dalam DashboardCharts.jsx */}
         
         {/* Recent Activity */}
         <motion.div 
@@ -253,7 +379,71 @@ function DashboardComponent() {
             <span className="w-2 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full mr-3"></span>
             Recent Activity
           </h3>
-          {/* Recent Activity content */}
+          
+          {/* Show recent activities from dashboardData if available */}
+          {dashboardData?.analyses?.slice(0, 5).map((analysis, index) => (
+            <motion.div 
+              key={analysis.id}
+              className="mb-4 p-4 bg-white rounded-lg border border-gray-100"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ x: 5 }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-800">
+                    {analysis.patientId?.name || 'Pasien'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {new Date(analysis.createdAt).toLocaleString('id-ID', { 
+                      day: 'numeric', 
+                      month: 'long', 
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <div className="px-3 py-1 rounded-full text-xs font-medium"
+                  style={{ 
+                    backgroundColor: 
+                      analysis.results.classification === 'No DR' ? '#10B98120' :
+                      analysis.results.classification === 'Mild' ? '#3B82F620' :
+                      analysis.results.classification === 'Moderate' ? '#F59E0B20' :
+                      analysis.results.classification === 'Severe' ? '#EF444420' :
+                      analysis.results.classification === 'Proliferative DR' ? '#BE185D20' :
+                      '#6B728020',
+                    color: 
+                      analysis.results.classification === 'No DR' ? '#10B981' :
+                      analysis.results.classification === 'Mild' ? '#3B82F6' :
+                      analysis.results.classification === 'Moderate' ? '#F59E0B' :
+                      analysis.results.classification === 'Severe' ? '#EF4444' :
+                      analysis.results.classification === 'Proliferative DR' ? '#BE185D' :
+                      '#6B7280'
+                  }}
+                >
+                  {analysis.results.classification}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          
+          {/* Loading state */}
+          {loading && !dashboardData?.analyses && (
+            <div className="animate-pulse space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+          )}
+          
+          {/* Empty state */}
+          {!loading && (!dashboardData?.analyses || dashboardData.analyses.length === 0) && (
+            <div className="text-center py-8 text-gray-500">
+              Tidak ada aktivitas terbaru
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </motion.div>
