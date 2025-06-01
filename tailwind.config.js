@@ -6,9 +6,6 @@ export default {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-      },
       colors: {
         // Gunakan warna HEX standar yang kompatibel dengan PDF
         blue: {
@@ -83,77 +80,8 @@ export default {
           800: '#1F2937',
           900: '#111827',
         },
-        purple: {
-          50: '#F5F3FF',
-          100: '#EDE9FE',
-          200: '#DDD6FE',
-          300: '#C4B5FD',
-          400: '#A78BFA',
-          500: '#8B5CF6',
-          600: '#7C3AED',
-          700: '#6D28D9',
-          800: '#5B21B6',
-          900: '#4C1D95',
-        },
-      },
-      boxShadow: {
-        'soft-sm': '0 2px 10px -3px rgba(0, 0, 0, 0.1), 0 1px 2px -2px rgba(0, 0, 0, 0.05)',
-        'soft': '0 4px 20px -5px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
-        'soft-md': '0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 3px 6px -2px rgba(0, 0, 0, 0.05)',
-        'soft-lg': '0 12px 30px -6px rgba(0, 0, 0, 0.1), 0 4px 8px -3px rgba(0, 0, 0, 0.05)',
-        'soft-xl': '0 20px 40px -8px rgba(0, 0, 0, 0.1), 0 6px 12px -4px rgba(0, 0, 0, 0.05)',
-        'inner-soft': 'inset 0 1px 4px 0 rgba(0, 0, 0, 0.05)',
-        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-      },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-in',
-        'slide-in-right': 'slideInRight 0.5s ease-out',
-        'slide-in-left': 'slideInLeft 0.5s ease-out',
-        'slide-in-up': 'slideInUp 0.5s ease-out',
-        'scale-in': 'scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        'bounce-in': 'bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        'float': 'float 3s ease-in-out infinite',
-        'pulse-soft': 'pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-      },
-      keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        pulseSoft: {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0.8 },
-        },
-      },
-      backdropBlur: {
-        xs: '2px',
-        sm: '4px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
-        '2xl': '24px',
-      },
-      borderRadius: {
-        'xl': '0.75rem',
-        '2xl': '1rem',
-        '3xl': '1.5rem',
-        '4xl': '2rem',
-      },
-      transitionDuration: {
-        '400': '400ms',
-        '600': '600ms',
-        '800': '800ms',
-        '900': '900ms',
-      },
-      transitionTimingFunction: {
-        'bounce': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        'in-out-soft': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms')({
-      strategy: 'class',
-    }),
-  ],
+  plugins: [],
 } 

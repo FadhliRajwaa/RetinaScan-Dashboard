@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,13 +12,11 @@ import {
   Tooltip,
   Legend,
   ArcElement,
-  RadialLinearScale,
-  Filler
+  RadialLinearScale
 } from 'chart.js';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import EnhancedSeverityChart from './EnhancedSeverityChart';
-import { useTheme } from '../../context/ThemeContext';
 
 // Registrasi komponen Chart.js
 ChartJS.register(
@@ -32,12 +29,10 @@ ChartJS.register(
   Tooltip,
   Legend,
   ArcElement,
-  RadialLinearScale,
-  Filler
+  RadialLinearScale
 );
 
 export default function DashboardCharts() {
-  const { theme } = useTheme();
   const [chartData, setChartData] = useState({
     scanTrends: {
       labels: [],
@@ -57,30 +52,6 @@ export default function DashboardCharts() {
   const [error, setError] = useState(null);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: 'spring',
-        stiffness: 300,
-        damping: 30
-      }
-    }
-  };
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -106,18 +77,9 @@ export default function DashboardCharts() {
             {
               label: 'Jumlah Scan',
               data: response.data.scanTrends?.data || [],
-              borderColor: theme.primary,
-              backgroundColor: `${theme.primary}20`,
-              tension: 0.4,
-              fill: true,
-              pointBackgroundColor: theme.primary,
-              pointBorderColor: '#fff',
-              pointBorderWidth: 2,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              pointHoverBackgroundColor: theme.primary,
-              pointHoverBorderColor: '#fff',
-              pointHoverBorderWidth: 2
+              borderColor: 'rgb(53, 162, 235)',
+              backgroundColor: 'rgba(53, 162, 235, 0.5)',
+              tension: 0.3
             }
           ]
         };
@@ -129,23 +91,22 @@ export default function DashboardCharts() {
             {
               data: response.data.conditionDistribution?.data || [],
               backgroundColor: [
-                'rgba(59, 130, 246, 0.8)', // blue
-                'rgba(16, 185, 129, 0.8)', // green
-                'rgba(249, 115, 22, 0.8)', // orange
-                'rgba(139, 92, 246, 0.8)', // purple
-                'rgba(236, 72, 153, 0.8)', // pink
-                'rgba(245, 158, 11, 0.8)'  // yellow
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)'
               ],
               borderColor: [
-                'rgba(59, 130, 246, 1)',
-                'rgba(16, 185, 129, 1)',
-                'rgba(249, 115, 22, 1)',
-                'rgba(139, 92, 246, 1)',
-                'rgba(236, 72, 153, 1)',
-                'rgba(245, 158, 11, 1)'
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
               ],
-              borderWidth: 2,
-              hoverOffset: 15
+              borderWidth: 1
             }
           ]
         };
@@ -157,11 +118,9 @@ export default function DashboardCharts() {
             {
               label: 'Jumlah Pasien',
               data: response.data.ageDistribution?.data || [],
-              backgroundColor: `${theme.accent}80`,
-              borderColor: theme.accent,
-              borderWidth: 2,
-              borderRadius: 8,
-              hoverBackgroundColor: theme.accent
+              backgroundColor: 'rgba(75, 192, 192, 0.7)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
             }
           ]
         };
@@ -189,336 +148,93 @@ export default function DashboardCharts() {
     }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [API_URL, theme]);
+  }, [API_URL]);
 
-  // Modern chart options
   const lineOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
-        labels: {
-          boxWidth: 15,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          padding: 20,
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif"
-          }
-        }
       },
       title: {
         display: true,
-        text: 'Tren Scan Retina',
-        font: {
-          size: 16,
-          weight: 'bold',
-          family: "'Inter', sans-serif"
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#1F2937',
-        bodyColor: '#4B5563',
-        borderColor: 'rgba(0, 0, 0, 0.1)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: false,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-          family: "'Inter', sans-serif"
-        },
-        bodyFont: {
-          size: 13,
-          family: "'Inter', sans-serif"
-        },
-        callbacks: {
-          label: function(context) {
-            return `Jumlah Scan: ${context.parsed.y}`;
-          }
-        }
+        text: 'Tren Scan Retina'
       }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false
-        },
-        ticks: {
-          font: {
-            family: "'Inter', sans-serif"
-          }
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        ticks: {
-          font: {
-            family: "'Inter', sans-serif"
-          }
-        }
-      }
-    },
-    interaction: {
-      intersect: false,
-      mode: 'index'
-    },
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart'
     }
   };
 
   const barOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
-        labels: {
-          boxWidth: 15,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          padding: 20,
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif"
-          }
-        }
       },
       title: {
         display: true,
-        text: 'Distribusi Umur Pasien',
-        font: {
-          size: 16,
-          weight: 'bold',
-          family: "'Inter', sans-serif"
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#1F2937',
-        bodyColor: '#4B5563',
-        borderColor: 'rgba(0, 0, 0, 0.1)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: false,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-          family: "'Inter', sans-serif"
-        },
-        bodyFont: {
-          size: 13,
-          family: "'Inter', sans-serif"
-        }
+        text: 'Distribusi Umur Pasien'
       }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false
-        },
-        ticks: {
-          font: {
-            family: "'Inter', sans-serif"
-          }
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        },
-        ticks: {
-          font: {
-            family: "'Inter', sans-serif"
-          }
-        }
-      }
-    },
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart',
-      delay: (context) => context.dataIndex * 100
     }
   };
 
   const pieOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right',
-        labels: {
-          boxWidth: 15,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          padding: 20,
-          font: {
-            size: 12,
-            family: "'Inter', sans-serif"
-          }
-        }
       },
       title: {
         display: true,
-        text: 'Distribusi Kondisi',
-        font: {
-          size: 16,
-          weight: 'bold',
-          family: "'Inter', sans-serif"
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#1F2937',
-        bodyColor: '#4B5563',
-        borderColor: 'rgba(0, 0, 0, 0.1)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: true,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-          family: "'Inter', sans-serif"
-        },
-        bodyFont: {
-          size: 13,
-          family: "'Inter', sans-serif"
-        }
+        text: 'Distribusi Kondisi'
       }
-    },
-    animation: {
-      animateRotate: true,
-      animateScale: true,
-      duration: 1000,
-      easing: 'easeOutQuart',
-      delay: (context) => context.dataIndex * 100
     }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="relative h-16 w-16">
-          <div className="absolute top-0 left-0 right-0 bottom-0 animate-spin rounded-full border-4 border-t-blue-500 border-r-transparent border-b-blue-300 border-l-transparent"></div>
-          <div className="absolute top-2 left-2 right-2 bottom-2 animate-ping rounded-full border-2 border-blue-500 opacity-30"></div>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className="flex flex-col items-center justify-center h-64 bg-white p-6 rounded-xl shadow-sm"
-      >
+      <div className="flex flex-col items-center justify-center h-64">
         <ExclamationCircleIcon className="w-12 h-12 text-red-500 mb-2" />
         <h2 className="text-lg font-semibold text-gray-800">{error}</h2>
-        <motion.button 
+        <button 
           onClick={() => window.location.reload()} 
-          className="mt-3 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="mt-3 px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
         >
           Coba Lagi
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
     );
   }
 
   return (
-    <motion.div 
-      className="space-y-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.h2 
-        className="text-xl font-semibold text-gray-800"
-        variants={itemVariants}
-      >
-        Analisis Data
-      </motion.h2>
+    <div className="space-y-8">
+      <h2 className="text-xl font-semibold text-gray-800">Analisis Data</h2>
       
-      {/* Tren Scan Retina - Full Width */}
-      <motion.div 
-        className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300"
-        variants={itemVariants}
-        whileHover={{ y: -3, transition: { duration: 0.2 } }}
-      >
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Tren Scan Retina</h3>
-        <div className="h-80">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Line Chart - Scan Trends */}
+        <div className="bg-white p-4 rounded-lg shadow-sm">
           <Line options={lineOptions} data={chartData.scanTrends} />
         </div>
-      </motion.div>
-      
-      {/* Two Column Charts */}
-      <motion.div 
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-        variants={containerVariants}
-      >
+        
         {/* Pie Chart - Condition Distribution */}
-        <motion.div 
-          className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300"
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        >
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribusi Kondisi</h3>
-          <div className="h-80">
-            <Pie options={pieOptions} data={chartData.conditionDistribution} />
-          </div>
-        </motion.div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <Pie options={pieOptions} data={chartData.conditionDistribution} />
+        </div>
         
         {/* Bar Chart - Age Distribution */}
-        <motion.div 
-          className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300"
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        >
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribusi Umur Pasien</h3>
-          <div className="h-80">
-            <Bar options={barOptions} data={chartData.ageDistribution} />
-          </div>
-        </motion.div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <Bar options={barOptions} data={chartData.ageDistribution} />
+        </div>
         
         {/* Enhanced Severity Chart */}
-        <motion.div 
-          className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300 lg:col-span-2"
-          variants={itemVariants}
-          whileHover={{ y: -3, transition: { duration: 0.2 } }}
-        >
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Tingkat Keparahan</h3>
-          <div className="h-80">
-            <EnhancedSeverityChart />
-          </div>
-        </motion.div>
-      </motion.div>
-    </motion.div>
+        <EnhancedSeverityChart />
+      </div>
+    </div>
   );
 }
