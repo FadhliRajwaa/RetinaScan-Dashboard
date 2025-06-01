@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye, FiZap } from 'react-icons/fi';
+import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye } from 'react-icons/fi';
 import { getLatestAnalysis } from '../../services/api';
 import { getSeverityTextColor, getSeverityBgColor, getSeverityLabel } from '../../utils/severityUtils';
 
 // Glassmorphism style
 const glassEffect = {
-  background: 'rgba(255, 255, 255, 0.85)',
+  background: 'rgba(255, 255, 255, 0.8)',
   backdropFilter: 'blur(10px)',
   WebkitBackdropFilter: 'blur(10px)',
   boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
@@ -28,32 +28,6 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     [0, 33, 66, 100], 
     ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981']
   );
-
-  // Variants untuk animasi
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        when: "beforeChildren",
-        staggerChildren: 0.15,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: 'spring',
-        stiffness: 400,
-        damping: 30
-      }
-    }
-  };
 
   // Auto-analyze when image is provided and no initial analysis
   useEffect(() => {
@@ -275,13 +249,30 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     }
   };
 
-  // Animasi untuk proses analisis
-  const processStages = [
-    { label: "Mempersiapkan Data", icon: <FiActivity className="w-8 h-8" />, color: "from-blue-500 to-cyan-400" },
-    { label: "Menganalisis Citra", icon: <FiEye className="w-8 h-8" />, color: "from-indigo-500 to-purple-400" },
-    { label: "Mendeteksi Pola", icon: <FiCpu className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
-    { label: "Menyelesaikan Analisis", icon: <FiCheck className="w-8 h-8" />, color: "from-emerald-500 to-green-400" }
-  ];
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        when: "beforeChildren",
+        staggerChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: 'spring',
+        stiffness: 300,
+        damping: 20
+      }
+    }
+  };
 
   const confidenceVariants = {
     hidden: { width: '0%' },
@@ -290,6 +281,14 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
       transition: { duration: 1.5, ease: "easeOut" }
     }
   };
+
+  // Animasi untuk proses analisis
+  const processStages = [
+    { label: "Mempersiapkan Data", icon: <FiActivity className="w-8 h-8" />, color: "from-blue-500 to-cyan-400" },
+    { label: "Menganalisis Citra", icon: <FiEye className="w-8 h-8" />, color: "from-indigo-500 to-purple-400" },
+    { label: "Mendeteksi Pola", icon: <FiCpu className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
+    { label: "Menyelesaikan Analisis", icon: <FiCheck className="w-8 h-8" />, color: "from-emerald-500 to-green-400" }
+  ];
 
   return (
     <motion.div
@@ -422,49 +421,43 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
               <motion.div 
                 className="p-5 border-b border-gray-100"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))'
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1))'
                 }}
               >
-                <h3 className="text-lg font-bold text-gray-800 flex items-center">
-                  <FiZap className="mr-2 text-indigo-500" />
-                  Hasil Analisis AI
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-800">Hasil Analisis</h3>
               </motion.div>
               
               <div className="p-5">
-                <motion.div 
-                  className="mb-6"
-                  variants={itemVariants}
-                >
+                <div className="mb-6">
                   <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan:</p>
-                  <div className="flex items-center">
+                  <motion.div 
+                    className="flex items-center"
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, type: 'spring' }}
+                  >
                     <motion.div 
                       className={`text-lg font-bold ${getSeverityTextColor(analysis.severity)}`}
-                      initial={{ scale: 0.9, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.2, type: 'spring', stiffness: 400 }}
+                      whileHover={{ scale: 1.05 }}
                     >
                       {analysis.severity}
                     </motion.div>
                     <motion.div 
                       className={`ml-3 px-3 py-1 rounded-full text-xs ${getSeverityBgColor(analysis.severity)}`}
-                      initial={{ scale: 0.8, opacity: 0, x: -10 }}
-                      animate={{ scale: 1, opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4, type: 'spring', stiffness: 400 }}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.4, type: 'spring' }}
                     >
                       {getSeverityLabel(analysis.severity)}
                     </motion.div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </div>
                 
-                <motion.div 
-                  className="mb-6"
-                  variants={itemVariants}
-                >
+                <div className="mb-6">
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-sm font-medium text-gray-500">Tingkat Kepercayaan:</p>
                     <motion.p 
-                      className="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"
+                      className="text-sm font-semibold"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.6 }}
@@ -496,7 +489,7 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                       <motion.div
                         className="absolute inset-0"
                         style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)',
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
                         }}
                         animate={{
                           x: ['-100%', '100%'],
@@ -510,19 +503,11 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                       />
                     </motion.div>
                   </div>
-                </motion.div>
-                
-                <motion.div 
-                  className="p-4 rounded-xl mb-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100"
-                  variants={itemVariants}
-                >
-                  <p className="text-sm font-medium text-indigo-700 mb-1">Rekomendasi:</p>
-                  <p className="text-sm text-gray-700">{analysis.recommendation || 'Tidak ada rekomendasi spesifik.'}</p>
-                </motion.div>
+                </div>
                 
                 <motion.button
                   onClick={handleViewResults}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl transition-all"
+                  className="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl mt-4 transition-all"
                   whileHover={{ 
                     scale: 1.02,
                     boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3), 0 4px 6px -2px rgba(99, 102, 241, 0.2)'
@@ -585,7 +570,7 @@ const LoadingIndicator = ({ stage, stages }) => {
   return (
     <div className="text-center">
       <motion.div 
-        className="w-28 h-28 mx-auto mb-8 relative"
+        className="w-24 h-24 mx-auto mb-8 relative"
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 300 }}
@@ -612,97 +597,106 @@ const LoadingIndicator = ({ stage, stages }) => {
         
         {/* Pulsing inner circle with icon */}
         <motion.div 
-          className="absolute inset-0 m-3 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600"
+          className={`absolute inset-3 rounded-full bg-gradient-to-br ${stages[stage]?.color || 'from-indigo-500 to-purple-600'} flex items-center justify-center text-white`}
           animate={{ 
-            boxShadow: ['0 0 0 0 rgba(99, 102, 241, 0.4)', '0 0 0 10px rgba(99, 102, 241, 0)', '0 0 0 0 rgba(99, 102, 241, 0)'],
+            scale: [1, 1.1, 1],
+            boxShadow: ['0 0 0 0 rgba(99, 102, 241, 0)', '0 0 0 10px rgba(99, 102, 241, 0.2)', '0 0 0 0 rgba(99, 102, 241, 0)'],
           }}
-          transition={{
-            repeat: Infinity,
+          transition={{ 
             duration: 2,
+            repeat: Infinity,
+            repeatType: "loop",
           }}
         >
-          {stage === 1 && <FiActivity className="w-10 h-10 text-white" />}
-          {stage === 2 && <FiEye className="w-10 h-10 text-white" />}
-          {stage === 3 && <FiCpu className="w-10 h-10 text-white" />}
-          {stage === 0 && <FiCpu className="w-10 h-10 text-white" />}
+          {stages[stage]?.icon || <FiCpu className="w-8 h-8" />}
+        </motion.div>
+        
+        {/* Orbiting dots */}
+        <motion.div
+          className="absolute w-full h-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        >
+          <motion.div 
+            className="absolute top-0 left-1/2 w-3 h-3 -ml-1.5 rounded-full bg-blue-500"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
+          />
+        </motion.div>
+        
+        <motion.div
+          className="absolute w-full h-full"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        >
+          <motion.div 
+            className="absolute bottom-0 left-1/2 w-3 h-3 -ml-1.5 rounded-full bg-purple-500"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", delay: 0.5 }}
+          />
         </motion.div>
       </motion.div>
+
+      <motion.h3 
+        className="text-xl font-semibold text-gray-800 mb-3"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        {getMessage(stage, stages)}
+      </motion.h3>
       
-      <motion.div
-        className="space-y-6"
+      <motion.p
+        className="text-gray-600 mb-6 max-w-xs mx-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3 }}
       >
-        <motion.h3 
-          className="text-xl font-semibold text-gray-800"
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
+        Sistem AI sedang menganalisis citra retina
+      </motion.p>
+      
+      <motion.div
+        className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden shadow-inner mt-6"
+        initial={{ opacity: 0, scaleX: 0.8 }}
+        animate={{ opacity: 1, scaleX: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <motion.div 
+          className="h-full rounded-full relative overflow-hidden"
+          style={{ width: `${((stage + 1) / stages.length) * 100}%` }}
+          initial={{ width: '0%' }}
+          animate={{ width: `${((stage + 1) / stages.length) * 100}%` }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          {getMessage(stage, stages)}
-        </motion.h3>
-        
-        <div className="w-full max-w-md mx-auto">
-          {/* Progress steps */}
-          <div className="flex justify-between relative mb-2">
-            {stages.map((s, index) => (
-              <motion.div
-                key={index}
-                className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
-                  index <= stage 
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white' 
-                    : 'bg-gray-100 text-gray-400'
-                }`}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ 
-                  scale: index === stage ? [1, 1.1, 1] : 1, 
-                  opacity: 1,
-                  boxShadow: index === stage ? '0 0 0 4px rgba(99, 102, 241, 0.3)' : 'none'
-                }}
-                transition={{ 
-                  delay: index * 0.15,
-                  repeat: index === stage ? Infinity : 0,
-                  repeatType: "reverse",
-                  duration: index === stage ? 1.5 : 0.3
-                }}
-              >
-                {index < stage ? (
-                  <FiCheck className="w-4 h-4" />
-                ) : (
-                  <span className="text-xs font-medium">{index + 1}</span>
-                )}
-              </motion.div>
-            ))}
-            
-            {/* Progress line */}
-            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0">
-              <motion.div 
-                className="h-full bg-gradient-to-r from-indigo-500 to-purple-600"
-                initial={{ width: '0%' }}
-                animate={{ width: `${(stage / (stages.length - 1)) * 100}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-          </div>
-          
-          {/* Step labels */}
-          <div className="flex justify-between">
-            {stages.map((s, index) => (
-              <motion.div
-                key={index}
-                className="w-20 text-center text-xs"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: index <= stage ? 1 : 0.5 }}
-                transition={{ delay: index * 0.15 + 0.2 }}
-              >
-                <p className={`font-medium ${index <= stage ? 'text-indigo-600' : 'text-gray-400'}`}>
-                  {s.label}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"
+          />
+          <motion.div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+            }}
+            animate={{
+              x: ['-100%', '100%'],
+            }}
+            transition={{
+              duration: 1.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatType: "loop",
+            }}
+          />
+        </motion.div>
+      </motion.div>
+      
+      <motion.div 
+        className="mt-3 text-sm text-gray-500 flex justify-between"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <span>Tahap {stage + 1} dari {stages.length}</span>
+        <span>{Math.round(((stage + 1) / stages.length) * 100)}%</span>
       </motion.div>
     </div>
   );

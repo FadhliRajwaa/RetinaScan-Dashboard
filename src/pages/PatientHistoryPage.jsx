@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
 import { getPatientHistory, deleteAnalysis } from '../services/api';
 import { API_URL } from '../utils/api';
@@ -16,47 +16,8 @@ import {
   FiBarChart2,
   FiRefreshCcw,
   FiTrash,
-  FiDownload,
-  FiChevronRight,
-  FiEye,
-  FiActivity
+  FiDownload
 } from 'react-icons/fi';
-
-// Glassmorphism style
-const glassEffect = {
-  background: 'rgba(255, 255, 255, 0.85)',
-  backdropFilter: 'blur(10px)',
-  WebkitBackdropFilter: 'blur(10px)',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
-  borderRadius: '16px',
-};
-
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: { 
-      when: "beforeChildren",
-      staggerChildren: 0.15,
-      delayChildren: 0.2
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1,
-    transition: { 
-      type: 'spring',
-      stiffness: 400,
-      damping: 30
-    }
-  }
-};
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
 const FALLBACK_API_URLS = [
@@ -317,6 +278,28 @@ function PatientHistoryPageComponent() {
   const severityDistribution = calculateSeverityDistribution();
   const totalAnalyses = patientAnalyses.length;
 
+  // Container animation
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  // Child animation
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 100, damping: 12 }
+    }
+  };
+
   // Fungsi untuk mengunduh PDF
   const handleDownloadPdf = async () => {
     try {
@@ -506,500 +489,348 @@ function PatientHistoryPageComponent() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen p-4 sm:p-6 lg:p-8"
-      style={{
-        background: 'linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%)',
-        backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-      }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Back button and page title */}
-        <motion.div 
-          className="flex items-center mb-6"
-          variants={itemVariants}
-        >
-          <motion.button
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header with back button */}
+        <div className="flex items-center mb-6">
+          <button 
             onClick={handleBack}
-            className="mr-4 p-2 rounded-full bg-white/70 hover:bg-white shadow-sm border border-gray-100 transition-all"
-            whileHover={{ scale: 1.1, boxShadow: '0 8px 15px rgba(0,0,0,0.1)' }}
-            whileTap={{ scale: 0.95 }}
+            className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <FiArrowLeft className="w-5 h-5 text-gray-700" />
-          </motion.button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Riwayat Pasien</h1>
-        </motion.div>
-
-        {/* Error message */}
-        {error && (
-          <motion.div 
-            className="bg-red-50 p-4 rounded-xl mb-6 text-red-600 flex items-center"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          >
-            <FiAlertTriangle className="mr-3 flex-shrink-0" />
-            <span>{error}</span>
-          </motion.div>
-        )}
-
+            <FiArrowLeft className="text-gray-600" size={20} />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Riwayat Pasien</h1>
+        </div>
+        
         {isLoading ? (
-          <motion.div 
-            className="flex justify-center items-center p-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 rounded-full border-t-4 border-b-4 border-blue-500 animate-spin"></div>
-              <div className="absolute inset-3 rounded-full bg-white flex items-center justify-center">
-                <FiActivity className="text-blue-500 w-6 h-6" />
-              </div>
+          <div className="flex justify-center items-center py-20">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
+              <p className="text-gray-500">Memuat data pasien...</p>
             </div>
-          </motion.div>
-        ) : (
-          <>
-            {/* Patient info card */}
-            {patientData && (
-              <motion.div 
-                className="mb-6 overflow-hidden rounded-xl"
-                style={glassEffect}
-                variants={itemVariants}
-              >
-                <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <h2 className="text-lg font-semibold text-gray-800 flex items-center">
-                    <FiUser className="mr-2 text-blue-500" />
-                    Informasi Pasien
-                  </h2>
-                </div>
-                <div className="p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Nama Lengkap</p>
-                      <p className="font-medium text-gray-800">{patientData.fullName || patientData.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Jenis Kelamin</p>
-                      <p className="font-medium text-gray-800">
-                        {patientData.gender === 'male' ? 'Laki-laki' : 
-                         patientData.gender === 'female' ? 'Perempuan' : 
-                         patientData.gender || 'Tidak Diketahui'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Usia</p>
-                      <p className="font-medium text-gray-800">{patientData.age ? `${patientData.age} tahun` : 'Tidak Diketahui'}</p>
-                    </div>
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-800 mb-2">{error}</h3>
+            <p className="text-gray-600 mb-6">Tidak dapat menemukan riwayat analisis untuk pasien ini.</p>
+            <button
+              onClick={handleBack}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Kembali ke Daftar Pasien
+            </button>
+          </div>
+        ) : patientData && patientAnalyses.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Patient Info Card */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <FiUser className="mr-2 text-blue-500" />
+                  Informasi Pasien
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Nama Lengkap</p>
+                    <p className="font-medium">{patientData.fullName || patientData.name}</p>
                   </div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Summary stats */}
-            {patientAnalyses.length > 0 && (
-              <motion.div 
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-                variants={itemVariants}
-              >
-                {/* Total analyses */}
-                <motion.div 
-                  className="p-5 rounded-xl"
-                  style={glassEffect}
-                  whileHover={{ 
-                    y: -5,
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Total Pemindaian</p>
-                      <p className="text-2xl font-bold text-gray-800">{totalAnalyses}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white">
-                      <FiBarChart2 className="w-6 h-6" />
-                    </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Jenis Kelamin</p>
+                    <p className="font-medium">{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
                   </div>
-                </motion.div>
-
-                {/* First scan date */}
-                <motion.div 
-                  className="p-5 rounded-xl"
-                  style={glassEffect}
-                  whileHover={{ 
-                    y: -5,
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Pemindaian Pertama</p>
-                      <p className="text-sm font-bold text-gray-800">
-                        {formatDate(patientAnalyses[patientAnalyses.length - 1]?.createdAt)}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-400 to-green-600 flex items-center justify-center text-white">
-                      <FiCalendar className="w-6 h-6" />
-                    </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Usia</p>
+                    <p className="font-medium">{patientData.age || '-'} tahun</p>
                   </div>
-                </motion.div>
-
-                {/* Latest scan date */}
-                <motion.div 
-                  className="p-5 rounded-xl"
-                  style={glassEffect}
-                  whileHover={{ 
-                    y: -5,
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Pemindaian Terakhir</p>
-                      <p className="text-sm font-bold text-gray-800">
-                        {formatDate(patientAnalyses[0]?.createdAt)}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-400 to-purple-600 flex items-center justify-center text-white">
-                      <FiCalendar className="w-6 h-6" />
-                    </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Tanggal Lahir</p>
+                    <p className="font-medium">
+                      {patientData.dateOfBirth ? formatDate(patientData.dateOfBirth).split(',')[0] : '-'}
+                    </p>
                   </div>
-                </motion.div>
-
-                {/* Latest severity */}
-                <motion.div 
-                  className="p-5 rounded-xl"
-                  style={glassEffect}
-                  whileHover={{ 
-                    y: -5,
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">Tingkat Keparahan Terakhir</p>
-                      <div className="mt-1">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityBadge(patientAnalyses[0]?.severity)}`}>
-                          {patientAnalyses[0]?.severity || 'Tidak Ada'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 flex items-center justify-center text-white">
-                      <FiAlertTriangle className="w-6 h-6" />
-                    </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Pemindaian</p>
+                    <p className="font-medium">{totalAnalyses} kali</p>
                   </div>
-                </motion.div>
-              </motion.div>
-            )}
-
-            {/* Analysis Details */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Patient Info Card */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <FiUser className="mr-2 text-blue-500" />
-                    Informasi Pasien
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Nama Lengkap</p>
-                      <p className="font-medium">{patientData.fullName || patientData.name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                      <p className="font-medium">{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Usia</p>
-                      <p className="font-medium">{patientData.age || '-'} tahun</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Tanggal Lahir</p>
-                      <p className="font-medium">
-                        {patientData.dateOfBirth ? formatDate(patientData.dateOfBirth).split(',')[0] : '-'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Total Pemindaian</p>
-                      <p className="font-medium">{totalAnalyses} kali</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Pemindaian Terakhir</p>
-                      <p className="font-medium">
-                        {patientAnalyses[0] ? formatDate(patientAnalyses[0].createdAt) : '-'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Analysis History List */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <FiFileText className="mr-2 text-blue-500" />
-                    Riwayat Pemindaian
-                  </h3>
-                  <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                    {patientAnalyses.map((analysis, index) => (
-                      <div 
-                        key={analysis.id}
-                        onClick={() => setSelectedAnalysisIndex(index)}
-                        className={`p-3 rounded-lg cursor-pointer transition-all ${
-                          selectedAnalysisIndex === index 
-                            ? 'bg-blue-50 border-l-4 border-blue-500' 
-                            : 'bg-gray-50 hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="text-sm font-medium">
-                              {formatDate(analysis.createdAt)}
-                            </p>
-                            <div className="flex items-center mt-1">
-                              <span className={`px-2 py-0.5 rounded-full text-xs ${getSeverityBadge(analysis.severity)}`}>
-                                {analysis.severity}
-                              </span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                {(analysis.confidence * 100).toFixed(0)}% keyakinan
-                              </span>
-                            </div>
-                          </div>
-                          {selectedAnalysisIndex === index && (
-                            <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                  <div>
+                    <p className="text-sm text-gray-500">Pemindaian Terakhir</p>
+                    <p className="font-medium">
+                      {patientAnalyses[0] ? formatDate(patientAnalyses[0].createdAt) : '-'}
+                    </p>
                   </div>
                 </div>
               </div>
               
-              {/* Analysis Details */}
-              <div className="lg:col-span-2">
-                {patientAnalyses[selectedAnalysisIndex] && (
-                  <div className="bg-white rounded-lg shadow-md p-6">
-                    <div className="flex justify-between items-start mb-6">
-                      <h3 className="text-lg font-semibold text-gray-800">
-                        Detail Analisis
-                      </h3>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={handleDownloadPdf}
-                          disabled={isPdfLoading}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                          title="Unduh PDF"
+              {/* Analysis History List */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <FiFileText className="mr-2 text-blue-500" />
+                  Riwayat Pemindaian
+                </h3>
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  {patientAnalyses.map((analysis, index) => (
+                    <div 
+                      key={analysis.id}
+                      onClick={() => setSelectedAnalysisIndex(index)}
+                      className={`p-3 rounded-lg cursor-pointer transition-all ${
+                        selectedAnalysisIndex === index 
+                          ? 'bg-blue-50 border-l-4 border-blue-500' 
+                          : 'bg-gray-50 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {formatDate(analysis.createdAt)}
+                          </p>
+                          <div className="flex items-center mt-1">
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${getSeverityBadge(analysis.severity)}`}>
+                              {analysis.severity}
+                            </span>
+                            <span className="text-xs text-gray-500 ml-2">
+                              {(analysis.confidence * 100).toFixed(0)}% keyakinan
+                            </span>
+                          </div>
+                        </div>
+                        {selectedAnalysisIndex === index && (
+                          <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Analysis Details */}
+            <div className="lg:col-span-2">
+              {patientAnalyses[selectedAnalysisIndex] && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex justify-between items-start mb-6">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      Detail Analisis
+                    </h3>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleDownloadPdf}
+                        disabled={isPdfLoading}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                        title="Unduh PDF"
+                      >
+                        {isPdfLoading ? (
+                          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                        ) : (
+                          <FiDownload size={18} />
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(patientAnalyses[selectedAnalysisIndex].id, e)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                        title="Hapus Analisis"
+                      >
+                        <FiTrash size={18} />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Image Preview */}
+                  <div className="bg-gray-100 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => {
+                            const imgEl = document.getElementById('retina-image');
+                            if (imgEl) {
+                              delete imgEl.dataset.fallbackAttempted;
+                              setImageStatus('loading');
+                              setImageLoadAttempt(prev => prev + 1);
+                              
+                              // Enforce re-rendering with a small delay
+                              setTimeout(() => {
+                                if (patientAnalyses[selectedAnalysisIndex].imagePath) {
+                                imgEl.src = formatImageUrl(patientAnalyses[selectedAnalysisIndex].imagePath);
+                                } else if (patientAnalyses[selectedAnalysisIndex].imageData) {
+                                  imgEl.src = patientAnalyses[selectedAnalysisIndex].imageData;
+                                }
+                              }, 50);
+                            }
+                          }}
+                          className="px-2 py-1 bg-green-500 text-white rounded text-xs flex items-center"
+                          title="Muat ulang gambar"
                         >
-                          {isPdfLoading ? (
-                            <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                          ) : (
-                            <FiDownload size={18} />
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => handleDelete(patientAnalyses[selectedAnalysisIndex].id, e)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                          title="Hapus Analisis"
-                        >
-                          <FiTrash size={18} />
+                          <FiRefreshCcw className="mr-1" /> Refresh
                         </button>
                       </div>
                     </div>
                     
-                    {/* Image Preview */}
-                    <div className="bg-gray-100 p-4 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
-                        <div className="flex gap-1">
-                          <button 
-                            onClick={() => {
-                              const imgEl = document.getElementById('retina-image');
-                              if (imgEl) {
-                                delete imgEl.dataset.fallbackAttempted;
-                                setImageStatus('loading');
-                                setImageLoadAttempt(prev => prev + 1);
-                                
-                                // Enforce re-rendering with a small delay
-                                setTimeout(() => {
-                                  if (patientAnalyses[selectedAnalysisIndex].imagePath) {
-                                  imgEl.src = formatImageUrl(patientAnalyses[selectedAnalysisIndex].imagePath);
-                                  } else if (patientAnalyses[selectedAnalysisIndex].imageData) {
-                                    imgEl.src = patientAnalyses[selectedAnalysisIndex].imageData;
-                                  }
-                                }, 50);
-                              }
-                            }}
-                            className="px-2 py-1 bg-green-500 text-white rounded text-xs flex items-center"
-                            title="Muat ulang gambar"
-                          >
-                            <FiRefreshCcw className="mr-1" /> Refresh
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Debug info panel (tersembunyi) */}
-                      <div id="debug-image-info" className="mb-2 p-2 bg-gray-700 text-white text-xs rounded hidden">
-                        {patientAnalyses[selectedAnalysisIndex].imagePath && (
-                          <>
-                            <p><strong>Original:</strong> {patientAnalyses[selectedAnalysisIndex].imagePath}</p>
-                            <p><strong>Filename:</strong> {patientAnalyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop()}</p>
-                            <p><strong>URL:</strong> {formatImageUrl(patientAnalyses[selectedAnalysisIndex].imagePath)}</p>
-                          </>
-                        )}
-                      </div>
-                      
-                      <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
-                        {patientAnalyses[selectedAnalysisIndex] ? (
-                          <>
-                            {imageStatus === 'loading' && (
-                              <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
-                                <div className="flex flex-col items-center space-y-2">
-                                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                                  <p className="text-xs text-gray-600">Memuat gambar...</p>
-                                </div>
+                    {/* Debug info panel (tersembunyi) */}
+                    <div id="debug-image-info" className="mb-2 p-2 bg-gray-700 text-white text-xs rounded hidden">
+                      {patientAnalyses[selectedAnalysisIndex].imagePath && (
+                        <>
+                          <p><strong>Original:</strong> {patientAnalyses[selectedAnalysisIndex].imagePath}</p>
+                          <p><strong>Filename:</strong> {patientAnalyses[selectedAnalysisIndex].imagePath.split(/[\/\\]/).pop()}</p>
+                          <p><strong>URL:</strong> {formatImageUrl(patientAnalyses[selectedAnalysisIndex].imagePath)}</p>
+                        </>
+                      )}
+                    </div>
+                    
+                    <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
+                      {patientAnalyses[selectedAnalysisIndex] ? (
+                        <>
+                          {imageStatus === 'loading' && (
+                            <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
+                              <div className="flex flex-col items-center space-y-2">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                                <p className="text-xs text-gray-600">Memuat gambar...</p>
                               </div>
-                            )}
-                            <img 
-                              id="retina-image"
-                              src={patientAnalyses[selectedAnalysisIndex].imageData || activeImageUrl || DEFAULT_IMAGE}
-                              alt="Retina scan"
-                              className="object-cover w-full h-full"
-                              onLoad={() => setImageStatus('success')}
-                              onError={(e) => {
-                                console.error('Error loading image:', e.target.src.substring(0, 50) + '...');
+                            </div>
+                          )}
+                          <img 
+                            id="retina-image"
+                            src={patientAnalyses[selectedAnalysisIndex].imageData || activeImageUrl || DEFAULT_IMAGE}
+                            alt="Retina scan"
+                            className="object-cover w-full h-full"
+                            onLoad={() => setImageStatus('success')}
+                            onError={(e) => {
+                              console.error('Error loading image:', e.target.src.substring(0, 50) + '...');
+                              
+                              // Stop onError dari berjalan lagi untuk mencegah infinite loop
+                              e.target.onerror = null;
+                              
+                              // Tandai error dan gunakan gambar default
+                              setImageStatus('error');
+                              
+                              // Prioritaskan imageData (base64) jika tersedia
+                              if (patientAnalyses[selectedAnalysisIndex].imageData) {
+                                console.log('Menggunakan data base64 dari database');
                                 
-                                // Stop onError dari berjalan lagi untuk mencegah infinite loop
-                                e.target.onerror = null;
-                                
-                                // Tandai error dan gunakan gambar default
-                                setImageStatus('error');
-                                
-                                // Prioritaskan imageData (base64) jika tersedia
-                                if (patientAnalyses[selectedAnalysisIndex].imageData) {
-                                  console.log('Menggunakan data base64 dari database');
-                                  
-                                  // Pastikan imageData adalah string base64 yang valid
-                                  const imageData = patientAnalyses[selectedAnalysisIndex].imageData;
-                                  if (imageData && imageData.startsWith('data:')) {
-                                    e.target.src = imageData;
-                                    return;
-                                  }
-                                }
-                                
-                                // Coba file path sebagai alternatif jika yang gagal adalah base64
-                                if (activeImageUrl) {
-                                  console.log('Mencoba menggunakan URL file sebagai fallback');
-                                  e.target.src = activeImageUrl;
+                                // Pastikan imageData adalah string base64 yang valid
+                                const imageData = patientAnalyses[selectedAnalysisIndex].imageData;
+                                if (imageData && imageData.startsWith('data:')) {
+                                  e.target.src = imageData;
                                   return;
                                 }
-                                
-                                // Gunakan gambar not-found.jpg sebagai fallback terakhir
-                                e.target.src = DEFAULT_IMAGE;
-                                console.log('Menggunakan gambar tidak ditemukan:', DEFAULT_IMAGE);
-                              }}
-                            />
-                            
-                            {imageStatus === 'error' && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-red-500/80 p-2 text-xs text-white text-center">
-                                Gagal memuat gambar. Silakan coba tombol Refresh atau API alternatif.
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="flex items-center justify-center h-full">
-                            <p className="text-gray-500 text-sm">Gambar tidak tersedia</p>
-                          </div>
-                        )}
-                      </div>
+                              }
+                              
+                              // Coba file path sebagai alternatif jika yang gagal adalah base64
+                              if (activeImageUrl) {
+                                console.log('Mencoba menggunakan URL file sebagai fallback');
+                                e.target.src = activeImageUrl;
+                                return;
+                              }
+                              
+                              // Gunakan gambar not-found.jpg sebagai fallback terakhir
+                              e.target.src = DEFAULT_IMAGE;
+                              console.log('Menggunakan gambar tidak ditemukan:', DEFAULT_IMAGE);
+                            }}
+                          />
+                          
+                          {imageStatus === 'error' && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-red-500/80 p-2 text-xs text-white text-center">
+                              Gagal memuat gambar. Silakan coba tombol Refresh atau API alternatif.
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <p className="text-gray-500 text-sm">Gambar tidak tersedia</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Analysis Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Nama File</p>
+                      <p className="text-base font-medium break-words">
+                        {patientAnalyses[selectedAnalysisIndex].originalFilename}
+                      </p>
                     </div>
                     
-                    {/* Analysis Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-100 p-4 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Nama File</p>
-                        <p className="text-base font-medium break-words">
-                          {patientAnalyses[selectedAnalysisIndex].originalFilename}
-                        </p>
-                      </div>
-                      
-                      <div className="bg-gray-100 p-4 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan</p>
-                        <span className={`px-3 py-1 rounded-full text-sm inline-block ${
-                          getSeverityBadge(patientAnalyses[selectedAnalysisIndex].severity)
-                        }`}>
-                          {patientAnalyses[selectedAnalysisIndex].severity}
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan</p>
+                      <span className={`px-3 py-1 rounded-full text-sm inline-block ${
+                        getSeverityBadge(patientAnalyses[selectedAnalysisIndex].severity)
+                      }`}>
+                        {patientAnalyses[selectedAnalysisIndex].severity}
+                      </span>
+                    </div>
+                    
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Kepercayaan</p>
+                      <div className="flex items-center">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
+                          <div 
+                            className="bg-blue-600 h-2.5 rounded-full" 
+                            style={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-base font-medium min-w-[60px] text-right">
+                          {(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(1)}%
                         </span>
                       </div>
-                      
-                      <div className="bg-gray-100 p-4 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Kepercayaan</p>
-                        <div className="flex items-center">
-                          <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                            <div 
-                              className="bg-blue-600 h-2.5 rounded-full" 
-                              style={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-base font-medium min-w-[60px] text-right">
-                            {(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-gray-100 p-4 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Tanggal Analisis</p>
-                        <p className="text-base font-medium">
-                          {formatDate(patientAnalyses[selectedAnalysisIndex].createdAt)}
-                        </p>
-                      </div>
                     </div>
                     
-                    {/* Notes */}
-                    {patientAnalyses[selectedAnalysisIndex].notes && (
-                      <div className="bg-gray-100 p-4 rounded-lg">
-                        <p className="text-sm font-medium text-gray-500 mb-2">Catatan</p>
-                        <p className="text-base">
-                          {patientAnalyses[selectedAnalysisIndex].notes}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Recommendations based on severity */}
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
-                      <p className="text-base text-blue-700">
-                        {patientAnalyses[selectedAnalysisIndex].notes ? (
-                          patientAnalyses[selectedAnalysisIndex].notes
-                        ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
-                          'Lakukan pemeriksaan rutin setiap tahun.'
-                        ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'ringan' ? (
-                          'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
-                        ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'sedang' ? (
-                          'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
-                        ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'berat' ? (
-                          'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
-                        ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'sangat berat' ? (
-                          'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
-                        ) : (
-                          'Lakukan pemeriksaan rutin setiap tahun.'
-                        )}
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Tanggal Analisis</p>
+                      <p className="text-base font-medium">
+                        {formatDate(patientAnalyses[selectedAnalysisIndex].createdAt)}
                       </p>
                     </div>
                   </div>
-                )}
-              </div>
+                  
+                  {/* Notes */}
+                  {patientAnalyses[selectedAnalysisIndex].notes && (
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Catatan</p>
+                      <p className="text-base">
+                        {patientAnalyses[selectedAnalysisIndex].notes}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Recommendations based on severity */}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
+                    <p className="text-base text-blue-700">
+                      {patientAnalyses[selectedAnalysisIndex].notes ? (
+                        patientAnalyses[selectedAnalysisIndex].notes
+                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
+                        'Lakukan pemeriksaan rutin setiap tahun.'
+                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'ringan' ? (
+                        'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
+                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'sedang' ? (
+                        'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'berat' ? (
+                        'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'sangat berat' ? (
+                        'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+                      ) : (
+                        'Lakukan pemeriksaan rutin setiap tahun.'
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          </>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-800 mb-2">Data Tidak Ditemukan</h3>
+            <p className="text-gray-600 mb-6">Tidak dapat menemukan data pasien atau riwayat analisis.</p>
+            <button
+              onClick={handleBack}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Kembali ke Daftar Pasien
+            </button>
+          </div>
         )}
-      </motion.div>
+      </div>
       
       {/* Confirmation Dialog for Delete */}
       {showConfirmDelete && (
@@ -1024,7 +855,7 @@ function PatientHistoryPageComponent() {
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
