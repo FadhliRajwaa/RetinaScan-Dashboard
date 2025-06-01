@@ -275,30 +275,13 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     }
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        when: "beforeChildren",
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: 'spring',
-        stiffness: 300,
-        damping: 20
-      }
-    }
-  };
+  // Animasi untuk proses analisis
+  const processStages = [
+    { label: "Mempersiapkan Data", icon: <FiActivity className="w-8 h-8" />, color: "from-blue-500 to-cyan-400" },
+    { label: "Menganalisis Citra", icon: <FiEye className="w-8 h-8" />, color: "from-indigo-500 to-purple-400" },
+    { label: "Mendeteksi Pola", icon: <FiCpu className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
+    { label: "Menyelesaikan Analisis", icon: <FiCheck className="w-8 h-8" />, color: "from-emerald-500 to-green-400" }
+  ];
 
   const confidenceVariants = {
     hidden: { width: '0%' },
@@ -307,14 +290,6 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
       transition: { duration: 1.5, ease: "easeOut" }
     }
   };
-
-  // Animasi untuk proses analisis
-  const processStages = [
-    { label: "Mempersiapkan Data", icon: <FiActivity className="w-8 h-8" />, color: "from-blue-500 to-cyan-400" },
-    { label: "Menganalisis Citra", icon: <FiEye className="w-8 h-8" />, color: "from-indigo-500 to-purple-400" },
-    { label: "Mendeteksi Pola", icon: <FiCpu className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
-    { label: "Menyelesaikan Analisis", icon: <FiCheck className="w-8 h-8" />, color: "from-emerald-500 to-green-400" }
-  ];
 
   return (
     <motion.div
