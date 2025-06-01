@@ -34,7 +34,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeIndex, setActiveIndex] = useState(null);
   const location = useLocation();
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   
   // Set active index based on current location
   useEffect(() => {
@@ -113,19 +113,19 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     }),
   };
 
-  // Modern gradient background with glassmorphism effect
-  const bgGradient = `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
-  const activeItemBg = `${theme.primary}`;
-  const hoverItemBg = `${theme.primary}40`;
+  // Get theme-specific colors
+  const currentTheme = isDarkMode ? theme.dark : theme.light;
   
-  // Glassmorphism style
-  const glassEffect = {
-    background: bgGradient,
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    borderRight: '1px solid rgba(255, 255, 255, 0.18)',
-  };
+  // Modern gradient background with glassmorphism effect
+  const bgGradient = isDarkMode 
+    ? `linear-gradient(135deg, ${currentTheme.primary}CC, ${currentTheme.accent}CC)`
+    : `linear-gradient(135deg, ${currentTheme.primary}CC, ${currentTheme.accent}CC)`;
+    
+  const activeItemBg = isDarkMode ? `${currentTheme.accent}` : `${currentTheme.primary}`;
+  const hoverItemBg = isDarkMode ? `${currentTheme.accent}40` : `${currentTheme.primary}40`;
+  
+  // Glassmorphism style based on theme
+  const glassEffect = isDarkMode ? theme.dark.glassEffect : theme.light.glassEffect;
 
   return (
     <>
@@ -149,7 +149,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         variants={sidebarVariants}
         initial="mobileClosed"
         animate={isMobileMenuOpen ? 'mobileOpen' : 'mobileClosed'}
-        className="lg:hidden fixed top-0 left-0 h-screen text-white w-[280px] z-50 overflow-hidden"
+        className={`lg:hidden fixed top-0 left-0 h-screen text-white w-[280px] z-50 overflow-hidden ${isDarkMode ? 'dark' : ''}`}
         style={{ 
           ...glassEffect,
           willChange: 'transform, opacity',
@@ -160,7 +160,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           {/* Header: Logo and Close Button */}
           <motion.div 
             className="p-5 flex items-center justify-between"
-            style={{ backgroundColor: `${theme.accent}20` }}
+            style={{ 
+              backgroundColor: isDarkMode 
+                ? `${currentTheme.backgroundAlt}80` 
+                : `${currentTheme.accent}20` 
+            }}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
@@ -173,7 +177,9 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             >
               <h1 className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
+                    background: isDarkMode 
+                      ? 'linear-gradient(90deg, #f9fafb, rgba(249,250,251,0.8))' 
+                      : 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>RetinaScan</h1>
@@ -181,17 +187,23 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 initial={{ width: 0 }}
                 animate={{ width: 120 }}
                 transition={{ delay: 0.2, duration: 0.4, type: 'spring' }}
-                className="h-1 bg-white/40 rounded-full mt-1"
-                style={{ willChange: 'width' }}
+                className="h-1 rounded-full mt-1"
+                style={{ 
+                  background: isDarkMode 
+                    ? currentTheme.coolGradient 
+                    : 'rgba(255,255,255,0.4)'
+                }}
               />
             </motion.div>
             <motion.button
               onClick={toggleMobileMenu}
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              whileTap={{ scale: 0.9, rotate: -5 }}
+              whileHover={theme.animations.smoothHover}
+              whileTap={theme.animations.smoothTap}
               className="p-2 rounded-full"
               style={{ 
-                backgroundColor: `${theme.accent}60`,
+                backgroundColor: isDarkMode 
+                  ? `${currentTheme.accent}60` 
+                  : `${currentTheme.accent}60`,
                 backdropFilter: 'blur(4px)',
                 willChange: 'transform'
               }}
@@ -225,7 +237,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                       }`}
                       style={{ 
                         backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                        boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
+                        boxShadow: location.pathname === item.path 
+                          ? isDarkMode 
+                            ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.3)' 
+                            : 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' 
+                          : 'none',
                         willChange: 'transform, background-color'
                       }}
                       whileHover={{ 
@@ -256,7 +272,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                         }`}
                         style={{ 
                           backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                          boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
+                          boxShadow: location.pathname === item.path 
+                            ? isDarkMode 
+                              ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.3)' 
+                              : 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' 
+                            : 'none'
                         }}
                       >
                         <item.icon className="h-6 w-6 mr-3" />
@@ -280,12 +300,14 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               onClick={(e) => handleLogoutEvent(e, toggleMobileMenu, FRONTEND_URL)}
               className="flex items-center p-4 w-full rounded-xl transition-all duration-200"
               style={{ 
-                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #ef4444cc, #f87171cc)'
+                  : 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
                 backdropFilter: 'blur(4px)',
                 willChange: 'transform, background-color'
               }}
-              whileHover={{ scale: 1.03, backgroundColor: '#dc2626' }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={theme.animations.smoothHover}
+              whileTap={theme.animations.smoothTap}
             >
               <ArrowLeftOnRectangleIcon className="h-6 w-6 mr-3" />
               <span className="text-base font-medium">Logout</span>
@@ -298,7 +320,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
       <motion.aside
         variants={sidebarVariants}
         animate={isOpen ? 'open' : 'closed'}
-        className="hidden lg:flex flex-col h-screen sticky top-0 z-40 text-white"
+        className={`hidden lg:flex flex-col h-screen sticky top-0 z-40 text-white ${isDarkMode ? 'dark' : ''}`}
         style={{ 
           ...glassEffect,
           willChange: 'width',
@@ -319,7 +341,9 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 <h1 
                   className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
+                    background: isDarkMode 
+                      ? 'linear-gradient(90deg, #f9fafb, rgba(249,250,251,0.8))' 
+                      : 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -330,7 +354,12 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   initial={{ width: 0 }}
                   animate={{ width: 120 }}
                   transition={{ delay: 0.1, duration: 0.4, type: 'spring' }}
-                  className="h-1 bg-white/40 rounded-full mt-1"
+                  className="h-1 rounded-full mt-1"
+                  style={{ 
+                    background: isDarkMode 
+                      ? currentTheme.coolGradient 
+                      : 'rgba(255,255,255,0.4)'
+                  }}
                 />
               </motion.div>
             ) : (
@@ -342,9 +371,13 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 transition={{ duration: 0.3, type: 'spring' }}
                 className="w-10 h-10 flex items-center justify-center"
                 style={{
-                  background: `linear-gradient(135deg, ${theme.accent}, ${theme.primary})`,
+                  background: isDarkMode 
+                    ? currentTheme.coolGradient
+                    : `linear-gradient(135deg, ${currentTheme.accent}, ${currentTheme.primary})`,
                   borderRadius: '12px',
-                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)'
+                  boxShadow: isDarkMode 
+                    ? currentTheme.mediumShadow
+                    : '0 4px 10px rgba(0, 0, 0, 0.2)'
                 }}
               >
                 <span className="text-xl font-extrabold text-white">R</span>
@@ -355,8 +388,8 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           <motion.button 
             onClick={() => setIsOpen(!isOpen)}
             className="p-2 rounded-xl hover:bg-white/10 transition-colors duration-150"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={theme.animations.smoothHover}
+            whileTap={theme.animations.smoothTap}
             style={{ willChange: 'transform' }}
           >
             <svg 
@@ -393,7 +426,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   }`}
                   style={{ 
                     backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
+                    boxShadow: location.pathname === item.path 
+                      ? isDarkMode 
+                        ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.3)' 
+                        : 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' 
+                      : 'none'
                   }}
                   whileHover={{ 
                     backgroundColor: hoverItemBg, 
@@ -431,7 +468,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   }`}
                   style={{ 
                     backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
+                    boxShadow: location.pathname === item.path 
+                      ? isDarkMode 
+                        ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.3)' 
+                        : 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' 
+                      : 'none',
                     willChange: 'transform, background-color'
                   }}
                 >
@@ -464,11 +505,13 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
             className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
             style={{ 
-              background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, #ef4444cc, #f87171cc)'
+                : 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
               backdropFilter: 'blur(4px)',
             }}
-            whileHover={{ scale: 1.03, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={theme.animations.smoothHover}
+            whileTap={theme.animations.smoothTap}
           >
             <ArrowLeftOnRectangleIcon className="h-5 w-5 min-w-[1.25rem]" />
             {isOpen && (
@@ -491,11 +534,13 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
               className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
               style={{ 
-                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #ef4444cc, #f87171cc)'
+                  : 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
                 backdropFilter: 'blur(4px)',
               }}
-              whileHover={{ scale: 1.1, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={theme.animations.smoothHover}
+              whileTap={theme.animations.smoothTap}
             >
               <ArrowLeftOnRectangleIcon className="h-5 w-5" />
             </motion.button>

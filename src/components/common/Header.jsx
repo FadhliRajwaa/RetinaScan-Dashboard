@@ -1,9 +1,9 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { BellIcon, Cog6ToothIcon, UserCircleIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
-  const { theme, isMobile } = useTheme();
+  const { theme, isMobile, isDarkMode, toggleDarkMode } = useTheme();
   
   const headerVariants = {
     hidden: { y: -50, opacity: 0 },
@@ -48,21 +48,15 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
     }
   };
 
-  // Glassmorphism style
-  const glassEffect = {
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-  };
+  // Glassmorphism style based on theme
+  const glassEffect = isDarkMode ? theme.dark.glassEffect : theme.light.glassEffect;
   
   return (
     <motion.header 
       variants={headerVariants}
       initial="hidden"
       animate="visible"
-      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
+      className={`mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl ${isDarkMode ? 'dark' : ''}`}
       style={{
         ...glassEffect,
         willChange: 'transform, opacity',
@@ -80,8 +74,8 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
           whileTap={{ scale: 0.95, rotate: -3 }}
           className="w-12 h-12 rounded-xl mr-4 flex items-center justify-center shadow-lg"
           style={{ 
-            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            boxShadow: `0 10px 15px -3px ${theme.primary}40`,
+            background: isDarkMode ? theme.dark.modernGradient : theme.light.modernGradient,
+            boxShadow: isDarkMode ? theme.dark.mediumShadow : theme.light.mediumShadow,
             willChange: 'transform',
             transform: 'translateZ(0)'
           }}
@@ -108,7 +102,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         <div>
           <motion.h2 
             variants={itemVariants}
-            className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800"
+            className={`text-lg sm:text-xl md:text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
           >
             {title}
           </motion.h2>
@@ -124,7 +118,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
             }}
             className="h-1 rounded-full mt-1 max-w-[120px]"
             style={{ 
-              background: `linear-gradient(to right, ${theme.primary}, ${theme.accent})`,
+              background: isDarkMode ? theme.dark.coolGradient : theme.light.coolGradient,
               willChange: 'width, opacity'
             }}
           />
@@ -138,24 +132,75 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         transition={{ delay: 0.3, duration: 0.3 }}
         className="hidden md:flex items-center space-x-3"
       >
+        {/* Dark Mode Toggle */}
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          whileHover={theme.animations.smoothHover}
+          whileTap={theme.animations.smoothTap}
+          onClick={toggleDarkMode}
+          className={`p-2 rounded-lg transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gray-700 text-yellow-300' 
+              : 'bg-blue-100 text-blue-800'
+          }`}
+          style={{
+            boxShadow: isDarkMode ? theme.dark.smallShadow : theme.light.smallShadow
+          }}
         >
-          <BellIcon className="h-5 w-5 text-gray-600" />
+          <AnimatePresence mode="wait">
+            {isDarkMode ? (
+              <motion.div
+                key="moon"
+                initial={{ rotate: -30, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 30, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <SunIcon className="h-5 w-5" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="sun"
+                initial={{ rotate: 30, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -30, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <MoonIcon className="h-5 w-5" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
+        
+        <motion.button
+          whileHover={theme.animations.smoothHover}
+          whileTap={theme.animations.smoothTap}
+          className={`p-2 rounded-lg transition-colors duration-200 ${
+            isDarkMode 
+              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+              : 'bg-white/50 text-gray-600 hover:bg-white/80'
+          }`}
+        >
+          <BellIcon className="h-5 w-5" />
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          whileHover={theme.animations.smoothHover}
+          whileTap={theme.animations.smoothTap}
+          className={`p-2 rounded-lg transition-colors duration-200 ${
+            isDarkMode 
+              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+              : 'bg-white/50 text-gray-600 hover:bg-white/80'
+          }`}
         >
-          <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
+          <Cog6ToothIcon className="h-5 w-5" />
         </motion.button>
         <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          whileHover={theme.animations.smoothHover}
+          whileTap={theme.animations.smoothTap}
+          className={`p-1 rounded-lg transition-colors duration-200 ${
+            isDarkMode 
+              ? 'bg-gray-700 hover:bg-gray-600' 
+              : 'bg-white/50 hover:bg-white/80'
+          }`}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
             A
@@ -165,31 +210,75 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
 
       {/* Hamburger button in the header for mobile */}
       {isMobile && (
-        <motion.button
-          variants={itemVariants}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleMenuClick}
-          className="p-3 rounded-lg text-white shadow-lg z-50"
-          style={{ 
-            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            willChange: 'transform',
-            transform: 'translateZ(0)',
-            position: 'relative' // Ensure it's above other elements
-          }}
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          {/* Dark Mode Toggle for Mobile */}
+          <motion.button
+            variants={itemVariants}
+            whileHover={theme.animations.smoothHover}
+            whileTap={theme.animations.smoothTap}
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-lg transition-all duration-300 ${
+              isDarkMode 
+                ? 'bg-gray-700 text-yellow-300' 
+                : 'bg-blue-100 text-blue-800'
+            }`}
+            style={{
+              boxShadow: isDarkMode ? theme.dark.smallShadow : theme.light.smallShadow
+            }}
+            aria-label="Toggle dark mode"
+          >
+            <AnimatePresence mode="wait">
+              {isDarkMode ? (
+                <motion.div
+                  key="moon-mobile"
+                  initial={{ rotate: -30, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 30, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <SunIcon className="h-5 w-5" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="sun-mobile"
+                  initial={{ rotate: 30, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -30, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <MoonIcon className="h-5 w-5" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
+          
+          {/* Hamburger Menu Button */}
+          <motion.button
+            variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleMenuClick}
+            className="p-3 rounded-lg text-white shadow-lg z-50"
+            style={{ 
+              background: isDarkMode ? theme.dark.modernGradient : theme.light.modernGradient,
+              boxShadow: isDarkMode ? theme.dark.mediumShadow : theme.light.mediumShadow,
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+              position: 'relative' // Ensure it's above other elements
+            }}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </motion.button>
+        </div>
       )}
     </motion.header>
   );
