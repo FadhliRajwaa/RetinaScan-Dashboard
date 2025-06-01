@@ -4,10 +4,8 @@ import { uploadImage } from '../../services/api';
 import PatientSelector from './PatientSelector';
 import { FiUpload, FiFile, FiImage, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
 
 function UploadImage({ onUploadSuccess, autoUpload = true }) {
-  const { theme, isDarkMode } = useTheme();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
@@ -22,22 +20,6 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
   // Gunakan ref untuk melacak apakah file sudah diupload
   const uploadedFileRef = useRef(null);
   
-  // Glassmorphism style berdasarkan tema
-  const glassEffect = {
-    background: isDarkMode 
-      ? 'rgba(17, 24, 39, 0.7)' 
-      : 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: isDarkMode 
-      ? '0 8px 32px 0 rgba(0, 0, 0, 0.2)' 
-      : '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-    border: isDarkMode 
-      ? '1px solid rgba(255, 255, 255, 0.05)' 
-      : '1px solid rgba(255, 255, 255, 0.18)',
-    borderRadius: '16px',
-  };
-
   // Effect untuk auto upload saat file atau pasien berubah
   useEffect(() => {
     // Hanya upload jika file dan pasien ada, dan file belum diupload
@@ -336,24 +318,18 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
 
   const dropzoneVariants = {
     default: { 
-      borderColor: isDarkMode ? 'rgba(75, 85, 99, 1)' : 'rgba(209, 213, 219, 1)',
+      borderColor: 'rgba(209, 213, 219, 1)',
       scale: 1,
-      boxShadow: isDarkMode 
-        ? '0 1px 3px rgba(0, 0, 0, 0.3)' 
-        : '0 1px 3px rgba(0, 0, 0, 0.1)'
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
     },
     dragging: { 
-      borderColor: isDarkMode ? 'rgba(96, 165, 250, 1)' : 'rgba(59, 130, 246, 1)',
+      borderColor: 'rgba(59, 130, 246, 1)',
       scale: 1.02,
-      boxShadow: isDarkMode 
-        ? '0 8px 16px rgba(30, 64, 175, 0.3)' 
-        : '0 8px 16px rgba(59, 130, 246, 0.2)'
+      boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)'
     },
     hover: {
       scale: 1.01,
-      boxShadow: isDarkMode 
-        ? '0 4px 8px rgba(0, 0, 0, 0.3)' 
-        : '0 4px 8px rgba(0, 0, 0, 0.1)'
+      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
     }
   };
 
@@ -399,7 +375,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className={`text-red-500 ${isDarkMode ? 'bg-red-900/30' : 'bg-red-50'} p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start shadow-sm ${isDarkMode ? 'border border-red-800/50' : 'border border-red-100'}`}
+            className="text-red-500 bg-red-50 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start shadow-sm border border-red-100"
           >
             <FiAlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
@@ -412,7 +388,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className={`text-green-600 ${isDarkMode ? 'bg-green-900/30' : 'bg-green-50'} p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start shadow-sm ${isDarkMode ? 'border border-green-800/50' : 'border border-green-100'}`}
+            className="text-green-600 bg-green-50 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start shadow-sm border border-green-100"
           >
             <FiCheck className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
             <span>{success}</span>
@@ -441,14 +417,11 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
             animate={dropAreaControls}
             whileHover="hover"
             className={`relative border-2 border-dashed rounded-2xl p-8 transition-all ${
-              isDragging 
-                ? isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
-                : isDarkMode ? 'bg-gray-800/50' : 'bg-white'
+              isDragging ? 'bg-blue-50' : 'bg-white'
             }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            style={glassEffect}
           >
             <input
               type="file"
@@ -469,7 +442,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                   exit={{ opacity: 0 }}
                 >
                   <motion.div
-                    className={`w-20 h-20 mb-4 ${isDarkMode ? 'bg-blue-900/30' : 'bg-blue-50'} rounded-full flex items-center justify-center ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}
+                    className="w-20 h-20 mb-4 bg-blue-50 rounded-full flex items-center justify-center text-blue-500"
                     variants={iconVariants}
                     whileHover="hover"
                     whileTap="tap"
@@ -478,14 +451,14 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                   </motion.div>
                   
                   <motion.h3 
-                    className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+                    className="text-lg font-medium text-gray-700 mb-2"
                     variants={itemVariants}
                   >
                     Seret & Lepaskan Gambar Retina
                   </motion.h3>
                   
                   <motion.p 
-                    className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}
+                    className="text-sm text-gray-500 mb-4"
                     variants={itemVariants}
                   >
                     atau klik untuk memilih file
@@ -494,18 +467,9 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                   <motion.button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className={`px-5 py-2.5 bg-gradient-to-r ${
-                      isDarkMode 
-                        ? 'from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                        : 'from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                    } text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all`}
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
                     variants={itemVariants}
-                    whileHover={{ 
-                      scale: 1.05, 
-                      boxShadow: isDarkMode 
-                        ? "0 5px 15px rgba(37, 99, 235, 0.4)" 
-                        : "0 5px 15px rgba(59, 130, 246, 0.4)" 
-                    }}
+                    whileHover={{ scale: 1.05, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.4)" }}
                     whileTap={{ scale: 0.95 }}
                     disabled={isLoading}
                   >
@@ -513,7 +477,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                   </motion.button>
                   
                   <motion.p 
-                    className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'} mt-4`}
+                    className="text-xs text-gray-400 mt-4"
                     variants={itemVariants}
                   >
                     Format yang didukung: JPG, PNG (maks. 5MB)
@@ -530,7 +494,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                 >
                   <div className="relative w-full max-w-xs mx-auto">
                     <motion.div
-                      className={`relative rounded-lg overflow-hidden shadow-lg ${isDarkMode ? 'border-4 border-gray-700' : 'border-4 border-white'}`}
+                      className="relative rounded-lg overflow-hidden shadow-lg border-4 border-white"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
@@ -543,11 +507,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                       
                       <motion.button
                         type="button"
-                        className={`absolute top-2 right-2 ${
-                          isDarkMode ? 'bg-red-600' : 'bg-red-500'
-                        } text-white rounded-full p-1 shadow-md ${
-                          isDarkMode ? 'hover:bg-red-700' : 'hover:bg-red-600'
-                        } transition-colors`}
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
                         onClick={() => {
                           setFile(null);
                           setPreview(null);
@@ -565,10 +525,10 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
                     >
-                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} flex items-center justify-center`}>
+                      <p className="text-sm font-medium text-gray-700 flex items-center justify-center">
                         <FiImage className="mr-2" /> {file?.name}
                       </p>
-                      <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                      <p className="text-xs text-gray-500 mt-1">
                         {(file?.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </motion.div>
@@ -583,11 +543,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                     <motion.button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className={`px-4 py-2 ${
-                        isDarkMode 
-                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      } text-sm font-medium rounded-lg transition-colors`}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       disabled={isLoading}
@@ -598,17 +554,8 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
                     {!autoUpload && (
                       <motion.button
                         type="submit"
-                        className={`px-4 py-2 bg-gradient-to-r ${
-                          isDarkMode 
-                            ? 'from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                            : 'from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-                        } text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all`}
-                        whileHover={{ 
-                          scale: 1.05, 
-                          boxShadow: isDarkMode 
-                            ? "0 5px 15px rgba(37, 99, 235, 0.4)" 
-                            : "0 5px 15px rgba(59, 130, 246, 0.4)" 
-                        }}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+                        whileHover={{ scale: 1.05, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.4)" }}
                         whileTap={{ scale: 0.95 }}
                         disabled={isLoading || !selectedPatient}
                       >
@@ -632,9 +579,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
             
             {/* Animated decorative elements */}
             <motion.div 
-              className={`absolute -z-10 top-1/4 -left-10 w-20 h-20 ${
-                isDarkMode ? 'bg-blue-700/10' : 'bg-blue-400/10'
-              } rounded-full blur-xl`}
+              className="absolute -z-10 top-1/4 -left-10 w-20 h-20 bg-blue-400/10 rounded-full blur-xl"
               animate={{ 
                 x: [0, 10, 0],
                 y: [0, -10, 0],
@@ -646,9 +591,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
               }}
             />
             <motion.div 
-              className={`absolute -z-10 bottom-1/4 -right-10 w-32 h-32 ${
-                isDarkMode ? 'bg-indigo-700/10' : 'bg-indigo-400/10'
-              } rounded-full blur-xl`}
+              className="absolute -z-10 bottom-1/4 -right-10 w-32 h-32 bg-indigo-400/10 rounded-full blur-xl"
               animate={{ 
                 x: [0, -10, 0],
                 y: [0, 10, 0],
@@ -663,24 +606,21 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
           
           {isLoading && (
             <motion.div 
-              className={`mt-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-4 shadow-sm ${
-                isDarkMode ? 'border border-gray-700' : 'border border-gray-100'
-              }`}
+              className="mt-4 bg-white rounded-lg p-4 shadow-sm border border-gray-100"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              style={glassEffect}
             >
               <div className="flex items-center">
-                <div className={`w-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full h-2.5`}>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <motion.div 
-                    className={`h-full ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'} rounded-full`}
+                    className="bg-blue-600 h-2.5 rounded-full" 
                     initial={{ width: "5%" }}
                     animate={{ width: "100%" }}
                     transition={{ duration: 2, ease: "easeInOut" }}
                   />
                 </div>
-                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} ml-4 whitespace-nowrap`}>Mengunggah...</span>
+                <span className="text-sm text-gray-500 ml-4 whitespace-nowrap">Mengunggah...</span>
               </div>
             </motion.div>
           )}

@@ -1,15 +1,9 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { 
-  BellIcon, 
-  Cog6ToothIcon, 
-  UserCircleIcon,
-  SunIcon,
-  MoonIcon
-} from '@heroicons/react/24/outline';
+import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
-  const { theme, isMobile, isDarkMode, toggleTheme } = useTheme();
+  const { theme, isMobile } = useTheme();
   
   const headerVariants = {
     hidden: { y: -50, opacity: 0 },
@@ -54,18 +48,12 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
     }
   };
 
-  // Glassmorphism style with enhanced effects
-  const glassEffect = isDarkMode ? {
-    background: 'rgba(17, 24, 39, 0.75)',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.25)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-  } : {
-    background: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.12)',
+  // Glassmorphism style
+  const glassEffect = {
+    background: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
     border: '1px solid rgba(255, 255, 255, 0.18)',
   };
   
@@ -74,9 +62,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       variants={headerVariants}
       initial="hidden"
       animate="visible"
-      className={`mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl ${
-        isDarkMode ? 'text-gray-100' : 'text-gray-800'
-      }`}
+      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
       style={{
         ...glassEffect,
         willChange: 'transform, opacity',
@@ -89,9 +75,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
           whileHover={{ 
             scale: 1.05,
             rotate: 3,
-            boxShadow: isDarkMode 
-              ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)' 
-              : '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)'
           }}
           whileTap={{ scale: 0.95, rotate: -3 }}
           className="w-12 h-12 rounded-xl mr-4 flex items-center justify-center shadow-lg"
@@ -115,14 +99,6 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-          ) : title === 'Data Pasien' ? (
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          ) : title.includes('Riwayat') || title.includes('History') ? (
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
           ) : (
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -132,7 +108,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         <div>
           <motion.h2 
             variants={itemVariants}
-            className="text-lg sm:text-xl md:text-2xl font-bold"
+            className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800"
           >
             {title}
           </motion.h2>
@@ -162,155 +138,58 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         transition={{ delay: 0.3, duration: 0.3 }}
         className="hidden md:flex items-center space-x-3"
       >
-        {/* Theme Toggle Button */}
         <motion.button
-          whileHover={{ 
-            scale: 1.05,
-            boxShadow: isDarkMode 
-              ? '0 4px 12px rgba(96, 165, 250, 0.3)' 
-              : '0 4px 12px rgba(59, 130, 246, 0.3)'
-          }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={toggleTheme}
-          className={`p-2 rounded-lg transition-all duration-300 ${
-            isDarkMode 
-              ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300' 
-              : 'bg-white/50 hover:bg-white/80 text-blue-600'
-          }`}
-          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
         >
-          <motion.div
-            initial={{ rotate: 0 }}
-            animate={{ rotate: isDarkMode ? 180 : 0 }}
-            transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
-          >
-            {isDarkMode ? (
-              <SunIcon className="h-5 w-5" />
-            ) : (
-              <MoonIcon className="h-5 w-5" />
-            )}
-          </motion.div>
-        </motion.button>
-
-        <motion.button
-          whileHover={{ 
-            scale: 1.05,
-            boxShadow: isDarkMode 
-              ? '0 4px 12px rgba(0, 0, 0, 0.2)' 
-              : '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}
-          whileTap={{ scale: 0.95 }}
-          className={`p-2 rounded-lg transition-all duration-300 ${
-            isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white/50 hover:bg-white/80'
-          }`}
-        >
-          <BellIcon className={`h-5 w-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+          <BellIcon className="h-5 w-5 text-gray-600" />
         </motion.button>
         <motion.button
-          whileHover={{ 
-            scale: 1.05,
-            boxShadow: isDarkMode 
-              ? '0 4px 12px rgba(0, 0, 0, 0.2)' 
-              : '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`p-2 rounded-lg transition-all duration-300 ${
-            isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white/50 hover:bg-white/80'
-          }`}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
         >
-          <Cog6ToothIcon className={`h-5 w-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
+          <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
         </motion.button>
         <motion.div
-          whileHover={{ 
-            scale: 1.05,
-            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
-          }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`p-1 rounded-lg transition-all duration-300 ${
-            isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white/50 hover:bg-white/80'
-          }`}
+          className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
-            <motion.span
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-            >
-              A
-            </motion.span>
+            A
           </div>
         </motion.div>
       </motion.div>
 
       {/* Hamburger button in the header for mobile */}
       {isMobile && (
-        <div className="flex items-center space-x-2">
-          {/* Theme Toggle Button for Mobile */}
-          <motion.button
-            variants={itemVariants}
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: isDarkMode 
-                ? '0 4px 12px rgba(96, 165, 250, 0.3)' 
-                : '0 4px 12px rgba(59, 130, 246, 0.3)'
-            }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className={`p-2 rounded-lg transition-all duration-300 ${
-              isDarkMode 
-                ? 'bg-gray-700 text-yellow-300' 
-                : 'bg-white/50 text-blue-600'
-            }`}
-            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            <motion.div
-              initial={{ rotate: 0 }}
-              animate={{ rotate: isDarkMode ? 180 : 0 }}
-              transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
-            >
-              {isDarkMode ? (
-                <SunIcon className="h-5 w-5" />
-              ) : (
-                <MoonIcon className="h-5 w-5" />
-              )}
-            </motion.div>
-          </motion.button>
-
-          <motion.button
-            variants={itemVariants}
-            whileHover={{ 
-              scale: 1.05,
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)'
-            }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleMenuClick}
-            className="p-3 rounded-lg text-white shadow-lg z-50"
-            style={{ 
-              background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              willChange: 'transform',
-              transform: 'translateZ(0)',
-              position: 'relative' // Ensure it's above other elements
-            }}
-            aria-label="Toggle menu"
-          >
-            <motion.div
-              initial={{ rotate: 0 }}
-              animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}
-              transition={{ duration: 0.3, type: 'spring', stiffness: 300 }}
-            >
-              {isMobileMenuOpen ? (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </motion.div>
-          </motion.button>
-        </div>
+        <motion.button
+          variants={itemVariants}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleMenuClick}
+          className="p-3 rounded-lg text-white shadow-lg z-50"
+          style={{ 
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            willChange: 'transform',
+            transform: 'translateZ(0)',
+            position: 'relative' // Ensure it's above other elements
+          }}
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </motion.button>
       )}
     </motion.header>
   );

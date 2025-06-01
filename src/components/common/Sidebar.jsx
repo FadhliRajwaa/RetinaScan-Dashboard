@@ -34,7 +34,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeIndex, setActiveIndex] = useState(null);
   const location = useLocation();
-  const { theme, isMobile, isDarkMode } = useTheme();
+  const { theme } = useTheme();
   
   // Set active index based on current location
   useEffect(() => {
@@ -113,30 +113,16 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     }),
   };
 
-  // Modern gradient background with glassmorphism effect based on theme
-  const bgGradient = isDarkMode 
-    ? `linear-gradient(135deg, ${theme.primary}60, ${theme.accent}60)`
-    : `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
-    
-  const activeItemBg = isDarkMode 
-    ? `${theme.primary}90` 
-    : `${theme.primary}`;
-    
-  const hoverItemBg = isDarkMode 
-    ? `${theme.primary}40` 
-    : `${theme.primary}40`;
+  // Modern gradient background with glassmorphism effect
+  const bgGradient = `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
+  const activeItemBg = `${theme.primary}`;
+  const hoverItemBg = `${theme.primary}40`;
   
-  // Glassmorphism style based on theme
-  const glassEffect = isDarkMode ? {
+  // Glassmorphism style
+  const glassEffect = {
     background: bgGradient,
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.35)',
-    borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-  } : {
-    background: bgGradient,
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
     borderRight: '1px solid rgba(255, 255, 255, 0.18)',
   };
@@ -174,7 +160,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           {/* Header: Logo and Close Button */}
           <motion.div 
             className="p-5 flex items-center justify-between"
-            style={{ backgroundColor: isDarkMode ? `${theme.accent}10` : `${theme.accent}20` }}
+            style={{ backgroundColor: `${theme.accent}20` }}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
@@ -187,9 +173,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             >
               <h1 className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    background: isDarkMode 
-                      ? 'linear-gradient(90deg, #f9fafb, rgba(249, 250, 251, 0.8))' 
-                      : 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
+                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>RetinaScan</h1>
@@ -207,7 +191,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               whileTap={{ scale: 0.9, rotate: -5 }}
               className="p-2 rounded-full"
               style={{ 
-                backgroundColor: isDarkMode ? `${theme.accent}40` : `${theme.accent}60`,
+                backgroundColor: `${theme.accent}60`,
                 backdropFilter: 'blur(4px)',
                 willChange: 'transform'
               }}
@@ -230,7 +214,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   animate="visible"
                   exit="hidden"
                   style={{ willChange: 'transform, opacity' }}
-                  className="mb-3"
+                  className="mb-2"
                 >
                   {item.external ? (
                     <motion.a
@@ -275,20 +259,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                           boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
                         }}
                       >
-                        <motion.div
-                          initial={{ rotate: 0 }}
-                          animate={{ 
-                            rotate: location.pathname === item.path ? [0, -10, 0] : 0,
-                            scale: location.pathname === item.path ? [1, 1.2, 1] : 1
-                          }}
-                          transition={{ 
-                            duration: 0.5, 
-                            repeat: location.pathname === item.path ? 0 : 0,
-                            repeatType: "reverse"
-                          }}
-                        >
-                          <item.icon className="h-6 w-6 mr-3" />
-                        </motion.div>
+                        <item.icon className="h-6 w-6 mr-3" />
                         <span className="text-base font-medium">{item.name}</span>
                       </Link>
                     </motion.div>
@@ -309,14 +280,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               onClick={(e) => handleLogoutEvent(e, toggleMobileMenu, FRONTEND_URL)}
               className="flex items-center p-4 w-full rounded-xl transition-all duration-200"
               style={{ 
-                background: isDarkMode ? 'linear-gradient(135deg, #b91c1c, #ef4444)' : 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
                 backdropFilter: 'blur(4px)',
                 willChange: 'transform, background-color'
               }}
-              whileHover={{ 
-                scale: 1.03, 
-                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.2)'
-              }}
+              whileHover={{ scale: 1.03, backgroundColor: '#dc2626' }}
               whileTap={{ scale: 0.97 }}
             >
               <ArrowLeftOnRectangleIcon className="h-6 w-6 mr-3" />
@@ -351,9 +319,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 <h1 
                   className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    background: isDarkMode 
-                      ? 'linear-gradient(90deg, #f9fafb, rgba(249, 250, 251, 0.8))' 
-                      : 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
+                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -381,21 +347,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)'
                 }}
               >
-                <motion.span 
-                  className="text-xl font-extrabold text-white"
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    rotate: [0, 5, 0]
-                  }}
-                  transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    repeatDelay: 5
-                  }}
-                >
-                  R
-                </motion.span>
+                <span className="text-xl font-extrabold text-white">R</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -431,7 +383,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               initial="hidden"
               animate="visible"
               style={{ willChange: 'transform, opacity' }}
-              className="mb-3"
+              className="mb-2"
             >
               {item.external ? (
                 <motion.a
@@ -487,20 +439,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                     to={item.path}
                     className="flex items-center w-full"
                   >
-                    <motion.div
-                      animate={{ 
-                        rotate: location.pathname === item.path ? [0, -10, 0] : 0,
-                        scale: location.pathname === item.path ? [1, 1.2, 1] : 1
-                      }}
-                      transition={{ 
-                        duration: 0.5, 
-                        repeat: location.pathname === item.path ? Infinity : 0,
-                        repeatType: "reverse",
-                        repeatDelay: 5
-                      }}
-                    >
-                      <item.icon className="h-5 w-5 min-w-[1.25rem]" />
-                    </motion.div>
+                    <item.icon className="h-5 w-5 min-w-[1.25rem]" />
                     {isOpen && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
@@ -525,13 +464,10 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
             className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
             style={{ 
-              background: isDarkMode ? 'linear-gradient(135deg, #b91c1c, #ef4444)' : 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+              background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
               backdropFilter: 'blur(4px)',
             }}
-            whileHover={{ 
-              scale: 1.03, 
-              boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.2)'
-            }}
+            whileHover={{ scale: 1.03, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
             whileTap={{ scale: 0.97 }}
           >
             <ArrowLeftOnRectangleIcon className="h-5 w-5 min-w-[1.25rem]" />
@@ -555,13 +491,10 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
               className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
               style={{ 
-                background: isDarkMode ? 'linear-gradient(135deg, #b91c1c, #ef4444)' : 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
                 backdropFilter: 'blur(4px)',
               }}
-              whileHover={{ 
-                scale: 1.1, 
-                boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -2px rgba(239, 68, 68, 0.2)'
-              }}
+              whileHover={{ scale: 1.1, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
               whileTap={{ scale: 0.9 }}
             >
               <ArrowLeftOnRectangleIcon className="h-5 w-5" />
