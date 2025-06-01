@@ -17,6 +17,10 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './App.css';
+import { useTheme } from './context/ThemeContext';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,23 +29,56 @@ function App() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const [currentTitle, setCurrentTitle] = useState('Dashboard');
+  const { isDarkMode } = useTheme();
   
   // API URL from environment variables
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 
-  // Update title based on current path
+  // Get user ID from URL params or localStorage
+  const userId = searchParams.get('userId') || localStorage.getItem('userId') || null;
+
+  // Toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+  
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await safeLogout(FRONTEND_URL);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      window.location.href = `${FRONTEND_URL}/#/?logout=true&from=dashboard&error=true`;
+    }
+  };
+
+  // Set page title based on current route
   useEffect(() => {
     const path = location.pathname;
-    console.log('Current path:', path);
     
-    if (path === '/' || path === '/dashboard') setCurrentTitle('Dashboard');
-    else if (path === '/patient-data') setCurrentTitle('Data Pasien');
-    else if (path === '/scan-retina') setCurrentTitle('Scan Retina');
-    else if (path === '/history') setCurrentTitle('History');
-    else if (path === '/analysis') setCurrentTitle('Analysis');
-    else if (path === '/report') setCurrentTitle('Report');
-  }, [location.pathname]);
+    if (path === '/' || path === '/dashboard') {
+      setCurrentTitle('Dashboard');
+    } else if (path === '/patient-data') {
+      setCurrentTitle('Data Pasien');
+    } else if (path === '/add-patient') {
+      setCurrentTitle('Tambah Pasien');
+    } else if (path.includes('/edit-patient')) {
+      setCurrentTitle('Edit Pasien');
+    } else if (path === '/scan-retina') {
+      setCurrentTitle('Scan Retina');
+    } else if (path === '/history') {
+      setCurrentTitle('Riwayat Pasien');
+    } else if (path.includes('/patient-history')) {
+      setCurrentTitle('Detail Riwayat');
+    } else if (path.includes('/patient-profile')) {
+      setCurrentTitle('Profil Pasien');
+    } else if (path === '/analysis') {
+      setCurrentTitle('Analisis');
+    } else if (path === '/report') {
+      setCurrentTitle('Laporan');
+    }
+  }, [location]);
 
   // Handle token from URL query parameter
   useEffect(() => {
@@ -208,43 +245,6 @@ function App() {
     }
   };
 
-  // Simpan userId dalam state untuk digunakan di seluruh aplikasi
-  const [userId, setUserId] = useState(null);
-
-  useEffect(() => {
-    const verifyAuth = async () => {
-      const authResult = await checkAuth();
-      setIsAuthenticated(authResult);
-      
-      if (authResult) {
-        // Ambil dan simpan ID pengguna dari token
-        try {
-          const token = localStorage.getItem('token');
-          const decodedToken = jwtDecode(token);
-          console.log('Token decoded:', decodedToken);
-          
-          if (decodedToken && decodedToken.id) {
-            setUserId(decodedToken.id);
-            console.log('User ID set:', decodedToken.id);
-          }
-        } catch (error) {
-          console.error('Failed to extract user ID from token:', error);
-        }
-        
-        setLoading(false);
-      } else {
-        setLoading(false);
-      }
-    };
-    
-    verifyAuth();
-  }, []);
-
-  const toggleMobileMenu = () => {
-    console.log('Toggling mobile menu, current state:', isMobileMenuOpen);
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
   // Early return for loading state
   if (loading) {
     return (
@@ -263,7 +263,7 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+    <div className={`flex flex-col lg:flex-row min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       <Sidebar toggleMobileMenu={toggleMobileMenu} isMobileMenuOpen={isMobileMenuOpen} />
       
       <main className="flex-1 p-0 lg:p-4 overflow-hidden transition-all duration-200" style={{ 
@@ -295,6 +295,19 @@ function App() {
           </Routes>
         </AnimatePresence>
       </main>
+      
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={isDarkMode ? "dark" : "light"}
+      />
     </div>
   );
 }

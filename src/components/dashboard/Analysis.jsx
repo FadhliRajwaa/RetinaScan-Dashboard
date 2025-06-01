@@ -3,18 +3,26 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye } from 'react-icons/fi';
 import { getLatestAnalysis } from '../../services/api';
 import { getSeverityTextColor, getSeverityBgColor, getSeverityLabel } from '../../utils/severityUtils';
+import { useTheme } from '../../context/ThemeContext';
 
-// Glassmorphism style
+// Glassmorphism style berdasarkan tema
 const glassEffect = {
-  background: 'rgba(255, 255, 255, 0.8)',
+  background: isDarkMode 
+    ? 'rgba(17, 24, 39, 0.7)' 
+    : 'rgba(255, 255, 255, 0.8)',
   backdropFilter: 'blur(10px)',
   WebkitBackdropFilter: 'blur(10px)',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-  border: '1px solid rgba(255, 255, 255, 0.18)',
+  boxShadow: isDarkMode 
+    ? '0 8px 32px 0 rgba(0, 0, 0, 0.2)' 
+    : '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+  border: isDarkMode 
+    ? '1px solid rgba(255, 255, 255, 0.05)' 
+    : '1px solid rgba(255, 255, 255, 0.18)',
   borderRadius: '16px',
 };
 
 function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
+  const { theme, isDarkMode } = useTheme();
   const [analysis, setAnalysis] = useState(initialAnalysis || null);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -292,116 +300,87 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
 
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
-      style={{ transform: 'translateZ(0)' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="w-full"
     >
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="text-red-500 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start"
-            style={{ ...glassEffect, background: 'rgba(254, 226, 226, 0.7)' }}
-          >
-            <FiAlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
-          </motion.div>
-        )}
-        
-        {/* Tambahkan indikator mode simulasi */}
-        {analysis && (analysis.isSimulation || analysis.simulation_mode || 
-          (analysis.raw_prediction && analysis.raw_prediction.is_simulation)) && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="text-amber-700 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start"
-            style={{ ...glassEffect, background: 'rgba(254, 240, 199, 0.7)' }}
-          >
-            <FiAlertTriangle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5 text-amber-600" />
-            <div>
-              <span className="font-bold block mb-1">PERHATIAN: Mode Simulasi Aktif</span> 
-              <span>Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia. Hasil ini TIDAK BOLEH digunakan untuk diagnosis. Silakan konsultasikan dengan dokter mata untuk diagnosis yang akurat.</span>
-              {analysis.errorMessage && (
-                <div className="mt-2 text-sm font-medium text-red-600">
-                  Alasan: {analysis.errorMessage}
-                </div>
-              )}
-              <div className="mt-2 text-xs">
-                <span className="font-semibold">Gunakan script "npm run test:flask" untuk menguji koneksi ke Flask API dan memastikan mode simulasi dinonaktifkan.</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left side - Image preview */}
-        {image && image.preview && (
-          <motion.div 
-            variants={itemVariants}
-            className="w-full md:w-1/2"
-          >
-            <motion.div 
-              className="rounded-xl overflow-hidden relative"
-              style={{ ...glassEffect }}
-              whileHover={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
-            >
-              <motion.div 
-                className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              />
-              <motion.img 
-                src={image.preview} 
-                alt="Citra Retina" 
-                className="w-full h-64 object-contain p-2"
-                initial={{ filter: 'blur(10px)', scale: 0.9 }}
-                animate={{ filter: 'blur(0px)', scale: 1 }}
-                transition={{ duration: 0.5, type: 'spring', stiffness: 300 }}
-              />
-              
-              {/* Overlay untuk efek hover */}
-              <motion.div 
-                className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4"
-              >
-                <motion.div 
-                  initial={{ y: 20, opacity: 0 }}
-                  whileHover={{ y: 0, opacity: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                >
-                  <p className="text-white text-sm font-medium">Gambar Retina</p>
-                  {image.patient && (
-                    <p className="text-white/80 text-xs mt-1">
-                      Pasien: {image.patient.fullName || image.patient.name}
-                    </p>
-                  )}
-                </motion.div>
-              </motion.div>
-              
-              <motion.div className="p-4 border-t border-gray-100">
-                <h3 className="text-sm font-medium text-gray-700">Citra Retina</h3>
-                {image.patient && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Pasien: {image.patient.fullName || image.patient.name}
-                  </p>
-                )}
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`text-red-500 ${isDarkMode ? 'bg-red-900/30' : 'bg-red-50'} p-4 rounded-xl mb-5 flex items-start shadow-sm ${isDarkMode ? 'border border-red-800/50' : 'border border-red-100'}`}
+        >
+          <FiAlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+          <span>{error}</span>
+        </motion.div>
+      )}
 
-        {/* Right side - Analysis results or loading */}
-        <motion.div 
-          variants={itemVariants}
-          className="w-full md:w-1/2"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Preview Image */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className={`rounded-xl overflow-hidden shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4`}
+          style={glassEffect}
+        >
+          <h3 className={`text-lg font-medium mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Gambar Retina</h3>
+          
+          {image?.preview ? (
+            <div className="relative rounded-lg overflow-hidden shadow-md">
+              <img 
+                src={image.preview} 
+                alt="Retina" 
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          ) : (
+            <div className={`h-48 flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg`}>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tidak ada gambar</p>
+            </div>
+          )}
+          
+          {image?.file && (
+            <div className="mt-3">
+              <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                {image.file.name}
+              </p>
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mt-1`}>
+                {(image.file.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+          )}
+          
+          {image?.patient && (
+            <div className={`mt-4 pt-4 ${isDarkMode ? 'border-t border-gray-700' : 'border-t border-gray-100'}`}>
+              <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Data Pasien
+              </h4>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <span className="font-medium">Nama:</span> {image.patient.fullName || image.patient.name}
+              </p>
+              {image.patient.dateOfBirth && (
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <span className="font-medium">Tanggal Lahir:</span> {new Date(image.patient.dateOfBirth).toLocaleDateString('id-ID')}
+                </p>
+              )}
+              {image.patient.medicalRecordNumber && (
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <span className="font-medium">No. Rekam Medis:</span> {image.patient.medicalRecordNumber}
+                </p>
+              )}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Analysis Results */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className={`rounded-xl overflow-hidden shadow-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4`}
+          style={glassEffect}
         >
           {isLoading ? (
             <motion.div 

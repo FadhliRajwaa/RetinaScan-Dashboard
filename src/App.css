@@ -40,3 +40,198 @@
 .read-the-docs {
   color: #888;
 }
+
+/* App.css */
+
+/* Ensure the app takes full height of the viewport */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Main app container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Content area */
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: padding-left 0.3s ease;
+}
+
+/* Responsive layout adjustments */
+@media (min-width: 1024px) {
+  .content-container {
+    padding-left: 280px; /* Width of sidebar */
+  }
+  
+  .content-container.sidebar-collapsed {
+    padding-left: 80px; /* Width of collapsed sidebar */
+  }
+}
+
+/* Mobile and tablet optimizations */
+@media (max-width: 1023px) {
+  .content-container {
+    padding-left: 0;
+  }
+  
+  /* Improve touch targets on mobile */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Tablet specific optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .tablet-col-6 {
+    width: calc(50% - 0.5rem);
+  }
+}
+
+/* Improved focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Improved animations */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+/* Glassmorphism effect */
+.glass-effect {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.light .glass-effect {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+.dark .glass-effect {
+  background-color: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* Performance optimizations */
+.hardware-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
+}
+
+/* Improved form elements */
+input, textarea, select {
+  appearance: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.light input, .light textarea, .light select {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+}
+
+.dark input, .dark textarea, .dark select {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: white;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.light .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.5);
+  border-radius: 20px;
+}
+
+.light .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.7);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 20px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.5);
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  
+  .print-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  a {
+    text-decoration: none !important;
+    color: black !important;
+  }
+}
