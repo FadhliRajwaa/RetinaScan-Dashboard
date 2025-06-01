@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { withPageTransition, useTheme } from '../context/ThemeContext';
+import { motion } from 'framer-motion';
+import { withPageTransition } from '../context/ThemeContext';
 import { getPatientHistory, deleteAnalysis } from '../services/api';
 import { API_URL } from '../utils/api';
 import axios from 'axios';
@@ -108,10 +108,6 @@ function PatientHistoryPageComponent() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [idToDelete, setIdToDelete] = useState(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
-  const { theme, isDarkMode } = useTheme();
-  
-  // Get theme-specific colors
-  const currentTheme = isDarkMode ? theme.dark : theme.light;
 
   useEffect(() => {
     const fetchPatientHistory = async () => {
@@ -175,26 +171,26 @@ function PatientHistoryPageComponent() {
   const getSeverityBadge = (severity) => {
     const severityLower = severity.toLowerCase();
     if (severityLower === 'tidak ada' || severityLower === 'normal') {
-      return isDarkMode ? 'bg-blue-900/40 text-blue-200' : 'bg-blue-100 text-blue-800';
+      return 'bg-blue-100 text-blue-800';
     } else if (severityLower === 'ringan' || severityLower === 'rendah') {
-      return isDarkMode ? 'bg-green-900/40 text-green-200' : 'bg-green-100 text-green-800';
+      return 'bg-green-100 text-green-800';
     } else if (severityLower === 'sedang') {
-      return isDarkMode ? 'bg-yellow-900/40 text-yellow-200' : 'bg-yellow-100 text-yellow-800';
+      return 'bg-yellow-100 text-yellow-800';
     } else if (severityLower === 'berat' || severityLower === 'parah') {
-      return isDarkMode ? 'bg-orange-900/40 text-orange-200' : 'bg-orange-100 text-orange-800';
+      return 'bg-orange-100 text-orange-800';
     } else if (severityLower === 'sangat berat' || severityLower === 'proliferative dr') {
-      return isDarkMode ? 'bg-red-900/40 text-red-200' : 'bg-red-100 text-red-800';
+      return 'bg-red-100 text-red-800';
     } else {
       // Fallback berdasarkan severityLevel jika ada
       const level = parseInt(severity);
       if (!isNaN(level)) {
-        if (level === 0) return isDarkMode ? 'bg-blue-900/40 text-blue-200' : 'bg-blue-100 text-blue-800';
-        if (level === 1) return isDarkMode ? 'bg-green-900/40 text-green-200' : 'bg-green-100 text-green-800';
-        if (level === 2) return isDarkMode ? 'bg-yellow-900/40 text-yellow-200' : 'bg-yellow-100 text-yellow-800';
-        if (level === 3) return isDarkMode ? 'bg-orange-900/40 text-orange-200' : 'bg-orange-100 text-orange-800';
-        if (level === 4) return isDarkMode ? 'bg-red-900/40 text-red-200' : 'bg-red-100 text-red-800';
+        if (level === 0) return 'bg-blue-100 text-blue-800';
+        if (level === 1) return 'bg-green-100 text-green-800';
+        if (level === 2) return 'bg-yellow-100 text-yellow-800';
+        if (level === 3) return 'bg-orange-100 text-orange-800';
+        if (level === 4) return 'bg-red-100 text-red-800';
       }
-      return isDarkMode ? 'bg-gray-800/40 text-gray-200' : 'bg-gray-100 text-gray-800';
+      return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -492,285 +488,158 @@ function PatientHistoryPageComponent() {
     }
   };
 
-  // Glassmorphism style based on theme
-  const glassEffect = isDarkMode ? theme.dark.glassEffect : theme.light.glassEffect;
-
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 ${isDarkMode ? 'dark' : ''}`}
-         style={{ 
-           background: isDarkMode 
-             ? `linear-gradient(135deg, ${currentTheme.background}, ${currentTheme.backgroundAlt})` 
-             : 'linear-gradient(135deg, #F9FAFB, #F3F4F6)'
-         }}>
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header with back button */}
-        <motion.div 
-          className="flex items-center mb-6"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.button 
+        <div className="flex items-center mb-6">
+          <button 
             onClick={handleBack}
-            className="mr-4 p-2 rounded-full"
-            whileHover={theme.animations.smoothHover}
-            whileTap={theme.animations.smoothTap}
-            style={{ 
-              backgroundColor: isDarkMode 
-                ? 'rgba(255, 255, 255, 0.05)' 
-                : 'rgba(0, 0, 0, 0.05)'
-            }}
+            className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <FiArrowLeft className={isDarkMode ? 'text-gray-300' : 'text-gray-600'} size={20} />
-          </motion.button>
-          <motion.h1 
-            className="text-2xl font-bold"
-            style={{ 
-              background: isDarkMode 
-                ? currentTheme.coolGradient 
-                : currentTheme.primaryGradient,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Riwayat Pasien
-          </motion.h1>
-        </motion.div>
+            <FiArrowLeft className="text-gray-600" size={20} />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Riwayat Pasien</h1>
+        </div>
         
         {isLoading ? (
-          <motion.div 
-            className="flex justify-center items-center py-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+          <div className="flex justify-center items-center py-20">
             <div className="flex flex-col items-center">
-              <motion.div 
-                className={`rounded-full h-12 w-12 border-t-2 border-b-2 ${isDarkMode ? 'border-blue-400' : 'border-blue-500'}`}
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              ></motion.div>
-              <p className={isDarkMode ? 'text-gray-300 mt-3' : 'text-gray-500 mt-3'}>Memuat data pasien...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
+              <p className="text-gray-500">Memuat data pasien...</p>
             </div>
-          </motion.div>
+          </div>
         ) : error ? (
-          <motion.div 
-            className="rounded-lg p-6 text-center"
-            style={{
-              ...glassEffect,
-              boxShadow: isDarkMode ? currentTheme.mediumShadow : '0 4px 6px rgba(0, 0, 0, 0.1)'
-            }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <FiAlertTriangle className={`text-yellow-500 text-5xl mx-auto mb-4 ${isDarkMode ? 'opacity-80' : ''}`} />
-            <h3 className={`text-xl font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{error}</h3>
-            <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Tidak dapat menemukan riwayat analisis untuk pasien ini.</p>
-            <motion.button
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-800 mb-2">{error}</h3>
+            <p className="text-gray-600 mb-6">Tidak dapat menemukan riwayat analisis untuk pasien ini.</p>
+            <button
               onClick={handleBack}
-              className="px-4 py-2 text-white rounded-lg"
-              style={{ 
-                background: isDarkMode 
-                  ? currentTheme.primaryGradient 
-                  : currentTheme.primaryGradient,
-                boxShadow: isDarkMode 
-                  ? '0 4px 12px rgba(59, 130, 246, 0.3)' 
-                  : '0 4px 12px rgba(59, 130, 246, 0.2)',
-              }}
-              whileHover={theme.animations.smoothHover}
-              whileTap={theme.animations.smoothTap}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Kembali ke Daftar Pasien
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
         ) : patientData && patientAnalyses.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Patient Info Card */}
             <div className="lg:col-span-1">
-              <motion.div 
-                className="rounded-lg p-6 mb-6"
-                style={{
-                  ...glassEffect,
-                  boxShadow: isDarkMode ? currentTheme.mediumShadow : '0 4px 6px rgba(0, 0, 0, 0.1)'
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                <h3 className="text-lg font-semibold mb-4 flex items-center"
-                    style={{ 
-                      color: isDarkMode ? currentTheme.text : currentTheme.text
-                    }}>
-                  <FiUser className="mr-2" style={{ color: isDarkMode ? currentTheme.accent : currentTheme.primary }} />
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <FiUser className="mr-2 text-blue-500" />
                   Informasi Pasien
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nama Lengkap</p>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : ''}`}>{patientData.fullName || patientData.name}</p>
+                    <p className="text-sm text-gray-500">Nama Lengkap</p>
+                    <p className="font-medium">{patientData.fullName || patientData.name}</p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Jenis Kelamin</p>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : ''}`}>{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
+                    <p className="text-sm text-gray-500">Jenis Kelamin</p>
+                    <p className="font-medium">{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Usia</p>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : ''}`}>{patientData.age || '-'} tahun</p>
+                    <p className="text-sm text-gray-500">Usia</p>
+                    <p className="font-medium">{patientData.age || '-'} tahun</p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tanggal Lahir</p>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : ''}`}>
+                    <p className="text-sm text-gray-500">Tanggal Lahir</p>
+                    <p className="font-medium">
                       {patientData.dateOfBirth ? formatDate(patientData.dateOfBirth).split(',')[0] : '-'}
                     </p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Pemindaian</p>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : ''}`}>{totalAnalyses} kali</p>
+                    <p className="text-sm text-gray-500">Total Pemindaian</p>
+                    <p className="font-medium">{totalAnalyses} kali</p>
                   </div>
                   <div>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Pemindaian Terakhir</p>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : ''}`}>
+                    <p className="text-sm text-gray-500">Pemindaian Terakhir</p>
+                    <p className="font-medium">
                       {patientAnalyses[0] ? formatDate(patientAnalyses[0].createdAt) : '-'}
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
               
               {/* Analysis History List */}
-              <motion.div 
-                className="rounded-lg p-6"
-                style={{
-                  ...glassEffect,
-                  boxShadow: isDarkMode ? currentTheme.mediumShadow : '0 4px 6px rgba(0, 0, 0, 0.1)'
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-              >
-                <h3 className="text-lg font-semibold mb-4 flex items-center"
-                    style={{ 
-                      color: isDarkMode ? currentTheme.text : currentTheme.text
-                    }}>
-                  <FiFileText className="mr-2" style={{ color: isDarkMode ? currentTheme.accent : currentTheme.primary }} />
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <FiFileText className="mr-2 text-blue-500" />
                   Riwayat Pemindaian
                 </h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                   {patientAnalyses.map((analysis, index) => (
-                    <motion.div 
+                    <div 
                       key={analysis.id}
                       onClick={() => setSelectedAnalysisIndex(index)}
                       className={`p-3 rounded-lg cursor-pointer transition-all ${
                         selectedAnalysisIndex === index 
-                          ? isDarkMode 
-                            ? 'bg-blue-900/20 border-l-4 border-blue-500' 
-                            : 'bg-blue-50 border-l-4 border-blue-500' 
-                          : isDarkMode
-                            ? 'bg-gray-800/30 hover:bg-gray-700/30'
-                            : 'bg-gray-50 hover:bg-gray-100'
+                          ? 'bg-blue-50 border-l-4 border-blue-500' 
+                          : 'bg-gray-50 hover:bg-gray-100'
                       }`}
-                      whileHover={{ 
-                        x: 4, 
-                        transition: { duration: 0.2 }
-                      }}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : ''}`}>
+                          <p className="text-sm font-medium">
                             {formatDate(analysis.createdAt)}
                           </p>
                           <div className="flex items-center mt-1">
                             <span className={`px-2 py-0.5 rounded-full text-xs ${getSeverityBadge(analysis.severity)}`}>
                               {analysis.severity}
                             </span>
-                            <span className={`text-xs ml-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <span className="text-xs text-gray-500 ml-2">
                               {(analysis.confidence * 100).toFixed(0)}% keyakinan
                             </span>
                           </div>
                         </div>
                         {selectedAnalysisIndex === index && (
-                          <motion.div 
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: isDarkMode ? currentTheme.accent : currentTheme.primary }}
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.3 }}
-                          ></motion.div>
+                          <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                         )}
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             </div>
             
             {/* Analysis Details */}
             <div className="lg:col-span-2">
               {patientAnalyses[selectedAnalysisIndex] && (
-                <motion.div 
-                  className="rounded-lg p-6"
-                  style={{
-                    ...glassEffect,
-                    boxShadow: isDarkMode ? currentTheme.mediumShadow : '0 4px 6px rgba(0, 0, 0, 0.1)'
-                  }}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4 }}
-                  key={patientAnalyses[selectedAnalysisIndex].id}
-                >
+                <div className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-lg font-semibold" style={{ color: isDarkMode ? currentTheme.text : 'inherit' }}>
+                    <h3 className="text-lg font-semibold text-gray-800">
                       Detail Analisis
                     </h3>
                     <div className="flex space-x-2">
-                      <motion.button
+                      <button
                         onClick={handleDownloadPdf}
                         disabled={isPdfLoading}
-                        className="p-2 rounded-full"
-                        style={{
-                          color: isDarkMode ? currentTheme.accent : currentTheme.primary,
-                          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(59, 130, 246, 0.1)'
-                        }}
-                        whileHover={theme.animations.smoothHover}
-                        whileTap={theme.animations.smoothTap}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                         title="Unduh PDF"
                       >
                         {isPdfLoading ? (
-                          <motion.div 
-                            className="h-5 w-5 rounded-full border-2 border-t-transparent"
-                            style={{ borderColor: isDarkMode ? `${currentTheme.accent} transparent ${currentTheme.accent} ${currentTheme.accent}` : `${currentTheme.primary} transparent ${currentTheme.primary} ${currentTheme.primary}` }}
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          ></motion.div>
+                          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
                         ) : (
                           <FiDownload size={18} />
                         )}
-                      </motion.button>
-                      <motion.button
+                      </button>
+                      <button
                         onClick={(e) => handleDelete(patientAnalyses[selectedAnalysisIndex].id, e)}
-                        className="p-2 rounded-full"
-                        style={{
-                          color: isDarkMode ? '#f87171' : '#ef4444',
-                          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(239, 68, 68, 0.1)'
-                        }}
-                        whileHover={theme.animations.smoothHover}
-                        whileTap={theme.animations.smoothTap}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                         title="Hapus Analisis"
                       >
                         <FiTrash size={18} />
-                      </motion.button>
+                      </button>
                     </div>
                   </div>
                   
                   {/* Image Preview */}
-                  <div className={`p-4 rounded-lg mb-4 ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100'}`}>
+                  <div className="bg-gray-100 p-4 rounded-lg">
                     <div className="flex justify-between items-center">
-                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Gambar Retina</p>
+                      <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
                       <div className="flex gap-1">
-                        <motion.button 
+                        <button 
                           onClick={() => {
                             const imgEl = document.getElementById('retina-image');
                             if (imgEl) {
@@ -788,16 +657,11 @@ function PatientHistoryPageComponent() {
                               }, 50);
                             }
                           }}
-                          className="px-2 py-1 text-white rounded text-xs flex items-center"
-                          style={{
-                            background: isDarkMode ? 'rgba(16, 185, 129, 0.7)' : 'rgba(16, 185, 129, 0.9)'
-                          }}
-                          whileHover={theme.animations.smoothHover}
-                          whileTap={theme.animations.smoothTap}
+                          className="px-2 py-1 bg-green-500 text-white rounded text-xs flex items-center"
                           title="Muat ulang gambar"
                         >
                           <FiRefreshCcw className="mr-1" /> Refresh
-                        </motion.button>
+                        </button>
                       </div>
                     </div>
                     
@@ -816,14 +680,10 @@ function PatientHistoryPageComponent() {
                       {patientAnalyses[selectedAnalysisIndex] ? (
                         <>
                           {imageStatus === 'loading' && (
-                            <div className={`absolute inset-0 flex items-center justify-center z-10 ${isDarkMode ? 'bg-gray-800/80' : 'bg-gray-100/80'}`}>
+                            <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
                               <div className="flex flex-col items-center space-y-2">
-                                <motion.div 
-                                  className={`rounded-full h-8 w-8 border-t-2 border-b-2 ${isDarkMode ? 'border-blue-400' : 'border-blue-500'}`}
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                ></motion.div>
-                                <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Memuat gambar...</p>
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                                <p className="text-xs text-gray-600">Memuat gambar...</p>
                               </div>
                             </div>
                           )}
@@ -875,7 +735,7 @@ function PatientHistoryPageComponent() {
                         </>
                       ) : (
                         <div className="flex items-center justify-center h-full">
-                          <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Gambar tidak tersedia</p>
+                          <p className="text-gray-500 text-sm">Gambar tidak tersedia</p>
                         </div>
                       )}
                     </div>
@@ -883,112 +743,59 @@ function PatientHistoryPageComponent() {
                   
                   {/* Analysis Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <motion.div 
-                      className="p-4 rounded-lg"
-                      style={{ 
-                        backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.4)' : 'rgba(243, 244, 246, 0.7)'
-                      }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Nama File</p>
-                      <p className={`text-base font-medium break-words ${isDarkMode ? 'text-white' : ''}`}>
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Nama File</p>
+                      <p className="text-base font-medium break-words">
                         {patientAnalyses[selectedAnalysisIndex].originalFilename}
                       </p>
-                    </motion.div>
+                    </div>
                     
-                    <motion.div 
-                      className="p-4 rounded-lg"
-                      style={{ 
-                        backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.4)' : 'rgba(243, 244, 246, 0.7)'
-                      }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.15 }}
-                    >
-                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Tingkat Keparahan</p>
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan</p>
                       <span className={`px-3 py-1 rounded-full text-sm inline-block ${
                         getSeverityBadge(patientAnalyses[selectedAnalysisIndex].severity)
                       }`}>
                         {patientAnalyses[selectedAnalysisIndex].severity}
                       </span>
-                    </motion.div>
+                    </div>
                     
-                    <motion.div 
-                      className="p-4 rounded-lg"
-                      style={{ 
-                        backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.4)' : 'rgba(243, 244, 246, 0.7)'
-                      }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                    >
-                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Tingkat Kepercayaan</p>
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Kepercayaan</p>
                       <div className="flex items-center">
                         <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                          <motion.div 
-                            className="h-2.5 rounded-full" 
-                            style={{ 
-                              background: isDarkMode ? currentTheme.primaryGradient : currentTheme.primaryGradient
-                            }}
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
-                            transition={{ duration: 0.5, delay: 0.3 }}
-                          ></motion.div>
+                          <div 
+                            className="bg-blue-600 h-2.5 rounded-full" 
+                            style={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
+                          ></div>
                         </div>
-                        <span className={`text-base font-medium min-w-[60px] text-right ${isDarkMode ? 'text-white' : ''}`}>
+                        <span className="text-base font-medium min-w-[60px] text-right">
                           {(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(1)}%
                         </span>
                       </div>
-                    </motion.div>
+                    </div>
                     
-                    <motion.div 
-                      className="p-4 rounded-lg"
-                      style={{ 
-                        backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.4)' : 'rgba(243, 244, 246, 0.7)'
-                      }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.25 }}
-                    >
-                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Tanggal Analisis</p>
-                      <p className={`text-base font-medium ${isDarkMode ? 'text-white' : ''}`}>
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Tanggal Analisis</p>
+                      <p className="text-base font-medium">
                         {formatDate(patientAnalyses[selectedAnalysisIndex].createdAt)}
                       </p>
-                    </motion.div>
+                    </div>
                   </div>
                   
                   {/* Notes */}
                   {patientAnalyses[selectedAnalysisIndex].notes && (
-                    <motion.div 
-                      className="p-4 rounded-lg mt-4"
-                      style={{ 
-                        backgroundColor: isDarkMode ? 'rgba(31, 41, 55, 0.4)' : 'rgba(243, 244, 246, 0.7)'
-                      }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                    >
-                      <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Catatan</p>
-                      <p className={`text-base ${isDarkMode ? 'text-white' : ''}`}>
+                    <div className="bg-gray-100 p-4 rounded-lg">
+                      <p className="text-sm font-medium text-gray-500 mb-2">Catatan</p>
+                      <p className="text-base">
                         {patientAnalyses[selectedAnalysisIndex].notes}
                       </p>
-                    </motion.div>
+                    </div>
                   )}
                   
                   {/* Recommendations based on severity */}
-                  <motion.div 
-                    className="p-4 rounded-lg mt-4"
-                    style={{ 
-                      backgroundColor: isDarkMode ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)'
-                    }}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.35 }}
-                  >
-                    <p className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-blue-300' : 'text-blue-800'}`}>Rekomendasi</p>
-                    <p className={`text-base ${isDarkMode ? 'text-blue-200' : 'text-blue-700'}`}>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
+                    <p className="text-base text-blue-700">
                       {patientAnalyses[selectedAnalysisIndex].notes ? (
                         patientAnalyses[selectedAnalysisIndex].notes
                       ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
@@ -1005,101 +812,49 @@ function PatientHistoryPageComponent() {
                         'Lakukan pemeriksaan rutin setiap tahun.'
                       )}
                     </p>
-                  </motion.div>
-                </motion.div>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         ) : (
-          <motion.div 
-            className="rounded-lg p-6 text-center"
-            style={{
-              ...glassEffect,
-              boxShadow: isDarkMode ? currentTheme.mediumShadow : '0 4px 6px rgba(0, 0, 0, 0.1)'
-            }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <FiAlertTriangle className={`text-yellow-500 text-5xl mx-auto mb-4 ${isDarkMode ? 'opacity-80' : ''}`} />
-            <h3 className={`text-xl font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Data Tidak Ditemukan</h3>
-            <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Tidak dapat menemukan data pasien atau riwayat analisis.</p>
-            <motion.button
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
+            <h3 className="text-xl font-medium text-gray-800 mb-2">Data Tidak Ditemukan</h3>
+            <p className="text-gray-600 mb-6">Tidak dapat menemukan data pasien atau riwayat analisis.</p>
+            <button
               onClick={handleBack}
-              className="px-4 py-2 text-white rounded-lg"
-              style={{ 
-                background: isDarkMode 
-                  ? currentTheme.primaryGradient 
-                  : currentTheme.primaryGradient,
-                boxShadow: isDarkMode 
-                  ? '0 4px 12px rgba(59, 130, 246, 0.3)' 
-                  : '0 4px 12px rgba(59, 130, 246, 0.2)',
-              }}
-              whileHover={theme.animations.smoothHover}
-              whileTap={theme.animations.smoothTap}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Kembali ke Daftar Pasien
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
         )}
       </div>
       
       {/* Confirmation Dialog for Delete */}
-      <AnimatePresence>
-        {showConfirmDelete && (
-          <motion.div 
-            className="fixed inset-0 flex items-center justify-center z-50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ backdropFilter: 'blur(4px)', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-          >
-            <motion.div 
-              className="rounded-lg p-6 max-w-md w-full"
-              style={{
-                ...glassEffect,
-                boxShadow: isDarkMode ? '0 8px 32px rgba(0, 0, 0, 0.4)' : '0 8px 32px rgba(0, 0, 0, 0.1)'
-              }}
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            >
-              <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Konfirmasi Hapus</h3>
-              <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Apakah Anda yakin ingin menghapus analisis ini? Tindakan ini tidak dapat dibatalkan.</p>
-              <div className="flex justify-end space-x-3">
-                <motion.button
-                  onClick={() => setShowConfirmDelete(false)}
-                  className="px-4 py-2 rounded-lg"
-                  style={{
-                    backgroundColor: isDarkMode ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.7)',
-                    color: isDarkMode ? 'white' : 'rgba(55, 65, 81, 1)'
-                  }}
-                  whileHover={theme.animations.smoothHover}
-                  whileTap={theme.animations.smoothTap}
-                >
-                  Batal
-                </motion.button>
-                <motion.button
-                  onClick={handleConfirmDelete}
-                  className="px-4 py-2 text-white rounded-lg"
-                  style={{
-                    background: theme.dangerGradient,
-                    boxShadow: isDarkMode 
-                      ? '0 4px 12px rgba(239, 68, 68, 0.3)' 
-                      : '0 4px 12px rgba(239, 68, 68, 0.2)',
-                  }}
-                  whileHover={theme.animations.smoothHover}
-                  whileTap={theme.animations.smoothTap}
-                >
-                  Hapus
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showConfirmDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
+            <p className="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus analisis ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirmDelete(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
