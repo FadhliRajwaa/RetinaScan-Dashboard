@@ -248,8 +248,11 @@ function App() {
   // Early return for loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="relative h-16 w-16">
+          <div className="absolute top-0 left-0 right-0 bottom-0 animate-spin rounded-full border-4 border-t-blue-500 border-r-transparent border-b-blue-300 border-l-transparent"></div>
+          <div className="absolute top-2 left-2 right-2 bottom-2 animate-ping rounded-full border-2 border-blue-500 opacity-30"></div>
+        </div>
       </div>
     );
   }
@@ -266,9 +269,9 @@ function App() {
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
       <Sidebar toggleMobileMenu={toggleMobileMenu} isMobileMenuOpen={isMobileMenuOpen} />
       
-      <main className="flex-1 p-0 lg:p-4 overflow-hidden transition-all duration-200" style={{ 
-        marginLeft: isMobileMenuOpen ? '0' : '0',
-        willChange: 'margin, padding',
+      <main className="flex-1 overflow-x-hidden transition-all duration-300 relative" style={{ 
+        willChange: 'transform',
+        maxWidth: '100vw'
       }}>
         {/* Global Header used in all pages */}
         <Header 
@@ -277,23 +280,25 @@ function App() {
           isMobileMenuOpen={isMobileMenuOpen}
         />
         
-        <AnimatePresence mode="wait" initial={false}>
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<Dashboard userId={userId} />} />
-            <Route path="/dashboard" element={<Dashboard userId={userId} />} />
-            <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
-            <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
-            <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
-            <Route path="/patient-profile/:patientId" element={<PatientProfilePage userId={userId} />} />
-            <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
-            <Route path="/history" element={<HistoryPage userId={userId} />} />
-            <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
-            <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
-            <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
-            <Route path="/report" element={<ReportPage userId={userId} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AnimatePresence>
+        <div className="px-4 sm:px-6 md:px-8 pb-8 w-full max-w-[1600px] mx-auto">
+          <AnimatePresence mode="wait" initial={false}>
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<Dashboard userId={userId} />} />
+              <Route path="/dashboard" element={<Dashboard userId={userId} />} />
+              <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
+              <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
+              <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
+              <Route path="/patient-profile/:patientId" element={<PatientProfilePage userId={userId} />} />
+              <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
+              <Route path="/history" element={<HistoryPage userId={userId} />} />
+              <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
+              <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
+              <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
+              <Route path="/report" element={<ReportPage userId={userId} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AnimatePresence>
+        </div>
       </main>
     </div>
   );

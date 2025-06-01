@@ -65,7 +65,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       variants={headerVariants}
       initial="hidden"
       animate="visible"
-      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
+      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl shadow-soft"
       style={{
         ...glassEffect,
         willChange: 'transform, opacity',

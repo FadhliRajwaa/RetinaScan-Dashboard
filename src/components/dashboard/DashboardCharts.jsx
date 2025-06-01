@@ -466,50 +466,57 @@ export default function DashboardCharts() {
         Analisis Data
       </motion.h2>
       
+      {/* Tren Scan Retina - Full Width */}
+      <motion.div 
+        className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300"
+        variants={itemVariants}
+        whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      >
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Tren Scan Retina</h3>
+        <div className="h-80">
+          <Line options={lineOptions} data={chartData.scanTrends} />
+        </div>
+      </motion.div>
+      
+      {/* Two Column Charts */}
       <motion.div 
         className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         variants={containerVariants}
       >
-        {/* Line Chart - Scan Trends */}
-        <motion.div 
-          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
-          variants={itemVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
-        >
-          <div className="h-64">
-            <Line options={lineOptions} data={chartData.scanTrends} />
-          </div>
-        </motion.div>
-        
         {/* Pie Chart - Condition Distribution */}
         <motion.div 
-          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
+          className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300"
           variants={itemVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
         >
-          <div className="h-64">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribusi Kondisi</h3>
+          <div className="h-80">
             <Pie options={pieOptions} data={chartData.conditionDistribution} />
           </div>
         </motion.div>
         
         {/* Bar Chart - Age Distribution */}
         <motion.div 
-          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
+          className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300"
           variants={itemVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
         >
-          <div className="h-64">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Distribusi Umur Pasien</h3>
+          <div className="h-80">
             <Bar options={barOptions} data={chartData.ageDistribution} />
           </div>
         </motion.div>
         
         {/* Enhanced Severity Chart */}
         <motion.div 
-          className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300"
+          className="bg-white p-6 rounded-xl shadow-soft hover:shadow-soft-md transition-shadow duration-300 lg:col-span-2"
           variants={itemVariants}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+          whileHover={{ y: -3, transition: { duration: 0.2 } }}
         >
-          <EnhancedSeverityChart />
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Tingkat Keparahan</h3>
+          <div className="h-80">
+            <EnhancedSeverityChart />
+          </div>
         </motion.div>
       </motion.div>
     </motion.div>

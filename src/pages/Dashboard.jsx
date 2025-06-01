@@ -22,6 +22,30 @@ export default function Dashboard({ userId }) {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 30
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -70,82 +94,117 @@ export default function Dashboard({ userId }) {
       title: 'Total Pasien',
       value: stats.totalPatients,
       icon: <UsersIcon className="w-8 h-8 text-blue-500" />,
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-700'
+      bgColor: 'from-blue-500/20 to-blue-500/5',
+      textColor: 'text-blue-700',
+      iconBg: 'bg-blue-100'
     },
     {
       title: 'Total Scan',
       value: stats.totalScans,
       icon: <DocumentTextIcon className="w-8 h-8 text-green-500" />,
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-700'
+      bgColor: 'from-green-500/20 to-green-500/5',
+      textColor: 'text-green-700',
+      iconBg: 'bg-green-100'
     },
     {
       title: 'Scan 7 Hari Terakhir',
       value: stats.recentScans,
       icon: <ClockIcon className="w-8 h-8 text-purple-500" />,
-      bgColor: 'bg-purple-50',
-      textColor: 'text-purple-700'
+      bgColor: 'from-purple-500/20 to-purple-500/5',
+      textColor: 'text-purple-700',
+      iconBg: 'bg-purple-100'
     },
     {
       title: 'Kondisi Parah',
       value: stats.severeConditions,
       icon: <ExclamationCircleIcon className="w-8 h-8 text-red-500" />,
-      bgColor: 'bg-red-50',
-      textColor: 'text-red-700'
+      bgColor: 'from-red-500/20 to-red-500/5',
+      textColor: 'text-red-700',
+      iconBg: 'bg-red-100'
     }
   ];
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center h-64">
+        <div className="relative h-16 w-16">
+          <div className="absolute top-0 left-0 right-0 bottom-0 animate-spin rounded-full border-4 border-t-blue-500 border-r-transparent border-b-blue-300 border-l-transparent"></div>
+          <div className="absolute top-2 left-2 right-2 bottom-2 animate-ping rounded-full border-2 border-blue-500 opacity-30"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="flex flex-col items-center justify-center h-64 bg-white p-6 rounded-xl shadow-sm"
+      >
         <ExclamationCircleIcon className="w-16 h-16 text-red-500 mb-4" />
         <h2 className="text-xl font-semibold text-gray-800">{error}</h2>
-        <button 
+        <motion.button 
           onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           Coba Lagi
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     );
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <motion.div 
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.h1 
+        className="text-2xl font-bold text-gray-800 mb-6"
+        variants={itemVariants}
+      >
+        Dashboard
+      </motion.h1>
       
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+        variants={containerVariants}
+      >
         {statCards.map((card, index) => (
           <motion.div
             key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`${card.bgColor} rounded-lg shadow-sm p-4 md:p-6 flex items-center`}
+            variants={itemVariants}
+            whileHover={{ 
+              y: -5,
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+              transition: { duration: 0.2 }
+            }}
+            className={`bg-gradient-to-br ${card.bgColor} rounded-xl shadow-soft p-6 flex items-center justify-between`}
           >
-            <div className="mr-4">{card.icon}</div>
             <div>
-              <p className="text-sm text-gray-600">{card.title}</p>
-              <p className={`text-2xl font-semibold ${card.textColor}`}>{card.value}</p>
+              <p className="text-sm text-gray-600 font-medium mb-1">{card.title}</p>
+              <p className={`text-3xl font-bold ${card.textColor}`}>{card.value}</p>
+            </div>
+            <div className={`p-3 rounded-xl ${card.iconBg} shadow-sm`}>
+              {card.icon}
             </div>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Charts */}
-      <div className="mt-8">
+      <motion.div 
+        className="mt-10"
+        variants={itemVariants}
+      >
         <DashboardCharts />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
