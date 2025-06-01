@@ -196,211 +196,107 @@ function Report({ result }) {
         pdf.text(lines, x, y);
         return y + (lines.length * lineHeight);
       };
-
-      // Fungsi untuk membuat gradient background pada rectangle
-      const drawGradientRect = (x, y, width, height, color1, color2, direction = 'horizontal') => {
-        const totalSteps = 20;
-        const stepSize = direction === 'horizontal' ? width / totalSteps : height / totalSteps;
-        
-        for (let i = 0; i < totalSteps; i++) {
-          const ratio = i / (totalSteps - 1);
-          const r = Math.floor(color1.r + ratio * (color2.r - color1.r));
-          const g = Math.floor(color1.g + ratio * (color2.g - color1.g));
-          const b = Math.floor(color1.b + ratio * (color2.b - color1.b));
-          
-          pdf.setFillColor(r, g, b);
-          
-          if (direction === 'horizontal') {
-            pdf.rect(x + (i * stepSize), y, stepSize, height, 'F');
-          } else {
-            pdf.rect(x, y + (i * stepSize), width, stepSize, 'F');
-          }
-        }
-      };
       
-      // Fungsi untuk membuat rounded rectangle
-      const drawRoundedRect = (x, y, width, height, radius, fillColor, strokeColor = null) => {
-        // Simpan state
-        const oldFillColor = pdf.getFillColor();
-        
-        // Set fill color
-        if (fillColor) {
-          pdf.setFillColor(fillColor.r, fillColor.g, fillColor.b);
-        }
-        
-        // Set stroke color jika ada
-        if (strokeColor) {
-          pdf.setDrawColor(strokeColor.r, strokeColor.g, strokeColor.b);
-          pdf.setLineWidth(0.5);
-        }
-        
-        // Draw rounded rectangle
-        pdf.roundedRect(x, y, width, height, radius, radius, fillColor ? 'F' : strokeColor ? 'D' : 'FD');
-        
-        // Restore state
-        pdf.setFillColor(oldFillColor);
-      };
+      // Header
+      pdf.setFillColor(37, 99, 235); // Warna biru
+      pdf.rect(0, 0, pageWidth, 40, 'F');
       
-      // Warna untuk gradient
-      const primaryColor = { r: 79, g: 70, b: 229 }; // Indigo-600
-      const secondaryColor = { r: 139, g: 92, b: 246 }; // Violet-500
-      const whiteColor = { r: 255, g: 255, b: 255 };
-      const lightGrayColor = { r: 243, g: 244, b: 246 }; // Gray-100
-      
-      // Background gradient untuk seluruh halaman
-      drawGradientRect(0, 0, pageWidth, pageHeight, 
-        { r: 249, g: 250, b: 251 }, // Gray-50
-        { r: 243, g: 244, b: 246 }, // Gray-100
-        'vertical'
-      );
-      
-      // Header dengan gradient
-      drawGradientRect(0, 0, pageWidth, 50, primaryColor, secondaryColor, 'horizontal');
-      
-      // Tambahkan efek bayangan di bawah header (simulasi dengan rectangle semi-transparan)
-      pdf.setFillColor(0, 0, 0);
-      pdf.setGState(new pdf.GState({ opacity: 0.05 }));
-      pdf.rect(0, 50, pageWidth, 3, 'F');
-      pdf.setGState(new pdf.GState({ opacity: 1 }));
-      
-      // Logo atau icon (simulasi dengan lingkaran)
-      pdf.setFillColor(255, 255, 255);
-      pdf.circle(margin + 5, 25, 8, 'F');
-      
-      // Judul dan tanggal
-      pdf.setTextColor(255, 255, 255);
+      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
       pdf.setFontSize(24);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Laporan Analisis Retina', pageWidth / 2, 25, { align: 'center' });
+      pdf.text('Laporan Analisis Retina', pageWidth / 2, 20, { align: 'center' });
       
-      pdf.setFontSize(11);
+      pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       const currentDate = formatDate(new Date());
-      pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, 35, { align: 'center' });
+      pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, 30, { align: 'center' });
       
-      let yPos = 65;
+      let yPos = 50;
+      
+      // Logo RetinaScan (opsional - ganti dengan path logo yang sesuai)
+      // pdf.addImage('path/to/logo.png', 'PNG', margin, yPos - 15, 40, 15);
       
       // Informasi pasien jika tersedia
       if (patient) {
-        // Informasi pasien dengan card design
-        drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 40, 4, whiteColor);
+        pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
+        pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
         
-        // Gradient strip di sisi kiri card
-        drawGradientRect(margin, yPos, 5, 40, primaryColor, secondaryColor, 'vertical');
-        
-        pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+        pdf.setTextColor(0, 0, 0);
         pdf.setFontSize(14);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Informasi Pasien', margin + 15, yPos + 12);
+        pdf.text('Informasi Pasien', margin + 5, yPos + 10);
         
         pdf.setFontSize(11);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(60, 60, 60);
-        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 15, yPos + 22);
-        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age || '-'} tahun`, margin + 15, yPos + 30);
+        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
+        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
         
-        yPos += 50;
+        yPos += 40;
       } else {
         yPos += 10;
       }
       
-      // Hasil analisis dengan card design
-      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 60, 4, whiteColor);
+      // Hasil analisis
+      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
       
-      // Gradient strip di sisi kiri card
-      drawGradientRect(margin, yPos, 5, 60, primaryColor, secondaryColor, 'vertical');
-      
-      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+      pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', margin + 15, yPos + 12);
+      pdf.text('Hasil Analisis', margin + 5, yPos + 10);
       
       // Tingkat keparahan
-      pdf.setFontSize(11);
+      pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin + 15, yPos + 25);
+      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
       
-      // Set warna berdasarkan tingkat keparahan dan buat badge
+      // Set warna berdasarkan tingkat keparahan
       const severityLevel = severity.toLowerCase();
-      let severityColor;
-      
       if (severityLevel === 'ringan') {
-        severityColor = { r: 34, g: 197, b: 94 }; // Green-500
+        pdf.setTextColor(39, 174, 96); // Hijau
       } else if (severityLevel === 'sedang') {
-        severityColor = { r: 234, g: 179, b: 8 }; // Yellow-500
+        pdf.setTextColor(241, 196, 15); // Kuning
       } else if (severityLevel === 'berat' || severityLevel === 'sangat berat') {
-        severityColor = { r: 239, g: 68, b: 68 }; // Red-500
+        pdf.setTextColor(231, 76, 60); // Merah
       } else {
-        severityColor = { r: 59, g: 130, b: 246 }; // Blue-500
+        pdf.setTextColor(52, 152, 219); // Biru
       }
       
-      // Badge untuk severity
-      const severityText = severity;
-      const textWidth = pdf.getStringUnitWidth(severityText) * pdf.getFontSize() / pdf.internal.scaleFactor;
-      const badgeWidth = textWidth + 10;
-      
-      drawRoundedRect(margin + 55, yPos + 21, badgeWidth, 8, 4, 
-        { r: severityColor.r, g: severityColor.g, b: severityColor.b, a: 0.1 }
-      );
-      
-      pdf.setTextColor(severityColor.r, severityColor.g, severityColor.b);
-      pdf.setFontSize(11);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
-      pdf.text(severityText, margin + 60, yPos + 26);
+      pdf.text(severity, margin + 50, yPos + 25);
       
       // Tingkat kepercayaan
-      pdf.setFontSize(11);
+      pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 15, yPos + 40);
+      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 5, yPos + 40);
       
-      // Progress bar untuk confidence dengan gradient
-      const barWidth = 80;
-      const barHeight = 6;
+      // Gambar bar untuk confidence
+      const barWidth = 50;
       const confidenceWidth = barWidth * confidence;
+      pdf.setFillColor(220, 220, 220); // Background bar
+      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
+      pdf.setFillColor(37, 99, 235); // Filled bar
+      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
       
-      // Background bar
-      drawRoundedRect(margin + 90, yPos + 37, barWidth, barHeight, 3, lightGrayColor);
-      
-      // Filled bar dengan gradient
-      if (confidenceWidth > 0) {
-        drawGradientRect(margin + 90, yPos + 37, confidenceWidth, barHeight, primaryColor, secondaryColor, 'horizontal');
-      }
-      
-      yPos += 70;
+      yPos += 60;
       
       // Gambar
       if (result.image && typeof result.image === 'string') {
         try {
-          // Tambahkan gambar jika tersedia dengan border dan shadow effect
-          const imgWidth = 120;
-          const imgHeight = 120;
-          const imgX = pageWidth / 2 - imgWidth / 2;
+          // Tambahkan gambar jika tersedia
+          const imgWidth = 100;
+          const imgHeight = 100;
+          pdf.addImage(result.image, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
+          yPos += imgHeight + 10;
           
-          // Shadow effect (rectangle semi-transparan di bawah gambar)
-          pdf.setFillColor(0, 0, 0);
-          pdf.setGState(new pdf.GState({ opacity: 0.1 }));
-          pdf.roundedRect(imgX + 2, yPos + 2, imgWidth, imgHeight, 2, 2, 'F');
-          pdf.setGState(new pdf.GState({ opacity: 1 }));
-          
-          // Border untuk gambar
-          drawRoundedRect(imgX, yPos, imgWidth, imgHeight, 2, whiteColor);
-          
-          // Gambar
-          pdf.addImage(result.image, 'JPEG', imgX, yPos, imgWidth, imgHeight);
-          
-          yPos += imgHeight + 15;
-          
-          // Tambahkan label gambar dengan style yang lebih modern
-          pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b, 0.1);
-          const labelWidth = 80;
-          pdf.roundedRect(pageWidth / 2 - labelWidth / 2, yPos - 10, labelWidth, 8, 4, 4, 'F');
-          
-          pdf.setFontSize(9);
-          pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
-          pdf.text('Gambar Retina', pageWidth / 2, yPos - 5, { align: 'center' });
-          
+          // Tambahkan label gambar
+          pdf.setFontSize(10);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
           yPos += 15;
         } catch (imgError) {
           console.error('Error adding image to PDF:', imgError);
@@ -409,18 +305,16 @@ function Report({ result }) {
         }
       }
       
-      // Rekomendasi dengan card design
-      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 50, 4, whiteColor);
+      // Rekomendasi
+      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
       
-      // Gradient strip di sisi kiri card
-      drawGradientRect(margin, yPos, 5, 50, primaryColor, secondaryColor, 'vertical');
-      
-      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+      pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 15, yPos + 12);
+      pdf.text('Rekomendasi', margin + 5, yPos + 10);
       
-      pdf.setFontSize(10);
+      pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
       
@@ -439,33 +333,25 @@ function Report({ result }) {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin + 15, yPos + 22, pageWidth - (margin * 2) - 30, 5);
-      yPos += 20;
+      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
+      yPos += 15;
       
-      // Disclaimer dengan style yang lebih modern
-      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 30, 4, 
-        { r: 254, g: 242, b: 242 } // Red-50
-      );
-      
-      pdf.setFontSize(8);
-      pdf.setTextColor(239, 68, 68); // Red-500
-      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      addWrappedText(disclaimer, margin + 10, yPos + 10, pageWidth - (margin * 2) - 20, 4);
-      
-      // Footer dengan gradient
-      drawGradientRect(0, pageHeight - 25, pageWidth, 25, primaryColor, secondaryColor, 'horizontal');
-      
-      // Logo RetinaScan di footer (simulasi dengan lingkaran)
-      pdf.setFillColor(255, 255, 255);
-      pdf.circle(margin + 10, pageHeight - 12.5, 4, 'F');
+      // Disclaimer
+      pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
       
       pdf.setFontSize(9);
-      pdf.setTextColor(255, 255, 255);
-      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 15, { align: 'center' });
+      pdf.setTextColor(100, 100, 100);
+      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
       
-      // QR code simulasi (kotak kecil di pojok kanan bawah)
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(pageWidth - margin - 10, pageHeight - 20, 10, 10, 'F');
+      // Footer
+      pdf.setFillColor(37, 99, 235); // Warna biru
+      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+      
+      pdf.setFontSize(10);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       
       // Simpan PDF
       pdf.save('retina-analysis-report.pdf');
@@ -491,78 +377,7 @@ function Report({ result }) {
       if (navigator.share) {
         // Buat PDF untuk dishare
         const pdf = new jsPDF('p', 'mm', 'a4');
-        
         // Gunakan fungsi yang sama dengan handleDownload untuk membuat PDF
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 20;
-        
-        // Fungsi untuk menambahkan teks dengan wrapping
-        const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
-          const lines = pdf.splitTextToSize(text, maxWidth);
-          pdf.text(lines, x, y);
-          return y + (lines.length * lineHeight);
-        };
-
-        // Fungsi untuk membuat gradient background pada rectangle
-        const drawGradientRect = (x, y, width, height, color1, color2, direction = 'horizontal') => {
-          const totalSteps = 20;
-          const stepSize = direction === 'horizontal' ? width / totalSteps : height / totalSteps;
-          
-          for (let i = 0; i < totalSteps; i++) {
-            const ratio = i / (totalSteps - 1);
-            const r = Math.floor(color1.r + ratio * (color2.r - color1.r));
-            const g = Math.floor(color1.g + ratio * (color2.g - color1.g));
-            const b = Math.floor(color1.b + ratio * (color2.b - color1.b));
-            
-            pdf.setFillColor(r, g, b);
-            
-            if (direction === 'horizontal') {
-              pdf.rect(x + (i * stepSize), y, stepSize, height, 'F');
-            } else {
-              pdf.rect(x, y + (i * stepSize), width, stepSize, 'F');
-            }
-          }
-        };
-        
-        // Fungsi untuk membuat rounded rectangle
-        const drawRoundedRect = (x, y, width, height, radius, fillColor, strokeColor = null) => {
-          // Simpan state
-          const oldFillColor = pdf.getFillColor();
-          
-          // Set fill color
-          if (fillColor) {
-            pdf.setFillColor(fillColor.r, fillColor.g, fillColor.b);
-          }
-          
-          // Set stroke color jika ada
-          if (strokeColor) {
-            pdf.setDrawColor(strokeColor.r, strokeColor.g, strokeColor.b);
-            pdf.setLineWidth(0.5);
-          }
-          
-          // Draw rounded rectangle
-          pdf.roundedRect(x, y, width, height, radius, radius, fillColor ? 'F' : strokeColor ? 'D' : 'FD');
-          
-          // Restore state
-          pdf.setFillColor(oldFillColor);
-        };
-        
-        // Warna untuk gradient
-        const primaryColor = { r: 79, g: 70, b: 229 }; // Indigo-600
-        const secondaryColor = { r: 139, g: 92, b: 246 }; // Violet-500
-        const whiteColor = { r: 255, g: 255, b: 255 };
-        const lightGrayColor = { r: 243, g: 244, b: 246 }; // Gray-100
-        
-        // Background gradient untuk seluruh halaman
-        drawGradientRect(0, 0, pageWidth, pageHeight, 
-          { r: 249, g: 250, b: 251 }, // Gray-50
-          { r: 243, g: 244, b: 246 }, // Gray-100
-          'vertical'
-        );
-        
-        // Header dengan gradient
-        drawGradientRect(0, 0, pageWidth, 50, primaryColor, secondaryColor, 'horizontal');
         
         // Simpan PDF ke Blob
         const pdfBlob = pdf.output('blob');
