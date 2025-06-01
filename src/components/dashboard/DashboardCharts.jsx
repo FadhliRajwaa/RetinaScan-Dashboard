@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -78,16 +77,9 @@ export default function DashboardCharts() {
             {
               label: 'Jumlah Scan',
               data: response.data.scanTrends?.data || [],
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.5)',
-              tension: 0.4,
-              borderWidth: 3,
-              pointBackgroundColor: 'white',
-              pointBorderColor: 'rgb(59, 130, 246)',
-              pointBorderWidth: 2,
-              pointRadius: 4,
-              pointHoverRadius: 6,
-              fill: true
+              borderColor: 'rgb(53, 162, 235)',
+              backgroundColor: 'rgba(53, 162, 235, 0.5)',
+              tension: 0.3
             }
           ]
         };
@@ -99,23 +91,22 @@ export default function DashboardCharts() {
             {
               data: response.data.conditionDistribution?.data || [],
               backgroundColor: [
-                'rgba(239, 68, 68, 0.8)',
-                'rgba(59, 130, 246, 0.8)',
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(245, 158, 11, 0.8)',
-                'rgba(139, 92, 246, 0.8)',
-                'rgba(236, 72, 153, 0.8)'
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)'
               ],
               borderColor: [
-                'rgba(239, 68, 68, 1)',
-                'rgba(59, 130, 246, 1)',
-                'rgba(16, 185, 129, 1)',
-                'rgba(245, 158, 11, 1)',
-                'rgba(139, 92, 246, 1)',
-                'rgba(236, 72, 153, 1)'
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
               ],
-              borderWidth: 2,
-              hoverOffset: 15
+              borderWidth: 1
             }
           ]
         };
@@ -127,11 +118,9 @@ export default function DashboardCharts() {
             {
               label: 'Jumlah Pasien',
               data: response.data.ageDistribution?.data || [],
-              backgroundColor: 'rgba(139, 92, 246, 0.8)',
-              borderColor: 'rgba(139, 92, 246, 1)',
-              borderWidth: 2,
-              borderRadius: 6,
-              hoverBackgroundColor: 'rgba(124, 58, 237, 0.9)'
+              backgroundColor: 'rgba(75, 192, 192, 0.7)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
             }
           ]
         };
@@ -161,381 +150,91 @@ export default function DashboardCharts() {
     return () => clearInterval(interval);
   }, [API_URL]);
 
-  // Animasi untuk container dan elemen-elemen
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-        duration: 0.5
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: 'spring',
-        stiffness: 400,
-        damping: 25
-      }
-    }
-  };
-
   const lineOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
-        labels: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 12,
-            weight: '500'
-          },
-          usePointStyle: true,
-          padding: 20
-        }
       },
       title: {
         display: true,
-        text: 'Tren Scan Retina',
-        font: {
-          family: 'Inter, sans-serif',
-          size: 16,
-          weight: '600'
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#1f2937',
-        bodyColor: '#1f2937',
-        borderColor: 'rgba(59, 130, 246, 0.5)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        usePointStyle: true,
-        titleFont: {
-          family: 'Inter, sans-serif',
-          size: 14,
-          weight: '600'
-        },
-        bodyFont: {
-          family: 'Inter, sans-serif',
-          size: 13
-        }
+        text: 'Tren Scan Retina'
       }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-          drawBorder: false
-        },
-        ticks: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 11
-          }
-        }
-      },
-      y: {
-        grid: {
-          color: 'rgba(156, 163, 175, 0.1)',
-          drawBorder: false
-        },
-        ticks: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 11
-          }
-        }
-      }
-    },
-    elements: {
-      line: {
-        tension: 0.4
-      }
-    },
-    animation: {
-      duration: 2000,
-      easing: 'easeOutQuart'
     }
   };
 
   const barOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
-        labels: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 12,
-            weight: '500'
-          },
-          usePointStyle: true,
-          padding: 20
-        }
       },
       title: {
         display: true,
-        text: 'Distribusi Umur Pasien',
-        font: {
-          family: 'Inter, sans-serif',
-          size: 16,
-          weight: '600'
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#1f2937',
-        bodyColor: '#1f2937',
-        borderColor: 'rgba(139, 92, 246, 0.5)',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        titleFont: {
-          family: 'Inter, sans-serif',
-          size: 14,
-          weight: '600'
-        },
-        bodyFont: {
-          family: 'Inter, sans-serif',
-          size: 13
-        }
+        text: 'Distribusi Umur Pasien'
       }
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-          drawBorder: false
-        },
-        ticks: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 11
-          }
-        }
-      },
-      y: {
-        grid: {
-          color: 'rgba(156, 163, 175, 0.1)',
-          drawBorder: false
-        },
-        ticks: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 11
-          }
-        }
-      }
-    },
-    animation: {
-      delay: (context) => context.dataIndex * 100,
-      duration: 1000,
-      easing: 'easeOutQuart'
     }
   };
 
   const pieOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right',
-        labels: {
-          font: {
-            family: 'Inter, sans-serif',
-            size: 12,
-            weight: '500'
-          },
-          usePointStyle: true,
-          padding: 20
-        }
       },
       title: {
         display: true,
-        text: 'Distribusi Kondisi',
-        font: {
-          family: 'Inter, sans-serif',
-          size: 16,
-          weight: '600'
-        },
-        padding: {
-          top: 10,
-          bottom: 20
-        }
-      },
-      tooltip: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        titleColor: '#1f2937',
-        bodyColor: '#1f2937',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        titleFont: {
-          family: 'Inter, sans-serif',
-          size: 14,
-          weight: '600'
-        },
-        bodyFont: {
-          family: 'Inter, sans-serif',
-          size: 13
-        }
+        text: 'Distribusi Kondisi'
       }
-    },
-    animation: {
-      animateRotate: true,
-      animateScale: true,
-      duration: 1500,
-      easing: 'easeOutCirc'
     }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <motion.div 
-          initial={{ rotate: 0 }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.5, ease: "linear", repeat: Infinity }}
-          className="w-14 h-14 border-4 border-blue-200 border-t-blue-500 rounded-full"
-        />
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center justify-center h-64"
-      >
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="mb-3 p-3 rounded-full bg-red-100"
-        >
-          <ExclamationCircleIcon className="w-12 h-12 text-red-500" />
-        </motion.div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">{error}</h2>
-        <motion.button 
+      <div className="flex flex-col items-center justify-center h-64">
+        <ExclamationCircleIcon className="w-12 h-12 text-red-500 mb-2" />
+        <h2 className="text-lg font-semibold text-gray-800">{error}</h2>
+        <button 
           onClick={() => window.location.reload()} 
-          className="px-4 py-2 bg-blue-500 text-white text-sm rounded-xl hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          className="mt-3 px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
         >
           Coba Lagi
-        </motion.button>
-      </motion.div>
+        </button>
+      </div>
     );
   }
 
-  const chartCardStyle = {
-    background: "rgba(255, 255, 255, 0.8)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05)",
-    borderRadius: "16px",
-    border: "1px solid rgba(255, 255, 255, 0.18)"
-  };
-
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8"
-    >
-      <motion.div variants={itemVariants} className="flex items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Analisis Data</h2>
-        <div className="ml-3 h-1 w-16 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"></div>
-      </motion.div>
+    <div className="space-y-8">
+      <h2 className="text-xl font-semibold text-gray-800">Analisis Data</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Line Chart - Scan Trends */}
-        <motion.div 
-          variants={itemVariants}
-          whileHover={{ 
-            y: -5, 
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)" 
-          }}
-          className="p-5 rounded-2xl shadow-md border border-blue-100"
-          style={chartCardStyle}
-        >
-          <div className="h-72">
-            <Line options={lineOptions} data={chartData.scanTrends} />
-          </div>
-        </motion.div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <Line options={lineOptions} data={chartData.scanTrends} />
+        </div>
         
         {/* Pie Chart - Condition Distribution */}
-        <motion.div 
-          variants={itemVariants}
-          whileHover={{ 
-            y: -5, 
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)" 
-          }}
-          className="p-5 rounded-2xl shadow-md border border-violet-100"
-          style={chartCardStyle}
-        >
-          <div className="h-72">
-            <Pie options={pieOptions} data={chartData.conditionDistribution} />
-          </div>
-        </motion.div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <Pie options={pieOptions} data={chartData.conditionDistribution} />
+        </div>
         
         {/* Bar Chart - Age Distribution */}
-        <motion.div 
-          variants={itemVariants}
-          whileHover={{ 
-            y: -5, 
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)" 
-          }}
-          className="p-5 rounded-2xl shadow-md border border-emerald-100"
-          style={chartCardStyle}
-        >
-          <div className="h-72">
-            <Bar options={barOptions} data={chartData.ageDistribution} />
-          </div>
-        </motion.div>
+        <div className="bg-white p-4 rounded-lg shadow-sm">
+          <Bar options={barOptions} data={chartData.ageDistribution} />
+        </div>
         
         {/* Enhanced Severity Chart */}
-        <motion.div 
-          variants={itemVariants}
-          whileHover={{ 
-            y: -5, 
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)" 
-          }}
-          className="p-5 rounded-2xl shadow-md border border-amber-100"
-          style={chartCardStyle}
-        >
-          <div className="h-72">
-            <EnhancedSeverityChart />
-          </div>
-        </motion.div>
+        <EnhancedSeverityChart />
       </div>
-    </motion.div>
+    </div>
   );
 }
