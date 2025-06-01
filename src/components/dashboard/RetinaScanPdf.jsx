@@ -1,376 +1,384 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font, PDFDownloadLink } from '@react-pdf/renderer';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 
-// Register font
+// Mendaftarkan font (opsional - bisa disesuaikan dengan kebutuhan)
 Font.register({
-  family: 'Nunito',
+  family: 'Open Sans',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/nunito/v16/XRXV3I6Li01BKofINeaE.ttf', fontWeight: 400 },
-    { src: 'https://fonts.gstatic.com/s/nunito/v16/XRXW3I6Li01BKofA6sKUYevN.ttf', fontWeight: 600 },
-    { src: 'https://fonts.gstatic.com/s/nunito/v16/XRXW3I6Li01BKofAjsOUYevN.ttf', fontWeight: 700 },
-  ],
+    { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-regular.ttf', fontWeight: 'normal' },
+    { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-600.ttf', fontWeight: 'bold' },
+  ]
 });
 
-// Create styles
+// Membuat stylesheet untuk PDF
 const styles = StyleSheet.create({
   page: {
-    padding: 30,
-    fontFamily: 'Nunito',
-    backgroundColor: '#ffffff',
+    fontFamily: 'Open Sans',
+    backgroundColor: '#FFFFFF',
   },
   header: {
-    flexDirection: 'row',
+    backgroundColor: '#2563EB',
+    padding: 30,
+    paddingBottom: 20,
     marginBottom: 20,
-    paddingBottom: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: '#3b82f6',
-    borderBottomStyle: 'solid',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerLeft: {
-    flexDirection: 'column',
-  },
-  headerRight: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-  },
-  logo: {
-    width: 50,
-    height: 50,
   },
   title: {
     fontSize: 24,
-    fontWeight: 700,
-    color: '#1e40af',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     marginBottom: 5,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  date: {
-    fontSize: 10,
-    color: '#6b7280',
-    marginBottom: 5,
-  },
-  reportId: {
-    fontSize: 10,
-    color: '#6b7280',
+    fontSize: 14,
+    color: '#DBEAFE',
+    textAlign: 'center',
   },
   section: {
     marginBottom: 15,
+    padding: '0 30px',
+  },
+  sectionWithBackground: {
+    marginBottom: 15,
     padding: 15,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-    borderLeftStyle: 'solid',
+    margin: '0 30px',
+    backgroundColor: '#F0F9FF',
+    borderRadius: 5,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: '#1e3a8a',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1F2937',
     marginBottom: 10,
-    paddingBottom: 5,
+    paddingBottom: 2,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    borderBottomStyle: 'solid',
+    borderBottomColor: '#E5E7EB',
   },
-  patientInfo: {
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  patientInfoItem: {
-    width: '50%',
     marginBottom: 8,
   },
-  patientInfoLabel: {
-    fontSize: 10,
-    color: '#6b7280',
+  label: {
+    width: '40%',
+    fontSize: 12,
+    color: '#4B5563',
   },
-  patientInfoValue: {
-    fontSize: 11,
-    color: '#111827',
-    fontWeight: 600,
+  value: {
+    width: '60%',
+    fontSize: 12,
+    color: '#1F2937',
+    fontWeight: 'bold',
   },
-  imageContainer: {
-    alignItems: 'center',
-    marginBottom: 15,
+  paragraph: {
+    fontSize: 12,
+    color: '#4B5563',
+    marginBottom: 8,
+    lineHeight: 1.5,
   },
   image: {
-    width: 250,
-    height: 250,
+    width: 200,
+    height: 200,
     objectFit: 'contain',
-    borderRadius: 8,
+    marginBottom: 10,
+    alignSelf: 'center',
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  listItem: {
+    flexDirection: 'row',
     marginBottom: 5,
   },
-  imageCaption: {
-    fontSize: 10,
-    color: '#6b7280',
-    textAlign: 'center',
+  bullet: {
+    fontSize: 12,
+    marginRight: 5,
   },
-  resultSection: {
-    marginBottom: 15,
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  resultTitle: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: '#1e3a8a',
+  listItemText: {
+    fontSize: 12,
+    color: '#4B5563',
     flex: 1,
   },
-  severityBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+  severityBox: {
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    marginHorizontal: 30,
+  },
+  severityContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  severityIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  severityTextContainer: {
+    flex: 1,
+  },
+  severityLabel: {
     fontSize: 10,
-    fontWeight: 700,
-  },
-  severityNone: {
-    backgroundColor: '#dbeafe',
-    color: '#1e40af',
-  },
-  severityMild: {
-    backgroundColor: '#d1fae5',
-    color: '#065f46',
-  },
-  severityModerate: {
-    backgroundColor: '#fef3c7',
-    color: '#92400e',
-  },
-  severitySevere: {
-    backgroundColor: '#fee2e2',
-    color: '#b91c1c',
-  },
-  severityProliferative: {
-    backgroundColor: '#fecaca',
-    color: '#991b1b',
-  },
-  confidenceBar: {
-    height: 6,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 3,
-    marginVertical: 5,
-  },
-  confidenceFill: {
-    height: 6,
-    backgroundColor: '#3b82f6',
-    borderRadius: 3,
-  },
-  confidenceText: {
-    fontSize: 10,
-    color: '#6b7280',
-    textAlign: 'right',
-  },
-  detailItem: {
-    marginBottom: 8,
-  },
-  detailLabel: {
-    fontSize: 10,
-    color: '#6b7280',
+    color: '#4B5563',
     marginBottom: 2,
   },
-  detailValue: {
-    fontSize: 11,
-    color: '#111827',
+  severityText: {
+    fontWeight: 'bold',
+    fontSize: 16,
   },
-  recommendationBox: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 10,
+  mild: {
+    backgroundColor: '#D1FAE5',
   },
-  recommendationTitle: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: '#1e40af',
-    marginBottom: 5,
+  mildText: {
+    color: '#065F46',
   },
-  recommendationText: {
-    fontSize: 11,
-    color: '#1e3a8a',
-    lineHeight: 1.4,
+  moderate: {
+    backgroundColor: '#FEF3C7',
+  },
+  moderateText: {
+    color: '#92400E',
+  },
+  severe: {
+    backgroundColor: '#FEE2E2',
+  },
+  severeText: {
+    color: '#991B1B',
+  },
+  normal: {
+    backgroundColor: '#DBEAFE',
+  },
+  normalText: {
+    color: '#1E40AF',
   },
   footer: {
     position: 'absolute',
-    bottom: 30,
-    left: 30,
-    right: 30,
-    fontSize: 9,
-    color: '#9ca3af',
-    textAlign: 'center',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    borderTopStyle: 'solid',
-  },
-  watermark: {
-    position: 'absolute',
-    bottom: 60,
-    right: 30,
-    fontSize: 8,
-    color: '#d1d5db',
-    transform: 'rotate(-45deg)',
-  },
-  gradientBar: {
-    position: 'absolute',
-    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
-    height: 10,
-    backgroundColor: '#3b82f6',
-  }
+    backgroundColor: '#2563EB',
+    padding: 20,
+    fontSize: 10,
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  confidenceBar: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    marginVertical: 5,
+    width: '100%',
+  },
+  confidenceFill: {
+    height: 6,
+    backgroundColor: '#2563EB',
+    borderRadius: 3,
+  },
+  disclaimer: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 5,
+    margin: '0 30px',
+  },
+  disclaimerText: {
+    fontSize: 9,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  patientInfoContainer: {
+    backgroundColor: '#F0F9FF',
+    padding: 15,
+    margin: '0 30px 20px 30px',
+    borderRadius: 5,
+  },
+  patientInfoTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
 });
 
-// Helper function to get severity style
-const getSeverityStyle = (severity) => {
-  const level = severity?.toLowerCase() || '';
-  
-  if (level.includes('tidak ada') || level.includes('normal') || level.includes('no dr')) {
-    return styles.severityNone;
-  } else if (level.includes('ringan') || level.includes('mild')) {
-    return styles.severityMild;
-  } else if (level.includes('sedang') || level.includes('moderate')) {
-    return styles.severityModerate;
-  } else if (level.includes('berat') || level.includes('severe')) {
-    return styles.severitySevere;
-  } else if (level.includes('sangat berat') || level.includes('proliferative')) {
-    return styles.severityProliferative;
-  }
-  
-  return styles.severityNone;
+// Komponen untuk laporan PDF
+const RetinaScanPdf = ({ report }) => {
+  // Helper untuk mendapatkan warna berdasarkan severity
+  const getSeverityStyles = (severity) => {
+    const severityLower = severity.toLowerCase();
+    if (severityLower === 'ringan') {
+      return { box: styles.mild, text: styles.mildText };
+    } else if (severityLower === 'sedang') {
+      return { box: styles.moderate, text: styles.moderateText };
+    } else if (severityLower === 'berat' || severityLower === 'sangat berat') {
+      return { box: styles.severe, text: styles.severeText };
+    } else {
+      return { box: styles.normal, text: styles.normalText };
+    }
   };
 
-// Format date helper
-const formatDate = (date) => {
-  try {
-    return format(new Date(date), 'dd MMMM yyyy, HH:mm', { locale: id });
-  } catch (error) {
-    return format(new Date(), 'dd MMMM yyyy, HH:mm', { locale: id });
-  }
+  // Format tanggal
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-// Main PDF Document Component
-const RetinaScanPdf = ({ data }) => {
-  // Extract data with fallbacks
-  const {
-    patient = {},
-    severity = 'Tidak ada',
-    confidence = 0.8,
-    recommendation = 'Tidak ada rekomendasi khusus.',
-    timestamp = new Date(),
-    imageUrl = '',
-    analysisId = 'RS' + Math.floor(Math.random() * 10000),
-  } = data || {};
-
-  // Format confidence as percentage
-  const confidencePercent = typeof confidence === 'number' 
-    ? (confidence > 1 ? confidence : confidence * 100).toFixed(1)
-    : 80;
+  // Mendapatkan icon untuk severity
+  const getSeverityIcon = (severity) => {
+    const severityLower = severity.toLowerCase();
+    if (severityLower === 'ringan') {
+      return 'https://img.icons8.com/ios-filled/100/065F46/info.png';
+    } else if (severityLower === 'sedang') {
+      return 'https://img.icons8.com/ios-filled/100/92400E/warning-shield.png';
+    } else if (severityLower === 'berat' || severityLower === 'sangat berat') {
+      return 'https://img.icons8.com/ios-filled/100/991B1B/high-priority.png';
+    } else {
+      return 'https://img.icons8.com/ios-filled/100/1E40AF/checkmark--v1.png';
+    }
+  };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Gradient bar at top */}
-        <View style={styles.gradientBar} />
-        
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>Hasil Scan Retina</Text>
-            <Text style={styles.subtitle}>RetinaScan AI Analysis Report</Text>
-          </View>
-          <View style={styles.headerRight}>
-            <Text style={styles.date}>{formatDate(timestamp)}</Text>
-            <Text style={styles.reportId}>ID: {analysisId}</Text>
-          </View>
+          <Text style={styles.title}>Laporan Pemeriksaan Retina</Text>
+          <Text style={styles.subtitle}>Tanggal: {formatDate(report.date)}</Text>
         </View>
 
-        {/* Patient Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informasi Pasien</Text>
-          <View style={styles.patientInfo}>
-            <View style={styles.patientInfoItem}>
-              <Text style={styles.patientInfoLabel}>Nama</Text>
-              <Text style={styles.patientInfoValue}>{patient.fullName || patient.name || 'Tidak tersedia'}</Text>
+        {/* Informasi Pasien */}
+        {report.patient && (
+          <View style={styles.patientInfoContainer}>
+            <Text style={styles.patientInfoTitle}>Informasi Pasien</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Nama:</Text>
+              <Text style={styles.value}>{report.patient.fullName || report.patient.name}</Text>
             </View>
-            <View style={styles.patientInfoItem}>
-              <Text style={styles.patientInfoLabel}>ID Pasien</Text>
-              <Text style={styles.patientInfoValue}>{patient._id || 'Tidak tersedia'}</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Jenis Kelamin:</Text>
+              <Text style={styles.value}>{report.patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</Text>
             </View>
-            <View style={styles.patientInfoItem}>
-              <Text style={styles.patientInfoLabel}>Tanggal Lahir</Text>
-              <Text style={styles.patientInfoValue}>
-                {patient.dateOfBirth ? formatDate(patient.dateOfBirth).split(',')[0] : 'Tidak tersedia'}
-              </Text>
-            </View>
-            <View style={styles.patientInfoItem}>
-              <Text style={styles.patientInfoLabel}>Jenis Kelamin</Text>
-              <Text style={styles.patientInfoValue}>
-                {patient.gender === 'male' ? 'Laki-laki' : 
-                 patient.gender === 'female' ? 'Perempuan' : 
-                 patient.gender || 'Tidak tersedia'}
-          </Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Umur:</Text>
+              <Text style={styles.value}>{report.patient.age} tahun</Text>
             </View>
           </View>
-        </View>
+        )}
 
-        {/* Image Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Citra Retina</Text>
-          <View style={styles.imageContainer}>
+        {/* Severity */}
+        <View style={{...styles.severityBox, ...getSeverityStyles(report.severity).box}}>
+          <View style={styles.severityContent}>
             <Image 
-              src={imageUrl || 'https://via.placeholder.com/300?text=No+Image'} 
-              style={styles.image} 
+              src={getSeverityIcon(report.severity)} 
+              style={styles.severityIcon}
+              cache={false}
             />
-            <Text style={styles.imageCaption}>Gambar retina yang dianalisis oleh sistem AI</Text>
+            <View style={styles.severityTextContainer}>
+              <Text style={styles.severityLabel}>Tingkat Keparahan:</Text>
+              <Text style={{...styles.severityText, ...getSeverityStyles(report.severity).text}}>
+                {report.severity}
+                {report.confidence ? ` (${Math.round(report.confidence * 100)}%)` : ''}
+          </Text>
+            </View>
           </View>
+          
+          {report.confidence && (
+            <View style={{marginTop: 8}}>
+              <View style={styles.confidenceBar}>
+                <View style={{...styles.confidenceFill, width: `${report.confidence * 100}%`}} />
+              </View>
+              <Text style={{fontSize: 9, color: '#6B7280', textAlign: 'right'}}>{Math.round(report.confidence * 100)}% kepercayaan</Text>
+            </View>
+          )}
         </View>
 
-        {/* Analysis Result */}
+        {/* Gambar Retina */}
+        {report.image && (
+          <View style={styles.sectionWithBackground}>
+            <Text style={styles.sectionTitle}>Gambar Retina</Text>
+            <Image 
+              src={report.image} 
+              style={styles.image} 
+              cache={false} 
+            />
+          </View>
+        )}
+
+        {/* Tanda Klinis */}
+        {report.clinicalSigns && report.clinicalSigns.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Hasil Analisis</Text>
-          
-          <View style={styles.resultSection}>
-            <View style={styles.resultHeader}>
-              <Text style={styles.resultTitle}>Tingkat Keparahan</Text>
-              <Text style={[styles.severityBadge, getSeverityStyle(severity)]}>
-                {severity}
+          <Text style={styles.sectionTitle}>Tanda Klinis</Text>
+            {report.clinicalSigns.map((sign, index) => (
+            <View style={styles.listItem} key={`sign-${index}`}>
+              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.listItemText}>{sign}</Text>
+            </View>
+          ))}
+        </View>
+        )}
+
+        {/* Detail */}
+        {report.details && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Detail Kondisi</Text>
+          <Text style={styles.paragraph}>{report.details}</Text>
+        </View>
+        )}
+
+        {/* Rekomendasi */}
+        <View style={styles.sectionWithBackground}>
+          <Text style={styles.sectionTitle}>Rekomendasi</Text>
+          <Text style={styles.paragraph}>
+            {report.recommendations || (
+              report.severity.toLowerCase() === 'tidak ada' || report.severity.toLowerCase() === 'normal'
+                ? 'Lakukan pemeriksaan rutin setiap tahun.'
+                : report.severity.toLowerCase() === 'ringan'
+                ? 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
+                : report.severity.toLowerCase() === 'sedang'
+                ? 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
+                : report.severity.toLowerCase() === 'berat'
+                ? 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
+                : 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+            )}
           </Text>
         </View>
 
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Tingkat Keyakinan</Text>
-              <View style={styles.confidenceBar}>
-                <View style={[styles.confidenceFill, { width: `${confidencePercent}%` }]} />
-              </View>
-              <Text style={styles.confidenceText}>{confidencePercent}%</Text>
+        {/* Informasi Tambahan */}
+        {(report.patientRisk || report.followUpTime) && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Informasi Tambahan</Text>
+            {report.patientRisk && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Risiko Pasien:</Text>
+            <Text style={styles.value}>{report.patientRisk}</Text>
           </View>
+            )}
+            {report.followUpTime && (
+          <View style={styles.row}>
+            <Text style={styles.label}>Kunjungan Berikutnya:</Text>
+            <Text style={styles.value}>{report.followUpTime}</Text>
           </View>
+            )}
+          </View>
+        )}
 
-          <View style={styles.recommendationBox}>
-            <Text style={styles.recommendationTitle}>Rekomendasi</Text>
-            <Text style={styles.recommendationText}>{recommendation}</Text>
-          </View>
+        {/* Disclaimer */}
+        <View style={styles.disclaimer}>
+          <Text style={styles.disclaimerText}>
+            Dokumen ini dibuat secara otomatis oleh sistem RetinaScan. Hasil pemeriksaan perlu dikonfirmasi oleh dokter mata.
+          </Text>
+          <Text style={styles.disclaimerText}>
+            © {new Date().getFullYear()} RetinaScan AI System
+          </Text>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>
-            Dokumen ini dibuat secara otomatis oleh sistem RetinaScan AI. 
-            Hasil analisis hanya bersifat prediktif dan harus dikonfirmasi oleh dokter spesialis mata.
-          </Text>
+          <Text>RetinaScan © {new Date().getFullYear()} | AI-Powered Retinopathy Detection</Text>
         </View>
-
-        {/* Watermark */}
-        <Text style={styles.watermark}>RetinaScan AI • {formatDate(timestamp)}</Text>
       </Page>
     </Document>
   );

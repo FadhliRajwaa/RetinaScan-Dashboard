@@ -316,170 +316,50 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
     }
   };
 
-  // Tambahkan style glassmorphism
-  const glassStyle = {
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-    borderRadius: '16px',
-  };
-
-  // Animasi untuk drop area
-  const dropAreaVariants = {
+  const dropzoneVariants = {
     default: { 
+      borderColor: 'rgba(209, 213, 219, 1)',
       scale: 1,
-      borderColor: 'rgba(59, 130, 246, 0.3)',
-      backgroundColor: 'rgba(239, 246, 255, 0.6)',
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
     },
     dragging: { 
+      borderColor: 'rgba(59, 130, 246, 1)',
       scale: 1.02,
-      borderColor: 'rgba(59, 130, 246, 0.8)',
-      backgroundColor: 'rgba(219, 234, 254, 0.8)',
-      transition: { duration: 0.2 }
+      boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)'
+    },
+    hover: {
+      scale: 1.01,
+      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
     }
   };
 
-  // Render drop area dengan animasi
-  const renderDropArea = () => (
-    <motion.div
-      className="mb-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.div
-        variants={itemVariants}
-        className="relative"
-      >
-        <motion.div
-          className="border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer"
-          style={{ borderColor: 'rgba(59, 130, 246, 0.3)' }}
-          animate={isDragging ? "dragging" : "default"}
-          variants={dropAreaVariants}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/jpeg,image/png"
-            className="hidden"
-          />
-          
-          <motion.div 
-            className="flex flex-col items-center justify-center"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div 
-              className="w-20 h-20 mb-4 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center shadow-lg"
-              whileHover={{ scale: 1.05, boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)' }}
-            >
-              <FiUpload className="w-8 h-8 text-white" />
-            </motion.div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">
-              {isDragging ? 'Lepaskan file di sini' : 'Unggah Gambar Retina'}
-            </h3>
-            <p className="text-sm text-gray-500 mb-3">
-              Seret & lepas file atau klik untuk memilih
-            </p>
-            <p className="text-xs text-gray-400">
-              Format yang didukung: JPEG, PNG (maks. 5MB)
-            </p>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </motion.div>
-  );
+  const iconVariants = {
+    hidden: { scale: 0, opacity: 0 },
+    visible: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { type: 'spring', stiffness: 300, damping: 20 }
+    },
+    hover: { 
+      scale: 1.1,
+      transition: { type: 'spring', stiffness: 400, damping: 10 }
+    },
+    tap: { scale: 0.9 }
+  };
 
-  // Render file preview dengan animasi
-  const renderFilePreview = () => (
-    <motion.div
-      className="mb-6"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.div
-        variants={itemVariants}
-        className="relative p-4 rounded-2xl overflow-hidden"
-        style={{
-          background: 'rgba(255, 255, 255, 0.7)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.18)',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-        }}
-      >
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          <motion.div 
-            className="relative w-full sm:w-1/3 aspect-square rounded-xl overflow-hidden shadow-lg"
-            whileHover={{ scale: 1.02 }}
-          >
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-full object-cover rounded-xl"
-            />
-            <motion.div 
-              className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            />
-          </motion.div>
-          
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center">
-                <FiFile className="w-5 h-5 text-blue-500 mr-2" />
-                <span className="text-sm font-medium text-gray-700 truncate max-w-[200px]">
-                  {file?.name}
-                </span>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  setFile(null);
-                  setPreview(null);
-                  setError('');
-                  setSuccess('');
-                }}
-                className="p-1 rounded-full hover:bg-gray-100"
-              >
-                <FiX className="w-5 h-5 text-gray-500" />
-              </motion.button>
-            </div>
-            
-            <div className="text-xs text-gray-500 mb-4">
-              {file && (
-                <p>
-                  Ukuran: {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-              )}
-            </div>
-            
-            <motion.button
-              whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2 px-4 mb-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-all flex items-center justify-center"
-            >
-              <FiImage className="mr-2" />
-              Ganti Gambar
-            </motion.button>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
+  const filePreviewVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { type: 'spring', stiffness: 300, damping: 25 }
+    },
+    exit: { 
+      opacity: 0, 
+      y: -20,
+      transition: { duration: 0.2 }
+    }
+  };
 
   return (
     <motion.div
@@ -527,8 +407,224 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
       </motion.div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {renderDropArea()}
-        {renderFilePreview()}
+        <motion.div 
+          variants={itemVariants}
+          className="space-y-2"
+        >
+          <motion.div
+            variants={dropzoneVariants}
+            initial="default"
+            animate={dropAreaControls}
+            whileHover="hover"
+            className={`relative border-2 border-dashed rounded-2xl p-8 transition-all ${
+              isDragging ? 'bg-blue-50' : 'bg-white'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/jpeg, image/png"
+              disabled={isLoading}
+            />
+            
+            <AnimatePresence mode="wait">
+              {!preview ? (
+                <motion.div 
+                  key="upload-prompt"
+                  className="flex flex-col items-center justify-center text-center"
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0 }}
+                >
+                  <motion.div
+                    className="w-20 h-20 mb-4 bg-blue-50 rounded-full flex items-center justify-center text-blue-500"
+                    variants={iconVariants}
+                    whileHover="hover"
+                    whileTap="tap"
+                  >
+                    <FiUpload className="w-8 h-8" />
+                  </motion.div>
+                  
+                  <motion.h3 
+                    className="text-lg font-medium text-gray-700 mb-2"
+                    variants={itemVariants}
+                  >
+                    Seret & Lepaskan Gambar Retina
+                  </motion.h3>
+                  
+                  <motion.p 
+                    className="text-sm text-gray-500 mb-4"
+                    variants={itemVariants}
+                  >
+                    atau klik untuk memilih file
+                  </motion.p>
+                  
+                  <motion.button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.05, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.4)" }}
+                    whileTap={{ scale: 0.95 }}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Mengunggah...' : 'Pilih File'}
+                  </motion.button>
+                  
+                  <motion.p 
+                    className="text-xs text-gray-400 mt-4"
+                    variants={itemVariants}
+                  >
+                    Format yang didukung: JPG, PNG (maks. 5MB)
+                  </motion.p>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="file-preview"
+                  className="flex flex-col items-center"
+                  variants={filePreviewVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <div className="relative w-full max-w-xs mx-auto">
+                    <motion.div
+                      className="relative rounded-lg overflow-hidden shadow-lg border-4 border-white"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <img 
+                        src={preview} 
+                        alt="Preview" 
+                        className="w-full h-auto object-cover"
+                      />
+                      
+                      <motion.button
+                        type="button"
+                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                        onClick={() => {
+                          setFile(null);
+                          setPreview(null);
+                        }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <FiX className="w-5 h-5" />
+                      </motion.button>
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="mt-4 text-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <p className="text-sm font-medium text-gray-700 flex items-center justify-center">
+                        <FiImage className="mr-2" /> {file?.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(file?.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </motion.div>
+                  </div>
+                  
+                  <motion.div 
+                    className="mt-6 flex space-x-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <motion.button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      disabled={isLoading}
+                    >
+                      Ganti Gambar
+                    </motion.button>
+                    
+                    {!autoUpload && (
+                      <motion.button
+                        type="submit"
+                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
+                        whileHover={{ scale: 1.05, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.4)" }}
+                        whileTap={{ scale: 0.95 }}
+                        disabled={isLoading || !selectedPatient}
+                      >
+                        {isLoading ? (
+                          <span className="flex items-center">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Mengunggah...
+                          </span>
+                        ) : (
+                          'Unggah & Analisis'
+                        )}
+                      </motion.button>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {/* Animated decorative elements */}
+            <motion.div 
+              className="absolute -z-10 top-1/4 -left-10 w-20 h-20 bg-blue-400/10 rounded-full blur-xl"
+              animate={{ 
+                x: [0, 10, 0],
+                y: [0, -10, 0],
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 5,
+                ease: "easeInOut" 
+              }}
+            />
+            <motion.div 
+              className="absolute -z-10 bottom-1/4 -right-10 w-32 h-32 bg-indigo-400/10 rounded-full blur-xl"
+              animate={{ 
+                x: [0, -10, 0],
+                y: [0, 10, 0],
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 7,
+                ease: "easeInOut" 
+              }}
+            />
+          </motion.div>
+          
+          {isLoading && (
+            <motion.div 
+              className="mt-4 bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            >
+              <div className="flex items-center">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <motion.div 
+                    className="bg-blue-600 h-2.5 rounded-full" 
+                    initial={{ width: "5%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 2, ease: "easeInOut" }}
+                  />
+                </div>
+                <span className="text-sm text-gray-500 ml-4 whitespace-nowrap">Mengunggah...</span>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
       </form>
     </motion.div>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaPlus, FaUserPlus } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -59,7 +59,7 @@ function PatientDataPageComponent() {
   // Variasi animasi untuk backdrop
   const backdropVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.3 } },
+    visible: { opacity: 1, transition: { duration: 0.2 } },
     exit: { opacity: 0, transition: { duration: 0.2 } }
   };
 
@@ -72,87 +72,42 @@ function PatientDataPageComponent() {
       scale: 1,
       transition: { 
         type: "spring", 
-        stiffness: 400, 
-        damping: 25, 
-        duration: 0.4
+        stiffness: 300, 
+        damping: 30, 
+        duration: 0.3
       }
     },
     exit: { 
       opacity: 0, 
       y: 20, 
       scale: 0.95,
-      transition: { duration: 0.3 }
-    }
-  };
-
-  // Animasi untuk container dan elemen-elemen
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-        duration: 0.5
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: 'spring',
-        stiffness: 400,
-        damping: 25
-      }
+      transition: { duration: 0.2 }
     }
   };
 
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="p-4 sm:p-6 lg:p-8"
-    >
-      <motion.div 
-        variants={itemVariants}
-        className="flex justify-between items-center mb-8"
-      >
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Data Pasien</h2>
-          <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"></div>
-        </div>
-        <motion.button
-          variants={itemVariants}
-          whileHover={{ 
-            scale: 1.05, 
-            boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)'
-          }}
-          whileTap={{ scale: 0.95 }}
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl sm:text-2xl font-semibold">Data Pasien</h2>
+        <button
           onClick={handleAddPatient}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white px-4 sm:px-5 py-2.5 rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          className="flex items-center gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-400 focus:outline-none"
         >
-          <FaUserPlus size={16} />
-          <span className="font-medium">Tambah Pasien</span>
-        </motion.button>
-      </motion.div>
+          <FaPlus size={14} />
+          <span>Tambah Pasien</span>
+        </button>
+      </div>
 
-      <motion.div variants={itemVariants}>
-        <PatientTable 
-          onDelete={handleDeletePatient}
-          refreshTrigger={refreshTrigger}
-        />
-      </motion.div>
+      <PatientTable 
+        onDelete={handleDeletePatient}
+        refreshTrigger={refreshTrigger}
+      />
 
       {/* Modal Konfirmasi Hapus dengan Animasi */}
       <AnimatePresence>
         {confirmDelete && (
           <motion.div 
-            className="fixed inset-0 bg-black/70 z-50 backdrop-blur-md flex items-center justify-center"
+            className="fixed inset-0 bg-black/70 z-50 backdrop-blur-sm flex items-center justify-center"
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -160,44 +115,31 @@ function PatientDataPageComponent() {
             onClick={handleOverlayClick}
           >
             <motion.div 
-              className="bg-white p-6 rounded-2xl shadow-2xl w-[90%] max-w-sm mx-4 border border-gray-100"
+              className="bg-white p-4 rounded-xl shadow-2xl w-[90%] max-w-sm mx-4"
               variants={modalVariants}
               onClick={(e) => e.stopPropagation()}
-              style={{
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-              }}
             >
-              <h3 className="text-lg sm:text-xl font-bold mb-4 text-gray-800 border-b pb-3">Konfirmasi Hapus</h3>
-              <p className="mb-6 text-gray-600">Apakah Anda yakin ingin menghapus data pasien ini? Tindakan ini tidak dapat dibatalkan.</p>
-              <div className="flex justify-end space-x-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <h3 className="text-base sm:text-lg font-semibold mb-3 border-b pb-2">Konfirmasi Hapus</h3>
+              <p className="mb-5 text-gray-600 text-sm">Apakah Anda yakin ingin menghapus data pasien ini? Tindakan ini tidak dapat dibatalkan.</p>
+              <div className="flex justify-end space-x-3">
+                <button
                   onClick={handleCloseModal}
-                  className="px-4 py-2.5 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-gray-200 focus:outline-none font-medium"
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-gray-200 focus:outline-none text-sm"
                 >
                   Batal
-                </motion.button>
-                <motion.button
-                  whileHover={{ 
-                    scale: 1.05,
-                    boxShadow: '0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -4px rgba(239, 68, 68, 0.3)'
-                  }}
-                  whileTap={{ scale: 0.95 }}
+                </button>
+                <button
                   onClick={confirmDeletePatient}
-                  className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-xl shadow-lg hover:from-red-700 hover:to-red-600 transition-all duration-300 focus:ring-2 focus:ring-red-400 focus:outline-none font-medium"
+                  className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus:ring-2 focus:ring-red-400 focus:outline-none text-sm"
                 >
                   Hapus
-                </motion.button>
+                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
 
