@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { BellIcon, Cog6ToothIcon, UserCircleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   const { theme, isMobile } = useTheme();
   
+  // Enhanced animation variants with spring physics for smoother motion
   const headerVariants = {
     hidden: { y: -50, opacity: 0 },
     visible: { 
@@ -12,9 +13,10 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       opacity: 1,
       transition: { 
         type: 'spring',
-        stiffness: 300,
-        damping: 30,
-        duration: 0.3,
+        stiffness: 400,
+        damping: 40,
+        mass: 1,
+        duration: 0.4,
         staggerChildren: 0.05,
         delayChildren: 0.1
       }
@@ -28,9 +30,10 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       y: 0,
       transition: { 
         type: 'spring',
-        stiffness: 300,
-        damping: 30,
-        duration: 0.3
+        stiffness: 400,
+        damping: 40,
+        mass: 1,
+        duration: 0.4
       }
     }
   };
@@ -48,11 +51,11 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
     }
   };
 
-  // Glassmorphism style
+  // Modern glassmorphism style
   const glassEffect = {
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
+    background: 'rgba(255, 255, 255, 0.9)',
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
     boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
     border: '1px solid rgba(255, 255, 255, 0.18)',
   };
@@ -119,8 +122,8 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
               delay: 0.2, 
               duration: 0.5,
               type: 'spring',
-              stiffness: 300,
-              damping: 30
+              stiffness: 400,
+              damping: 40
             }}
             className="h-1 rounded-full mt-1 max-w-[120px]"
             style={{ 
@@ -131,22 +134,38 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         </div>
       </div>
 
+      {/* Search Bar - Hidden on Mobile */}
+      <motion.div
+        variants={itemVariants}
+        className="hidden md:flex items-center flex-1 mx-8 relative"
+      >
+        <div className="relative w-full max-w-md">
+          <input
+            type="text"
+            placeholder="Cari pasien..."
+            className="w-full py-2 pl-10 pr-4 rounded-xl bg-white/50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all duration-300"
+          />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        </div>
+      </motion.div>
+
       {/* Header Actions */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.3 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
         className="hidden md:flex items-center space-x-3"
       >
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          className="relative p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
         >
           <BellIcon className="h-5 w-5 text-gray-600" />
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">2</span>
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
           whileTap={{ scale: 0.95 }}
           className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
         >
@@ -157,7 +176,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
           whileTap={{ scale: 0.95 }}
           className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium shadow-lg">
             A
           </div>
         </motion.div>
