@@ -1,9 +1,15 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { 
+  BellIcon, 
+  Cog6ToothIcon, 
+  UserCircleIcon, 
+  SunIcon, 
+  MoonIcon 
+} from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
-  const { theme, isMobile } = useTheme();
+  const { theme, isMobile, darkMode, toggleDarkMode } = useTheme();
   
   const headerVariants = {
     hidden: { y: -50, opacity: 0 },
@@ -48,13 +54,19 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
     }
   };
 
-  // Glassmorphism style
+  // Glassmorphism style for light/dark mode
   const glassEffect = {
-    background: 'rgba(255, 255, 255, 0.8)',
+    background: darkMode 
+      ? 'rgba(30, 41, 59, 0.7)' 
+      : 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
+    boxShadow: darkMode 
+      ? '0 8px 32px 0 rgba(0, 0, 0, 0.3)' 
+      : '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+    border: darkMode 
+      ? '1px solid rgba(255, 255, 255, 0.05)' 
+      : '1px solid rgba(255, 255, 255, 0.18)',
   };
   
   return (
@@ -108,7 +120,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         <div>
           <motion.h2 
             variants={itemVariants}
-            className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800"
+            className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-100"
           >
             {title}
           </motion.h2>
@@ -138,24 +150,39 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         transition={{ delay: 0.3, duration: 0.3 }}
         className="hidden md:flex items-center space-x-3"
       >
+        {/* Theme Toggle Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          onClick={toggleDarkMode}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 dark:bg-gray-800/50 dark:hover:bg-gray-800/80 transition-colors duration-200"
+          aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
         >
-          <BellIcon className="h-5 w-5 text-gray-600" />
+          {darkMode ? (
+            <SunIcon className="h-5 w-5 text-yellow-400" />
+          ) : (
+            <MoonIcon className="h-5 w-5 text-gray-600" />
+          )}
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 dark:bg-gray-800/50 dark:hover:bg-gray-800/80 transition-colors duration-200"
+        >
+          <BellIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 dark:bg-gray-800/50 dark:hover:bg-gray-800/80 transition-colors duration-200"
         >
-          <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
+          <Cog6ToothIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
         </motion.button>
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          className="p-1 rounded-lg bg-white/50 hover:bg-white/80 dark:bg-gray-800/50 dark:hover:bg-gray-800/80 transition-colors duration-200"
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
             A
@@ -165,31 +192,49 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
 
       {/* Hamburger button in the header for mobile */}
       {isMobile && (
-        <motion.button
-          variants={itemVariants}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleMenuClick}
-          className="p-3 rounded-lg text-white shadow-lg z-50"
-          style={{ 
-            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-            willChange: 'transform',
-            transform: 'translateZ(0)',
-            position: 'relative' // Ensure it's above other elements
-          }}
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          )}
-        </motion.button>
+        <div className="flex items-center space-x-2">
+          {/* Theme Toggle Button for Mobile */}
+          <motion.button
+            variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={toggleDarkMode}
+            className="p-2 rounded-lg bg-white/50 hover:bg-white/80 dark:bg-gray-800/50 dark:hover:bg-gray-800/80 transition-colors duration-200"
+            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? (
+              <SunIcon className="h-5 w-5 text-yellow-400" />
+            ) : (
+              <MoonIcon className="h-5 w-5 text-gray-600" />
+            )}
+          </motion.button>
+
+          <motion.button
+            variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleMenuClick}
+            className="p-3 rounded-lg text-white shadow-lg z-50"
+            style={{ 
+              background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+              position: 'relative' // Ensure it's above other elements
+            }}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </motion.button>
+        </div>
       )}
     </motion.header>
   );

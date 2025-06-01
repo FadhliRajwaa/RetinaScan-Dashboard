@@ -11,7 +11,8 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowLeftCircleIcon,
   Cog6ToothIcon,
-  BellIcon
+  BellIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 // Environment variables
@@ -34,7 +35,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeIndex, setActiveIndex] = useState(null);
   const location = useLocation();
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
   
   // Set active index based on current location
   useEffect(() => {
@@ -114,17 +115,24 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   };
 
   // Modern gradient background with glassmorphism effect
-  const bgGradient = `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
-  const activeItemBg = `${theme.primary}`;
-  const hoverItemBg = `${theme.primary}40`;
+  const bgGradient = darkMode
+    ? `linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(79, 70, 229, 0.9))`
+    : `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
+  
+  const activeItemBg = darkMode ? 'rgba(255, 255, 255, 0.1)' : theme.primary;
+  const hoverItemBg = darkMode ? 'rgba(255, 255, 255, 0.05)' : `${theme.primary}40`;
   
   // Glassmorphism style
   const glassEffect = {
     background: bgGradient,
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    borderRight: '1px solid rgba(255, 255, 255, 0.18)',
+    boxShadow: darkMode 
+      ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+      : '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    borderRight: darkMode
+      ? '1px solid rgba(255, 255, 255, 0.05)'
+      : '1px solid rgba(255, 255, 255, 0.18)',
   };
 
   return (

@@ -1,62 +1,67 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image, Font, PDFDownloadLink } from '@react-pdf/renderer';
 
-// Mendaftarkan font (opsional - bisa disesuaikan dengan kebutuhan)
+// Mendaftarkan font modern
 Font.register({
-  family: 'Open Sans',
+  family: 'Montserrat',
   fonts: [
-    { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-regular.ttf', fontWeight: 'normal' },
-    { src: 'https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-600.ttf', fontWeight: 'bold' },
+    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTUSjIg1_i6t8kCHKm459Wlhzg.ttf', fontWeight: 'normal' },
+    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_bZF3gnD-w.ttf', fontWeight: 'bold' },
+    { src: 'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_c5H3gnD-w.ttf', fontWeight: 'semibold' },
   ]
 });
 
-// Membuat stylesheet untuk PDF
+// Membuat stylesheet untuk PDF dengan desain modern
 const styles = StyleSheet.create({
   page: {
-    fontFamily: 'Open Sans',
+    fontFamily: 'Montserrat',
     backgroundColor: '#FFFFFF',
+    paddingBottom: 65, // Untuk footer
   },
   header: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#3B82F6',
+    backgroundImage: 'linear-gradient(45deg, #3B82F6, #6366F1)',
     padding: 30,
-    paddingBottom: 20,
-    marginBottom: 20,
+    paddingBottom: 25,
+    marginBottom: 25,
+    borderBottomRightRadius: 50,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 5,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
-    color: '#DBEAFE',
+    color: '#E0F2FE',
     textAlign: 'center',
   },
   section: {
-    marginBottom: 15,
+    marginBottom: 20,
     padding: '0 30px',
   },
   sectionWithBackground: {
-    marginBottom: 15,
-    padding: 15,
+    marginBottom: 20,
+    padding: 20,
     margin: '0 30px',
     backgroundColor: '#F0F9FF',
-    borderRadius: 5,
+    borderRadius: 8,
+    border: '1px solid #E0F2FE',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 10,
-    paddingBottom: 2,
+    marginBottom: 12,
+    paddingBottom: 5,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   label: {
     width: '40%',
@@ -72,79 +77,84 @@ const styles = StyleSheet.create({
   paragraph: {
     fontSize: 12,
     color: '#4B5563',
-    marginBottom: 8,
-    lineHeight: 1.5,
+    marginBottom: 10,
+    lineHeight: 1.6,
   },
   image: {
-    width: 200,
-    height: 200,
+    width: 220,
+    height: 220,
     objectFit: 'contain',
-    marginBottom: 10,
+    marginBottom: 12,
     alignSelf: 'center',
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    border: '1px solid #E5E7EB',
   },
   listItem: {
     flexDirection: 'row',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   bullet: {
     fontSize: 12,
-    marginRight: 5,
+    marginRight: 8,
   },
   listItemText: {
     fontSize: 12,
     color: '#4B5563',
     flex: 1,
+    lineHeight: 1.4,
   },
   severityBox: {
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 15,
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
     marginHorizontal: 30,
+    border: '1px solid #E5E7EB',
   },
   severityContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   severityIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
+    width: 24,
+    height: 24,
+    marginRight: 12,
   },
   severityTextContainer: {
     flex: 1,
   },
   severityLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#4B5563',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   severityText: {
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
   },
   mild: {
     backgroundColor: '#D1FAE5',
+    border: '1px solid #A7F3D0',
   },
   mildText: {
     color: '#065F46',
   },
   moderate: {
     backgroundColor: '#FEF3C7',
+    border: '1px solid #FDE68A',
   },
   moderateText: {
     color: '#92400E',
   },
   severe: {
     backgroundColor: '#FEE2E2',
+    border: '1px solid #FECACA',
   },
   severeText: {
     color: '#991B1B',
   },
   normal: {
     backgroundColor: '#DBEAFE',
+    border: '1px solid #BFDBFE',
   },
   normalText: {
     color: '#1E40AF',
@@ -154,47 +164,68 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#3B82F6',
+    backgroundImage: 'linear-gradient(45deg, #3B82F6, #6366F1)',
     padding: 20,
     fontSize: 10,
     color: '#FFFFFF',
     textAlign: 'center',
   },
   confidenceBar: {
-    height: 6,
+    height: 8,
     backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-    marginVertical: 5,
+    borderRadius: 4,
+    marginVertical: 6,
     width: '100%',
   },
   confidenceFill: {
-    height: 6,
-    backgroundColor: '#2563EB',
-    borderRadius: 3,
+    height: 8,
+    backgroundColor: '#3B82F6',
+    borderRadius: 4,
   },
   disclaimer: {
-    marginTop: 20,
-    padding: 10,
+    marginTop: 25,
+    padding: 12,
     backgroundColor: '#F3F4F6',
-    borderRadius: 5,
+    borderRadius: 8,
     margin: '0 30px',
+    border: '1px solid #E5E7EB',
   },
   disclaimerText: {
     fontSize: 9,
     color: '#6B7280',
     textAlign: 'center',
+    lineHeight: 1.4,
   },
   patientInfoContainer: {
     backgroundColor: '#F0F9FF',
-    padding: 15,
-    margin: '0 30px 20px 30px',
-    borderRadius: 5,
+    padding: 20,
+    margin: '0 30px 25px 30px',
+    borderRadius: 8,
+    border: '1px solid #BFDBFE',
   },
   patientInfoTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  logoContainer: {
+    position: 'absolute',
+    top: 15,
+    left: 30,
+  },
+  logo: {
+    width: 40,
+    height: 40,
+  },
+  watermark: {
+    position: 'absolute',
+    bottom: 100,
+    right: 40,
+    fontSize: 60,
+    color: 'rgba(243, 244, 246, 0.5)',
+    transform: 'rotate(-45deg)',
   },
 });
 
@@ -240,11 +271,20 @@ const RetinaScanPdf = ({ report }) => {
     }
   };
 
+  // Logo RetinaScan
+  const logoUrl = 'https://i.imgur.com/jNNT4LE.png'; // Placeholder logo URL - ganti dengan logo RetinaScan yang sebenarnya
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        {/* Watermark */}
+        <Text style={styles.watermark}>RetinaScan</Text>
+        
         {/* Header */}
         <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Image src={logoUrl} style={styles.logo} />
+          </View>
           <Text style={styles.title}>Laporan Pemeriksaan Retina</Text>
           <Text style={styles.subtitle}>Tanggal: {formatDate(report.date)}</Text>
         </View>
@@ -265,6 +305,12 @@ const RetinaScanPdf = ({ report }) => {
               <Text style={styles.label}>Umur:</Text>
               <Text style={styles.value}>{report.patient.age} tahun</Text>
             </View>
+            {report.patient.medicalRecord && (
+              <View style={styles.row}>
+                <Text style={styles.label}>No. Rekam Medis:</Text>
+                <Text style={styles.value}>{report.patient.medicalRecord}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -281,7 +327,7 @@ const RetinaScanPdf = ({ report }) => {
               <Text style={{...styles.severityText, ...getSeverityStyles(report.severity).text}}>
                 {report.severity}
                 {report.confidence ? ` (${Math.round(report.confidence * 100)}%)` : ''}
-          </Text>
+              </Text>
             </View>
           </View>
           
@@ -371,7 +417,7 @@ const RetinaScanPdf = ({ report }) => {
             Dokumen ini dibuat secara otomatis oleh sistem RetinaScan. Hasil pemeriksaan perlu dikonfirmasi oleh dokter mata.
           </Text>
           <Text style={styles.disclaimerText}>
-            © {new Date().getFullYear()} RetinaScan AI System
+            © {new Date().getFullYear()} RetinaScan AI System | Powered by Advanced Retina Analysis Technology
           </Text>
         </View>
 
@@ -385,28 +431,32 @@ const RetinaScanPdf = ({ report }) => {
 };
 
 // Komponen untuk tombol download PDF
-export const RetinaScanPdfDownload = ({ report, fileName }) => (
+export const RetinaScanPdfDownload = ({ report, fileName, darkMode = false }) => (
   <PDFDownloadLink 
     document={<RetinaScanPdf report={report} />} 
-    fileName={fileName || `RetinaScan_Report.pdf`}
-    className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+    fileName={fileName || `RetinaScan_Report_${new Date().toISOString().split('T')[0]}.pdf`}
+    className={`flex items-center px-4 py-2.5 rounded-lg transition-all duration-300 shadow-md ${
+      darkMode 
+        ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-blue-900/20' 
+        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/20'
+    }`}
     style={{ textDecoration: 'none' }}
   >
     {({ blob, url, loading, error }) => 
       loading ? (
         <>
-          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          Menyiapkan PDF...
+          <span className="text-sm font-medium">Menyiapkan PDF...</span>
         </>
       ) : (
         <>
-          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 mr-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          Unduh PDF (Kualitas Tinggi)
+          <span className="text-sm font-medium">Unduh PDF</span>
         </>
       )
     }

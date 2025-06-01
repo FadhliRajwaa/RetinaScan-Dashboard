@@ -9,6 +9,33 @@ export const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [theme, setTheme] = useState(globalTheme);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Load theme preference from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    } else {
+      setDarkMode(false);
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  // Toggle dark/light mode
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
 
   // Deteksi perangkat mobile
   useEffect(() => {
@@ -24,8 +51,18 @@ export const ThemeProvider = ({ children }) => {
     };
   }, []);
 
+  // Combine theme with dark mode settings
+  const currentTheme = {
+    ...theme,
+    isDark: darkMode,
+    background: darkMode ? '#0f172a' : theme.background,
+    backgroundAlt: darkMode ? '#1e293b' : theme.backgroundAlt,
+    text: darkMode ? '#f1f5f9' : theme.text,
+    primary: darkMode ? '#60a5fa' : theme.primary,
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isMobile }}>
+    <ThemeContext.Provider value={{ theme: currentTheme, setTheme, isMobile, darkMode, toggleDarkMode }}>
       {children}
     </ThemeContext.Provider>
   );

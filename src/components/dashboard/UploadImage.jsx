@@ -4,6 +4,7 @@ import { uploadImage } from '../../services/api';
 import PatientSelector from './PatientSelector';
 import { FiUpload, FiFile, FiImage, FiX, FiCheck, FiAlertCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 function UploadImage({ onUploadSuccess, autoUpload = true }) {
   const [file, setFile] = useState(null);
@@ -16,6 +17,7 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
   const fileInputRef = useRef(null);
   const dropAreaControls = useAnimation();
   const navigate = useNavigate();
+  const { darkMode } = useTheme();
 
   // Gunakan ref untuk melacak apakah file sudah diupload
   const uploadedFileRef = useRef(null);
@@ -295,338 +297,175 @@ function UploadImage({ onUploadSuccess, autoUpload = true }) {
     setIsLoading(false);
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        when: "beforeChildren",
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { type: 'spring', damping: 12 }
-    }
-  };
-
-  const dropzoneVariants = {
-    default: { 
-      borderColor: 'rgba(209, 213, 219, 1)',
-      scale: 1,
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-    },
-    dragging: { 
-      borderColor: 'rgba(59, 130, 246, 1)',
-      scale: 1.02,
-      boxShadow: '0 8px 16px rgba(59, 130, 246, 0.2)'
-    },
-    hover: {
-      scale: 1.01,
-      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-    }
-  };
-
-  const iconVariants = {
-    hidden: { scale: 0, opacity: 0 },
-    visible: { 
-      scale: 1, 
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 300, damping: 20 }
-    },
-    hover: { 
-      scale: 1.1,
-      transition: { type: 'spring', stiffness: 400, damping: 10 }
-    },
-    tap: { scale: 0.9 }
-  };
-
-  const filePreviewVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { type: 'spring', stiffness: 300, damping: 25 }
-    },
-    exit: { 
-      opacity: 0, 
-      y: -20,
-      transition: { duration: 0.2 }
-    }
-  };
-
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto"
-    >
-      <AnimatePresence mode="wait">
+    <div className="space-y-6">
+      <AnimatePresence>
         {error && (
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="text-red-500 bg-red-50 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start shadow-sm border border-red-100"
+            exit={{ opacity: 0, y: -10 }}
+            className={`p-4 rounded-lg flex items-start ${
+              darkMode 
+                ? 'bg-red-900/20 border border-red-800/30 text-red-400' 
+                : 'bg-red-50 border border-red-100 text-red-600'
+            }`}
           >
-            <FiAlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+            <FiAlertCircle className="mt-0.5 mr-3 flex-shrink-0" />
             <span>{error}</span>
           </motion.div>
         )}
         
         {success && (
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            className="text-green-600 bg-green-50 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start shadow-sm border border-green-100"
+            exit={{ opacity: 0, y: -10 }}
+            className={`p-4 rounded-lg flex items-start ${
+              darkMode 
+                ? 'bg-green-900/20 border border-green-800/30 text-green-400' 
+                : 'bg-green-50 border border-green-100 text-green-600'
+            }`}
           >
-            <FiCheck className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+            <FiCheck className="mt-0.5 mr-3 flex-shrink-0" />
             <span>{success}</span>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <motion.div 
-        variants={itemVariants}
-        className="mb-6"
-      >
+      
+      {/* Pilih Pasien */}
+      <div className="mb-6">
+        <label className={`block text-sm font-medium mb-2 ${
+          darkMode ? 'text-gray-300' : 'text-gray-700'
+        }`}>
+          Pilih Pasien
+        </label>
         <PatientSelector 
           onSelectPatient={setSelectedPatient} 
           selectedPatient={selectedPatient} 
         />
-      </motion.div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+      </div>
+      
+      {/* Upload Area */}
+      <div className="mb-6">
+        <label className={`block text-sm font-medium mb-2 ${
+          darkMode ? 'text-gray-300' : 'text-gray-700'
+        }`}>
+          Unggah Gambar Retina
+        </label>
+        
         <motion.div 
-          variants={itemVariants}
-          className="space-y-2"
+          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+            isDragging 
+              ? darkMode 
+                ? 'border-blue-500 bg-blue-900/10' 
+                : 'border-blue-500 bg-blue-50' 
+              : darkMode 
+                ? 'border-gray-600 hover:border-blue-500 hover:bg-blue-900/10' 
+                : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+          }`}
+          animate={dropAreaControls}
+          variants={{
+            default: { 
+              borderColor: darkMode ? 'rgb(75, 85, 99)' : 'rgb(209, 213, 219)', 
+              backgroundColor: darkMode ? 'transparent' : 'transparent' 
+            },
+            dragging: { 
+              borderColor: 'rgb(59, 130, 246)', 
+              backgroundColor: darkMode ? 'rgba(30, 64, 175, 0.1)' : 'rgb(239, 246, 255)' 
+            }
+          }}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current.click()}
         >
-          <motion.div
-            variants={dropzoneVariants}
-            initial="default"
-            animate={dropAreaControls}
-            whileHover="hover"
-            className={`relative border-2 border-dashed rounded-2xl p-8 transition-all ${
-              isDragging ? 'bg-blue-50' : 'bg-white'
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept="image/jpeg, image/png"
-              disabled={isLoading}
-            />
-            
-            <AnimatePresence mode="wait">
-              {!preview ? (
-                <motion.div 
-                  key="upload-prompt"
-                  className="flex flex-col items-center justify-center text-center"
-                  initial="hidden"
-                  animate="visible"
-                  exit={{ opacity: 0 }}
-                >
-                  <motion.div
-                    className="w-20 h-20 mb-4 bg-blue-50 rounded-full flex items-center justify-center text-blue-500"
-                    variants={iconVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                  >
-                    <FiUpload className="w-8 h-8" />
-                  </motion.div>
-                  
-                  <motion.h3 
-                    className="text-lg font-medium text-gray-700 mb-2"
-                    variants={itemVariants}
-                  >
-                    Seret & Lepaskan Gambar Retina
-                  </motion.h3>
-                  
-                  <motion.p 
-                    className="text-sm text-gray-500 mb-4"
-                    variants={itemVariants}
-                  >
-                    atau klik untuk memilih file
-                  </motion.p>
-                  
-                  <motion.button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
-                    variants={itemVariants}
-                    whileHover={{ scale: 1.05, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.4)" }}
-                    whileTap={{ scale: 0.95 }}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Mengunggah...' : 'Pilih File'}
-                  </motion.button>
-                  
-                  <motion.p 
-                    className="text-xs text-gray-400 mt-4"
-                    variants={itemVariants}
-                  >
-                    Format yang didukung: JPG, PNG (maks. 5MB)
-                  </motion.p>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  key="file-preview"
-                  className="flex flex-col items-center"
-                  variants={filePreviewVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                >
-                  <div className="relative w-full max-w-xs mx-auto">
-                    <motion.div
-                      className="relative rounded-lg overflow-hidden shadow-lg border-4 border-white"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <img 
-                        src={preview} 
-                        alt="Preview" 
-                        className="w-full h-auto object-cover"
-                      />
-                      
-                      <motion.button
-                        type="button"
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
-                        onClick={() => {
-                          setFile(null);
-                          setPreview(null);
-                        }}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <FiX className="w-5 h-5" />
-                      </motion.button>
-                    </motion.div>
-                    
-                    <motion.div 
-                      className="mt-4 text-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <p className="text-sm font-medium text-gray-700 flex items-center justify-center">
-                        <FiImage className="mr-2" /> {file?.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {(file?.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </motion.div>
-                  </div>
-                  
-                  <motion.div 
-                    className="mt-6 flex space-x-3"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <motion.button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      disabled={isLoading}
-                    >
-                      Ganti Gambar
-                    </motion.button>
-                    
-                    {!autoUpload && (
-                      <motion.button
-                        type="submit"
-                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium rounded-lg shadow-md hover:shadow-lg transition-all"
-                        whileHover={{ scale: 1.05, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.4)" }}
-                        whileTap={{ scale: 0.95 }}
-                        disabled={isLoading || !selectedPatient}
-                      >
-                        {isLoading ? (
-                          <span className="flex items-center">
-                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Mengunggah...
-                          </span>
-                        ) : (
-                          'Unggah & Analisis'
-                        )}
-                      </motion.button>
-                    )}
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            {/* Animated decorative elements */}
-            <motion.div 
-              className="absolute -z-10 top-1/4 -left-10 w-20 h-20 bg-blue-400/10 rounded-full blur-xl"
-              animate={{ 
-                x: [0, 10, 0],
-                y: [0, -10, 0],
-              }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 5,
-                ease: "easeInOut" 
-              }}
-            />
-            <motion.div 
-              className="absolute -z-10 bottom-1/4 -right-10 w-32 h-32 bg-indigo-400/10 rounded-full blur-xl"
-              animate={{ 
-                x: [0, -10, 0],
-                y: [0, 10, 0],
-              }}
-              transition={{ 
-                repeat: Infinity, 
-                duration: 7,
-                ease: "easeInOut" 
-              }}
-            />
-          </motion.div>
-          
-          {isLoading && (
-            <motion.div 
-              className="mt-4 bg-white rounded-lg p-4 shadow-sm border border-gray-100"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-            >
-              <div className="flex items-center">
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <motion.div 
-                    className="bg-blue-600 h-2.5 rounded-full" 
-                    initial={{ width: "5%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 2, ease: "easeInOut" }}
-                  />
-                </div>
-                <span className="text-sm text-gray-500 ml-4 whitespace-nowrap">Mengunggah...</span>
+          {!preview ? (
+            <div className="space-y-3">
+              <div className={`mx-auto flex items-center justify-center h-16 w-16 rounded-full ${
+                darkMode 
+                  ? 'bg-blue-900/30 text-blue-400' 
+                  : 'bg-blue-100 text-blue-600'
+              }`}>
+                <FiUpload size={28} />
               </div>
-            </motion.div>
+              <div>
+                <p className={`text-lg font-medium ${
+                  darkMode ? 'text-gray-200' : 'text-gray-700'
+                }`}>
+                  Klik atau seret file ke sini
+                </p>
+                <p className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  Format yang didukung: JPEG, PNG (maks. 5MB)
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="relative">
+              <img 
+                src={preview} 
+                alt="Preview" 
+                className="max-h-64 mx-auto rounded-lg shadow-lg" 
+              />
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className={`absolute top-2 right-2 p-1.5 rounded-full ${
+                  darkMode 
+                    ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                } shadow-md`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                  setPreview(null);
+                }}
+              >
+                <FiX size={16} />
+              </motion.button>
+            </div>
           )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg, image/png"
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </motion.div>
-      </form>
-    </motion.div>
+      </div>
+      
+      {/* Submit Button */}
+      <div className="flex justify-end">
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          disabled={!file || !selectedPatient || isLoading}
+          onClick={handleSubmit}
+          className={`px-5 py-2.5 rounded-lg font-medium flex items-center justify-center min-w-[120px] ${
+            !file || !selectedPatient || isLoading
+              ? darkMode 
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : darkMode 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:from-blue-700 hover:to-blue-800' 
+                : 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md hover:from-blue-700 hover:to-blue-600'
+          } transition-all duration-200`}
+        >
+          {isLoading ? (
+            <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <FiUpload className="mr-2" />
+          )}
+          {isLoading ? 'Mengunggah...' : 'Unggah & Analisis'}
+        </motion.button>
+      </div>
+    </div>
   );
 }
 

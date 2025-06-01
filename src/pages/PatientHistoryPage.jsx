@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
 import { getPatientHistory, deleteAnalysis } from '../services/api';
 import { API_URL } from '../utils/api';
+import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
-import jsPDF from 'jspdf';
+import { RetinaScanPdfDownload } from '../components/dashboard/RetinaScanPdf';
 import { 
   FiArrowLeft, 
   FiUser, 
@@ -18,6 +19,7 @@ import {
   FiTrash,
   FiDownload
 } from 'react-icons/fi';
+import ReactDOM from 'react-dom';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
 const FALLBACK_API_URLS = [
@@ -108,6 +110,27 @@ function PatientHistoryPageComponent() {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [idToDelete, setIdToDelete] = useState(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const { darkMode } = useTheme();
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: 'spring', damping: 12 }
+    }
+  };
 
   useEffect(() => {
     const fetchPatientHistory = async () => {
@@ -278,28 +301,6 @@ function PatientHistoryPageComponent() {
   const severityDistribution = calculateSeverityDistribution();
   const totalAnalyses = patientAnalyses.length;
 
-  // Container animation
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  // Child animation
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 100, damping: 12 }
-    }
-  };
-
   // Fungsi untuk mengunduh PDF
   const handleDownloadPdf = async () => {
     try {
@@ -312,250 +313,222 @@ function PatientHistoryPageComponent() {
       const analysis = patientAnalyses[selectedAnalysisIndex];
       const patient = patientData;
       
-      // Buat PDF langsung dengan jsPDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
-      
-      // Fungsi untuk menambahkan teks dengan wrapping
-      const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
-        const lines = pdf.splitTextToSize(text, maxWidth);
-        pdf.text(lines, x, y);
-        return y + (lines.length * lineHeight);
+      // Siapkan data untuk PDF
+      const reportData = {
+        date: analysis.createdAt,
+        patient: patient,
+        severity: analysis.severity,
+        confidence: analysis.confidence,
+        image: analysis.imageData || activeImageUrl,
+        details: analysis.notes || '',
+        recommendations: analysis.notes || '',
       };
-      
-      // Header
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, 0, pageWidth, 40, 'F');
-      
-      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
-      pdf.setFontSize(24);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Laporan Riwayat Pemeriksaan', pageWidth / 2, 20, { align: 'center' });
-      
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`Tanggal: ${formatDate(analysis.createdAt)}`, pageWidth / 2, 30, { align: 'center' });
-      
-      let yPos = 50;
-      
-      // Informasi pasien
-      pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
-      
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Informasi Pasien', margin + 5, yPos + 10);
-      
-      pdf.setFontSize(11);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
-      pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
-      pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age || '-'} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
-      
-      yPos += 40;
-      
-      // Hasil analisis
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
-      
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', margin + 5, yPos + 10);
-      
-      // Tingkat keparahan
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
-      
-      // Set warna berdasarkan tingkat keparahan
-      const severityLevel = analysis.severity.toLowerCase();
-      if (severityLevel === 'ringan' || severityLevel === 'rendah') {
-        pdf.setTextColor(39, 174, 96); // Hijau
-      } else if (severityLevel === 'sedang') {
-        pdf.setTextColor(241, 196, 15); // Kuning
-      } else if (severityLevel === 'berat' || severityLevel === 'parah' || severityLevel === 'sangat berat') {
-        pdf.setTextColor(231, 76, 60); // Merah
-      } else {
-        pdf.setTextColor(52, 152, 219); // Biru
-      }
-      
-      pdf.setFontSize(16);
-      pdf.setFont(undefined, 'bold');
-      pdf.text(analysis.severity, margin + 50, yPos + 25);
-      
-      // Tingkat kepercayaan
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin + 5, yPos + 40);
-      
-      // Gambar bar untuk confidence
-      const barWidth = 50;
-      const confidenceWidth = barWidth * analysis.confidence;
-      pdf.setFillColor(220, 220, 220); // Background bar
-      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
-      pdf.setFillColor(37, 99, 235); // Filled bar
-      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
-      
-      yPos += 60;
-      
-      // Gambar
-      if (analysis.imageData) {
-        try {
-          // Tambahkan gambar jika tersedia
-          const imgWidth = 100;
-          const imgHeight = 100;
-          pdf.addImage(analysis.imageData, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
-          yPos += imgHeight + 10;
-          
-          // Tambahkan label gambar
-          pdf.setFontSize(10);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
-          yPos += 15;
-        } catch (imgError) {
-          console.error('Error adding image to PDF:', imgError);
-          // Lanjutkan tanpa gambar jika gagal
-          yPos += 10;
-        }
-      }
-      
-      // Rekomendasi
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
-      
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 5, yPos + 10);
-      
-      pdf.setFontSize(11);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
-      
-      let recommendation = '';
-      if (analysis.notes) {
-        recommendation = analysis.notes;
-      } else if (severityLevel === 'tidak ada' || severityLevel === 'normal') {
-        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
-      } else if (severityLevel === 'ringan' || severityLevel === 'rendah') {
-        recommendation = 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
-      } else if (severityLevel === 'sedang') {
-        recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
-      } else if (severityLevel === 'berat' || severityLevel === 'parah') {
-        recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
-      } else if (severityLevel === 'sangat berat' || severityLevel === 'proliferative dr') {
-        recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
-      } else {
-        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
-      }
-      
-      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
-      yPos += 15;
-      
-      // Disclaimer
-      pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 100, 100);
-      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
-      
-      // Footer
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-      
-      pdf.setFontSize(10);
-      pdf.setTextColor(255, 255, 255);
-      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       
       // Nama file
       const fileName = `RetinaScan_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
       
-      // Simpan PDF
-      pdf.save(fileName);
+      // Buat elemen untuk RetinaScanPdfDownload
+      const pdfLink = document.createElement('div');
+      pdfLink.style.display = 'none';
+      document.body.appendChild(pdfLink);
+      
+      // Render RetinaScanPdfDownload
+      ReactDOM.render(
+        <RetinaScanPdfDownload report={reportData} fileName={fileName} darkMode={darkMode} />,
+        pdfLink,
+        () => {
+          // Klik tombol download secara otomatis
+          setTimeout(() => {
+            const downloadButton = pdfLink.querySelector('a');
+            if (downloadButton) {
+              downloadButton.click();
+            }
+            // Hapus elemen setelah download
+            setTimeout(() => {
+              ReactDOM.unmountComponentAtNode(pdfLink);
+              document.body.removeChild(pdfLink);
+              setIsPdfLoading(false);
+            }, 1000);
+          }, 100);
+        }
+      );
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Gagal membuat PDF. Silakan coba lagi.');
-    } finally {
       setIsPdfLoading(false);
     }
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <motion.div 
+      className={`p-4 sm:p-6 lg:p-8 min-h-screen ${
+        darkMode 
+          ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900' 
+          : 'bg-gradient-to-b from-blue-50 to-white'
+      }`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="max-w-7xl mx-auto">
         {/* Header with back button */}
-        <div className="flex items-center mb-6">
-          <button 
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex items-center mb-6"
+        >
+          <motion.button 
+            variants={itemVariants}
             onClick={handleBack}
-            className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className={`mr-4 p-2 rounded-full transition-colors ${
+              darkMode 
+                ? 'hover:bg-gray-700 text-gray-300' 
+                : 'hover:bg-gray-100 text-gray-600'
+            }`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <FiArrowLeft className="text-gray-600" size={20} />
-          </button>
-          <h1 className="text-2xl font-bold text-gray-800">Riwayat Pasien</h1>
-        </div>
+            <FiArrowLeft size={20} />
+          </motion.button>
+          <motion.h1 
+            variants={itemVariants}
+            className={`text-2xl font-bold ${
+              darkMode ? 'text-white' : 'text-gray-800'
+            }`}
+          >
+            Riwayat Pasien
+          </motion.h1>
+        </motion.div>
         
         {isLoading ? (
-          <div className="flex justify-center items-center py-20">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-center items-center py-20"
+          >
             <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
-              <p className="text-gray-500">Memuat data pasien...</p>
+              <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${
+                darkMode ? 'border-blue-500' : 'border-blue-600'
+              } mb-3`}></div>
+              <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>Memuat data pasien...</p>
             </div>
-          </div>
+          </motion.div>
         ) : error ? (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-800 mb-2">{error}</h3>
-            <p className="text-gray-600 mb-6">Tidak dapat menemukan riwayat analisis untuk pasien ini.</p>
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Kembali ke Daftar Pasien
-            </button>
-          </div>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className={`${
+              darkMode 
+                ? 'bg-gray-800 border border-gray-700' 
+                : 'bg-white'
+            } rounded-xl shadow-xl p-6 text-center`}
+          >
+            <motion.div variants={itemVariants}>
+              <FiAlertTriangle className={`${
+                darkMode ? 'text-yellow-400' : 'text-yellow-500'
+              } text-5xl mx-auto mb-4`} />
+              <h3 className={`text-xl font-medium ${
+                darkMode ? 'text-gray-200' : 'text-gray-800'
+              } mb-2`}>{error}</h3>
+              <p className={`${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              } mb-6`}>Tidak dapat menemukan riwayat analisis untuk pasien ini.</p>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleBack}
+                className={`px-4 py-2 ${
+                  darkMode
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                } text-white rounded-lg shadow-md transition-colors`}
+              >
+                Kembali ke Daftar Pasien
+              </motion.button>
+            </motion.div>
+          </motion.div>
         ) : patientData && patientAnalyses.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
             {/* Patient Info Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <FiUser className="mr-2 text-blue-500" />
+            <motion.div 
+              variants={itemVariants}
+              className="lg:col-span-1"
+            >
+              <div className={`${
+                darkMode 
+                  ? 'bg-gray-800 border border-gray-700' 
+                  : 'bg-white'
+              } rounded-xl shadow-xl p-6 mb-6`}>
+                <h3 className={`text-lg font-semibold ${
+                  darkMode ? 'text-white' : 'text-gray-800'
+                } mb-4 flex items-center`}>
+                  <div className={`p-2 rounded-full mr-3 ${
+                    darkMode 
+                      ? 'bg-blue-900/30 text-blue-400' 
+                      : 'bg-blue-100 text-blue-600'
+                  }`}>
+                    <FiUser />
+                  </div>
                   Informasi Pasien
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500">Nama Lengkap</p>
-                    <p className="font-medium">{patientData.fullName || patientData.name}</p>
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Nama Lengkap</p>
+                    <p className={`font-medium ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{patientData.fullName || patientData.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                    <p className="font-medium">{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Jenis Kelamin</p>
+                    <p className={`font-medium ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Usia</p>
-                    <p className="font-medium">{patientData.age || '-'} tahun</p>
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Usia</p>
+                    <p className={`font-medium ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{patientData.age || '-'} tahun</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Tanggal Lahir</p>
-                    <p className="font-medium">
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Tanggal Lahir</p>
+                    <p className={`font-medium ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
                       {patientData.dateOfBirth ? formatDate(patientData.dateOfBirth).split(',')[0] : '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Total Pemindaian</p>
-                    <p className="font-medium">{totalAnalyses} kali</p>
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Total Pemindaian</p>
+                    <p className={`font-medium ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>{totalAnalyses} kali</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Pemindaian Terakhir</p>
-                    <p className="font-medium">
+                    <p className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Pemindaian Terakhir</p>
+                    <p className={`font-medium ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
                       {patientAnalyses[0] ? formatDate(patientAnalyses[0].createdAt) : '-'}
                     </p>
                   </div>
@@ -563,70 +536,129 @@ function PatientHistoryPageComponent() {
               </div>
               
               {/* Analysis History List */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <FiFileText className="mr-2 text-blue-500" />
+              <div className={`${
+                darkMode 
+                  ? 'bg-gray-800 border border-gray-700' 
+                  : 'bg-white'
+              } rounded-xl shadow-xl p-6`}>
+                <h3 className={`text-lg font-semibold ${
+                  darkMode ? 'text-white' : 'text-gray-800'
+                } mb-4 flex items-center`}>
+                  <div className={`p-2 rounded-full mr-3 ${
+                    darkMode 
+                      ? 'bg-purple-900/30 text-purple-400' 
+                      : 'bg-purple-100 text-purple-600'
+                  }`}>
+                    <FiFileText />
+                  </div>
                   Riwayat Pemindaian
                 </h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                  {patientAnalyses.map((analysis, index) => (
-                    <div 
-                      key={analysis.id}
-                      onClick={() => setSelectedAnalysisIndex(index)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all ${
-                        selectedAnalysisIndex === index 
-                          ? 'bg-blue-50 border-l-4 border-blue-500' 
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-sm font-medium">
-                            {formatDate(analysis.createdAt)}
-                          </p>
-                          <div className="flex items-center mt-1">
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${getSeverityBadge(analysis.severity)}`}>
-                              {analysis.severity}
-                            </span>
-                            <span className="text-xs text-gray-500 ml-2">
-                              {(analysis.confidence * 100).toFixed(0)}% keyakinan
-                            </span>
+                  <AnimatePresence>
+                    {patientAnalyses.map((analysis, index) => (
+                      <motion.div 
+                        key={analysis.id || index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: index * 0.05 }}
+                        onClick={() => setSelectedAnalysisIndex(index)}
+                        className={`p-3 rounded-lg cursor-pointer transition-all ${
+                          selectedAnalysisIndex === index 
+                            ? darkMode
+                              ? 'bg-blue-900/30 border-l-4 border-blue-500'
+                              : 'bg-blue-50 border-l-4 border-blue-500'
+                            : darkMode
+                              ? 'bg-gray-700/50 hover:bg-gray-700'
+                              : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className={`text-sm font-medium ${
+                              darkMode ? 'text-gray-200' : 'text-gray-800'
+                            }`}>
+                              {formatDate(analysis.createdAt)}
+                            </p>
+                            <div className="flex items-center mt-1">
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                darkMode
+                                  ? analysis.severity.toLowerCase().includes('tidak') || analysis.severity.toLowerCase().includes('normal')
+                                    ? 'bg-blue-900/30 text-blue-400'
+                                    : analysis.severity.toLowerCase().includes('ringan')
+                                      ? 'bg-green-900/30 text-green-400'
+                                      : analysis.severity.toLowerCase().includes('sedang')
+                                        ? 'bg-yellow-900/30 text-yellow-400'
+                                        : analysis.severity.toLowerCase().includes('berat')
+                                          ? 'bg-red-900/30 text-red-400'
+                                          : 'bg-purple-900/30 text-purple-400'
+                                  : getSeverityBadge(analysis.severity)
+                              }`}>
+                                {analysis.severity}
+                              </span>
+                              <span className={`text-xs ${
+                                darkMode ? 'text-gray-400' : 'text-gray-500'
+                              } ml-2`}>
+                                {(analysis.confidence * 100).toFixed(0)}% keyakinan
+                              </span>
+                            </div>
                           </div>
+                          {selectedAnalysisIndex === index && (
+                            <div className={`h-2 w-2 rounded-full ${
+                              darkMode ? 'bg-blue-500' : 'bg-blue-500'
+                            }`}></div>
+                          )}
                         </div>
-                        {selectedAnalysisIndex === index && (
-                          <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
-            </div>
+            </motion.div>
             
             {/* Analysis Details */}
-            <div className="lg:col-span-2">
+            <motion.div 
+              variants={itemVariants}
+              className="lg:col-span-2"
+            >
               {patientAnalyses[selectedAnalysisIndex] && (
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className={`${
+                  darkMode 
+                    ? 'bg-gray-800 border border-gray-700' 
+                    : 'bg-white'
+                } rounded-xl shadow-xl p-6`}>
                   <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800">
+                    <h3 className={`text-lg font-semibold ${
+                      darkMode ? 'text-white' : 'text-gray-800'
+                    }`}>
                       Detail Analisis
                     </h3>
                     <div className="flex space-x-2">
                       <button
                         onClick={handleDownloadPdf}
                         disabled={isPdfLoading}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                        className={`p-2 ${
+                          darkMode
+                            ? 'text-blue-300 hover:bg-gray-700'
+                            : 'text-blue-600 hover:bg-gray-100'
+                        } rounded-full transition-colors`}
                         title="Unduh PDF"
                       >
                         {isPdfLoading ? (
-                          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                          <div className={`animate-spin h-5 w-5 ${
+                            darkMode ? 'border-blue-300' : 'border-blue-600'
+                          } border-t-transparent rounded-full`}></div>
                         ) : (
                           <FiDownload size={18} />
                         )}
                       </button>
                       <button
                         onClick={(e) => handleDelete(patientAnalyses[selectedAnalysisIndex].id, e)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                        className={`p-2 ${
+                          darkMode
+                            ? 'text-red-300 hover:bg-gray-700'
+                            : 'text-red-600 hover:bg-gray-100'
+                        } rounded-full transition-colors`}
                         title="Hapus Analisis"
                       >
                         <FiTrash size={18} />
@@ -637,7 +669,9 @@ function PatientHistoryPageComponent() {
                   {/* Image Preview */}
                   <div className="bg-gray-100 p-4 rounded-lg">
                     <div className="flex justify-between items-center">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
+                      <p className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      } mb-2`}>Gambar Retina</p>
                       <div className="flex gap-1">
                         <button 
                           onClick={() => {
@@ -657,7 +691,11 @@ function PatientHistoryPageComponent() {
                               }, 50);
                             }
                           }}
-                          className="px-2 py-1 bg-green-500 text-white rounded text-xs flex items-center"
+                          className={`px-2 py-1 ${
+                            darkMode
+                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                          } rounded text-xs flex items-center`}
                           title="Muat ulang gambar"
                         >
                           <FiRefreshCcw className="mr-1" /> Refresh
@@ -682,8 +720,12 @@ function PatientHistoryPageComponent() {
                           {imageStatus === 'loading' && (
                             <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
                               <div className="flex flex-col items-center space-y-2">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                                <p className="text-xs text-gray-600">Memuat gambar...</p>
+                                <div className={`animate-spin rounded-full h-8 w-8 ${
+                                  darkMode ? 'border-blue-300' : 'border-blue-600'
+                                } border-t-2 border-b-2`}></div>
+                                <p className={`text-xs ${
+                                  darkMode ? 'text-gray-400' : 'text-gray-600'
+                                }`}>Memuat gambar...</p>
                               </div>
                             </div>
                           )}
@@ -735,7 +777,9 @@ function PatientHistoryPageComponent() {
                         </>
                       ) : (
                         <div className="flex items-center justify-center h-full">
-                          <p className="text-gray-500 text-sm">Gambar tidak tersedia</p>
+                          <p className={`text-sm ${
+                            darkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}>Gambar tidak tersedia</p>
                         </div>
                       )}
                     </div>
@@ -744,119 +788,221 @@ function PatientHistoryPageComponent() {
                   {/* Analysis Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Nama File</p>
-                      <p className="text-base font-medium break-words">
+                      <p className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      } mb-2`}>Nama File</p>
+                      <p className={`text-base font-medium break-words ${
+                        darkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>
                         {patientAnalyses[selectedAnalysisIndex].originalFilename}
                       </p>
                     </div>
                     
                     <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan</p>
+                      <p className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      } mb-2`}>Tingkat Keparahan</p>
                       <span className={`px-3 py-1 rounded-full text-sm inline-block ${
-                        getSeverityBadge(patientAnalyses[selectedAnalysisIndex].severity)
+                        darkMode
+                          ? analysis.severity.toLowerCase().includes('tidak') || analysis.severity.toLowerCase().includes('normal')
+                            ? 'bg-blue-900/30 text-blue-400'
+                            : analysis.severity.toLowerCase().includes('ringan')
+                              ? 'bg-green-900/30 text-green-400'
+                              : analysis.severity.toLowerCase().includes('sedang')
+                                ? 'bg-yellow-900/30 text-yellow-400'
+                                : analysis.severity.toLowerCase().includes('berat')
+                                  ? 'bg-red-900/30 text-red-400'
+                                  : 'bg-purple-900/30 text-purple-400'
+                          : getSeverityBadge(analysis.severity)
                       }`}>
-                        {patientAnalyses[selectedAnalysisIndex].severity}
+                        {analysis.severity}
                       </span>
                     </div>
                     
                     <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Kepercayaan</p>
+                      <p className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      } mb-2`}>Tingkat Kepercayaan</p>
                       <div className="flex items-center">
                         <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
                           <div 
-                            className="bg-blue-600 h-2.5 rounded-full" 
-                            style={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
+                            className={`bg-blue-600 h-2.5 rounded-full ${
+                              darkMode ? 'bg-blue-900' : ''
+                            }`}
+                            style={{ width: `${(analysis.confidence * 100).toFixed(0)}%` }}
                           ></div>
                         </div>
-                        <span className="text-base font-medium min-w-[60px] text-right">
-                          {(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(1)}%
+                        <span className={`text-base font-medium min-w-[60px] text-right ${
+                          darkMode ? 'text-gray-200' : 'text-gray-800'
+                        }`}>
+                          {(analysis.confidence * 100).toFixed(1)}%
                         </span>
                       </div>
                     </div>
                     
                     <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Tanggal Analisis</p>
-                      <p className="text-base font-medium">
-                        {formatDate(patientAnalyses[selectedAnalysisIndex].createdAt)}
+                      <p className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      } mb-2`}>Tanggal Analisis</p>
+                      <p className={`text-base font-medium ${
+                        darkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>
+                        {formatDate(analysis.createdAt)}
                       </p>
                     </div>
                   </div>
                   
                   {/* Notes */}
-                  {patientAnalyses[selectedAnalysisIndex].notes && (
+                  {analysis.notes && (
                     <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Catatan</p>
-                      <p className="text-base">
-                        {patientAnalyses[selectedAnalysisIndex].notes}
+                      <p className={`text-sm font-medium ${
+                        darkMode ? 'text-gray-400' : 'text-gray-500'
+                      } mb-2`}>Catatan</p>
+                      <p className={`text-base ${
+                        darkMode ? 'text-gray-200' : 'text-gray-800'
+                      }`}>
+                        {analysis.notes}
                       </p>
                     </div>
                   )}
                   
                   {/* Recommendations based on severity */}
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
-                    <p className="text-base text-blue-700">
-                      {patientAnalyses[selectedAnalysisIndex].notes ? (
-                        patientAnalyses[selectedAnalysisIndex].notes
-                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
+                    <p className={`text-sm font-medium ${
+                      darkMode ? 'text-blue-200' : 'text-blue-800'
+                    } mb-2`}>Rekomendasi</p>
+                    <p className={`text-base text-blue-700 ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}>
+                      {analysis.notes ? (
+                        analysis.notes
+                      ) : analysis.severity.toLowerCase() === 'tidak ada' ? (
                         'Lakukan pemeriksaan rutin setiap tahun.'
-                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'ringan' ? (
+                      ) : analysis.severity.toLowerCase() === 'ringan' ? (
                         'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
-                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'sedang' ? (
+                      ) : analysis.severity.toLowerCase() === 'sedang' ? (
                         'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
-                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'berat' ? (
+                      ) : analysis.severity.toLowerCase() === 'berat' ? (
                         'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
-                      ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'sangat berat' ? (
+                      ) : analysis.severity.toLowerCase() === 'sangat berat' ? (
                         'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
                       ) : (
                         'Lakukan pemeriksaan rutin setiap tahun.'
                       )}
                     </p>
                   </div>
+                  
+                  {/* Download PDF Button */}
+                  <div className="mt-6 flex justify-center">
+                    {patientAnalyses[selectedAnalysisIndex] && (
+                      <RetinaScanPdfDownload
+                        report={{
+                          date: patientAnalyses[selectedAnalysisIndex].createdAt,
+                          patient: patientData,
+                          severity: patientAnalyses[selectedAnalysisIndex].severity,
+                          confidence: patientAnalyses[selectedAnalysisIndex].confidence,
+                          image: patientAnalyses[selectedAnalysisIndex].imageData || activeImageUrl,
+                          details: patientAnalyses[selectedAnalysisIndex].notes || '',
+                          recommendations: patientAnalyses[selectedAnalysisIndex].notes || '',
+                        }}
+                        fileName={`RetinaScan_${patientData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`}
+                        darkMode={darkMode}
+                      />
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-800 mb-2">Data Tidak Ditemukan</h3>
-            <p className="text-gray-600 mb-6">Tidak dapat menemukan data pasien atau riwayat analisis.</p>
-            <button
-              onClick={handleBack}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Kembali ke Daftar Pasien
-            </button>
-          </div>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className={`${
+              darkMode 
+                ? 'bg-gray-800 border border-gray-700' 
+                : 'bg-white'
+            } rounded-xl shadow-xl p-6 text-center`}
+          >
+            <motion.div variants={itemVariants}>
+              <FiFileText className={`${
+                darkMode ? 'text-gray-400' : 'text-gray-400'
+              } text-5xl mx-auto mb-4`} />
+              <h3 className={`text-xl font-medium ${
+                darkMode ? 'text-gray-200' : 'text-gray-700'
+              } mb-2`}>Belum Ada Riwayat</h3>
+              <p className={`${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              } mb-6`}>Pasien ini belum memiliki riwayat analisis retina.</p>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleBack}
+                className={`px-4 py-2 ${
+                  darkMode
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+                } text-white rounded-lg shadow-md transition-colors`}
+              >
+                Kembali ke Daftar Pasien
+              </motion.button>
+            </motion.div>
+          </motion.div>
         )}
       </div>
       
-      {/* Confirmation Dialog for Delete */}
+      {/* Confirm Delete Modal */}
       {showConfirmDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
-            <p className="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus analisis ini? Tindakan ini tidak dapat dibatalkan.</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className={`${
+              darkMode 
+                ? 'bg-gray-800 border border-gray-700' 
+                : 'bg-white'
+            } rounded-xl shadow-xl p-6 max-w-md w-full mx-4`}
+          >
+            <h3 className={`text-xl font-medium ${
+              darkMode ? 'text-white' : 'text-gray-800'
+            } mb-4`}>Konfirmasi Hapus</h3>
+            <p className={`${
+              darkMode ? 'text-gray-300' : 'text-gray-600'
+            } mb-6`}>Apakah Anda yakin ingin menghapus analisis ini? Tindakan ini tidak dapat dibatalkan.</p>
             <div className="flex justify-end space-x-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setShowConfirmDelete(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                className={`px-4 py-2 rounded-lg ${
+                  darkMode
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
               >
                 Batal
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className={`px-4 py-2 ${
+                  darkMode
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
+                    : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800'
+                } text-white rounded-lg shadow-md transition-colors`}
               >
                 Hapus
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
-export default withPageTransition(PatientHistoryPageComponent); 
+const PatientHistoryPage = withPageTransition(PatientHistoryPageComponent);
+export default PatientHistoryPage; 
