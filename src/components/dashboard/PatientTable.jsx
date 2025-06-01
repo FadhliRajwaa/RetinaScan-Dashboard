@@ -5,10 +5,8 @@ import { FaEdit, FaTrash, FaEye, FaSearch, FaSort, FaSortUp, FaSortDown, FaFilte
 import { format, differenceInYears } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
 
 const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
-  const { darkMode } = useTheme();
   const [patients, setPatients] = useState([]);
   const [filteredPatients, setFilteredPatients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,11 +142,11 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
   
   const getSortIcon = (columnName) => {
     if (sortConfig.key !== columnName) {
-      return <FaSort className="ml-1 text-gray-400 dark:text-gray-500 inline" />;
+      return <FaSort className="ml-1 text-gray-400 inline" />;
     }
     return sortConfig.direction === 'ascending' 
-      ? <FaSortUp className="ml-1 text-blue-600 dark:text-blue-400 inline" /> 
-      : <FaSortDown className="ml-1 text-blue-600 dark:text-blue-400 inline" />;
+      ? <FaSortUp className="ml-1 text-blue-600 inline" /> 
+      : <FaSortDown className="ml-1 text-blue-600 inline" />;
   };
   
   // Get current patients for pagination
@@ -166,49 +164,58 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
   // Blood type options for filter
   const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
-  // Animation variants
+  // Animasi untuk container dan elemen-elemen
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: {
+    visible: { 
       opacity: 1,
-      transition: {
-        staggerChildren: 0.05,
-        delayChildren: 0.1
+      transition: { 
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+        duration: 0.5
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
       opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15
+      transition: { 
+        type: 'spring',
+        stiffness: 400,
+        damping: 25
       }
     }
-  };
-
-  const buttonVariants = {
-    hover: { scale: 1.05, transition: { duration: 0.2 } },
-    tap: { scale: 0.95, transition: { duration: 0.1 } }
   };
 
   // Loading skeleton animation
   const LoadingSkeleton = () => (
     <>
       {[...Array(5)].map((_, index) => (
-        <tr key={`skeleton-${index}`} className="border-b dark:border-gray-700 animate-pulse">
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div></td>
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div></td>
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div></td>
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div></td>
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div></td>
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div></td>
-          <td className="px-4 py-3"><div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div></td>
-        </tr>
+        <motion.tr 
+          key={`skeleton-${index}`} 
+          className="border-b"
+          initial={{ opacity: 0 }}
+          animate={{ 
+            opacity: [0.3, 0.6, 0.3],
+            transition: { 
+              duration: 1.5, 
+              repeat: Infinity,
+              repeatType: "reverse",
+              delay: index * 0.1
+            }
+          }}
+        >
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-3/4"></div></td>
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-1/2"></div></td>
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-1/4"></div></td>
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-2/3"></div></td>
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-1/2"></div></td>
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-1/4"></div></td>
+          <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded-full w-full"></div></td>
+        </motion.tr>
       ))}
     </>
   );
@@ -216,17 +223,24 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
   // Empty state component
   const EmptyState = () => (
     <motion.tr
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, type: 'spring', stiffness: 400, damping: 25 }}
     >
       <td colSpan="7" className="px-4 py-8 text-center">
         <div className="flex flex-col items-center justify-center">
-          <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <p className="text-gray-500 dark:text-gray-400 font-medium mb-1">Tidak ada data pasien</p>
-          <p className="text-gray-400 dark:text-gray-500 text-sm">Tambahkan pasien baru untuk melihat data di sini</p>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="mb-4 p-4 rounded-full bg-blue-50"
+          >
+            <svg className="w-16 h-16 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </motion.div>
+          <p className="text-gray-700 font-semibold mb-1">Tidak ada data pasien</p>
+          <p className="text-gray-500 text-sm">Tambahkan pasien baru untuk melihat data di sini</p>
         </div>
       </td>
     </motion.tr>
@@ -237,13 +251,24 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700"
+      className="bg-white backdrop-blur-lg bg-opacity-80 p-5 sm:p-6 rounded-2xl shadow-xl border border-gray-100"
+      style={{
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)'
+      }}
     >
-      <motion.div 
-        variants={itemVariants}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
-      >
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-800 dark:text-gray-100">Data Pasien</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <motion.h3 
+          variants={itemVariants}
+          className="text-lg sm:text-xl font-bold text-gray-800 flex items-center"
+        >
+          Data Pasien
+          <span className="ml-3 px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+            {filteredPatients.length} pasien
+          </span>
+        </motion.h3>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           {/* Search Bar */}
@@ -251,33 +276,33 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
             variants={itemVariants}
             className="relative w-full sm:w-64"
           >
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Cari pasien..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2.5 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
+              className="pl-10 pr-4 py-2.5 w-full rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
             />
           </motion.div>
           
           {/* Filter Button */}
           <motion.button
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
+            variants={itemVariants}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-300 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all shadow-sm ${
               showFilters 
-                ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             <FaFilter size={14} />
-            <span>Filter</span>
+            <span className="font-medium">Filter</span>
           </motion.button>
         </div>
-      </motion.div>
+      </div>
       
       {/* Filter Panel */}
       <AnimatePresence>
@@ -288,14 +313,14 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
             exit={{ opacity: 0, height: 0 }}
             className="mb-6 overflow-hidden"
           >
-            <div className="p-5 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 shadow-inner">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Kelamin</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin</label>
                   <select
                     value={filterConfig.gender}
                     onChange={(e) => setFilterConfig({...filterConfig, gender: e.target.value})}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
                   >
                     <option value="all">Semua</option>
                     <option value="male">Laki-laki</option>
@@ -303,11 +328,11 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Golongan Darah</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Golongan Darah</label>
                   <select
                     value={filterConfig.bloodType}
                     onChange={(e) => setFilterConfig({...filterConfig, bloodType: e.target.value})}
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400"
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
                   >
                     <option value="all">Semua</option>
                     {bloodTypes.map(type => (
@@ -317,16 +342,15 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                 </div>
               </div>
               
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-5">
                 <motion.button
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     setFilterConfig({ gender: 'all', bloodType: 'all' });
                     setSearchTerm('');
                   }}
-                  className="px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all"
                 >
                   Reset Filter
                 </motion.button>
@@ -338,9 +362,8 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
 
       {error && (
         <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg border border-red-200 dark:border-red-800/30 flex items-center"
+          variants={itemVariants}
+          className="mb-6 bg-red-50 text-red-500 p-4 rounded-xl border border-red-100 flex items-center"
         >
           <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -351,37 +374,37 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
 
       <motion.div 
         variants={itemVariants}
-        className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
+        className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm"
       >
         <table className="w-full text-sm text-left">
-          <thead className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase bg-gray-100 dark:bg-gray-700/80">
+          <thead className="text-xs font-medium text-gray-700 uppercase bg-gradient-to-r from-gray-50 to-gray-100">
             <tr>
-              <th className="px-4 py-3 cursor-pointer select-none" onClick={() => requestSort('fullName')}>
+              <th className="px-4 py-3.5 cursor-pointer select-none" onClick={() => requestSort('fullName')}>
                 <div className="flex items-center">
                   Nama {getSortIcon('fullName')}
                 </div>
               </th>
-              <th className="px-4 py-3 cursor-pointer select-none" onClick={() => requestSort('dateOfBirth')}>
+              <th className="px-4 py-3.5 cursor-pointer select-none" onClick={() => requestSort('dateOfBirth')}>
                 <div className="flex items-center">
                   Tgl. Lahir {getSortIcon('dateOfBirth')}
                 </div>
               </th>
-              <th className="px-4 py-3">Umur</th>
-              <th className="px-4 py-3 cursor-pointer select-none" onClick={() => requestSort('gender')}>
+              <th className="px-4 py-3.5">Umur</th>
+              <th className="px-4 py-3.5 cursor-pointer select-none" onClick={() => requestSort('gender')}>
                 <div className="flex items-center">
                   Jenis Kelamin {getSortIcon('gender')}
                 </div>
               </th>
-              <th className="px-4 py-3">Telepon</th>
-              <th className="px-4 py-3 cursor-pointer select-none" onClick={() => requestSort('bloodType')}>
+              <th className="px-4 py-3.5">Telepon</th>
+              <th className="px-4 py-3.5 cursor-pointer select-none" onClick={() => requestSort('bloodType')}>
                 <div className="flex items-center">
                   Gol. Darah {getSortIcon('bloodType')}
                 </div>
               </th>
-              <th className="px-4 py-3">Aksi</th>
+              <th className="px-4 py-3.5">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody>
             {loading ? (
               <LoadingSkeleton />
             ) : currentPatients.length === 0 ? (
@@ -391,38 +414,38 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                 return (
                   <motion.tr 
                     key={patient._id} 
-                    className="hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors"
+                    className="border-b hover:bg-blue-50/50 transition-colors"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    whileHover={{ backgroundColor: darkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)' }}
+                    whileHover={{ backgroundColor: 'rgba(59, 130, 246, 0.08)' }}
                   >
-                    <td className="px-4 py-3.5 font-medium text-gray-800 dark:text-gray-200">
+                    <td className="px-4 py-3.5 font-medium text-gray-800">
                       {patient.fullName || patient.name || '-'}
                     </td>
-                    <td className="px-4 py-3.5 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3.5 text-gray-600">
                       {formatDate(patient.dateOfBirth)}
                     </td>
-                    <td className="px-4 py-3.5 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3.5 text-gray-600">
                       {calculateAge(patient.dateOfBirth) || '-'}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                         patient.gender === 'male' || patient.gender === 'Laki-laki'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' 
+                          ? 'bg-blue-100 text-blue-800' 
                           : patient.gender === 'female' || patient.gender === 'Perempuan'
-                          ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                          ? 'bg-pink-100 text-pink-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
                         {getGenderLabel(patient.gender)}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-gray-600 dark:text-gray-400">
+                    <td className="px-4 py-3.5 text-gray-600">
                       {patient.phone || '-'}
                     </td>
                     <td className="px-4 py-3.5">
                       {patient.bloodType ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
                           {patient.bloodType}
                         </span>
                       ) : '-'}
@@ -430,31 +453,31 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                     <td className="px-4 py-3.5">
                       <div className="flex space-x-3">
                         <motion.button
-                          whileHover={{ scale: 1.2 }}
+                          whileHover={{ scale: 1.2, color: '#4f46e5' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleViewPatientProfile(patient)}
-                          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                          className="text-indigo-500 hover:text-indigo-700 transition-colors"
                           title="Profil Pasien"
                         >
-                          <FaEye />
+                          <FaEye size={16} />
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.2 }}
+                          whileHover={{ scale: 1.2, color: '#2563eb' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleEditPatient(patient)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+                          className="text-blue-500 hover:text-blue-700 transition-colors"
                           title="Edit"
                         >
-                          <FaEdit />
+                          <FaEdit size={16} />
                         </motion.button>
                         <motion.button
-                          whileHover={{ scale: 1.2 }}
+                          whileHover={{ scale: 1.2, color: '#dc2626' }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => onDelete(patient._id)}
-                          className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                          className="text-red-500 hover:text-red-700 transition-colors"
                           title="Hapus"
                         >
-                          <FaTrash />
+                          <FaTrash size={16} />
                         </motion.button>
                       </div>
                     </td>
@@ -472,20 +495,19 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
           variants={itemVariants}
           className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4"
         >
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Menampilkan {indexOfFirstPatient + 1}-{Math.min(indexOfLastPatient, filteredPatients.length)} dari {filteredPatients.length} pasien
+          <p className="text-sm text-gray-600">
+            Menampilkan <span className="font-medium">{indexOfFirstPatient + 1}-{Math.min(indexOfLastPatient, filteredPatients.length)}</span> dari <span className="font-medium">{filteredPatients.length}</span> pasien
           </p>
-          <nav className="flex flex-wrap justify-center gap-1">
+          <nav className="flex space-x-1">
             <motion.button
-              variants={buttonVariants}
-              whileHover={currentPage !== 1 ? "hover" : {}}
-              whileTap={currentPage !== 1 ? "tap" : {}}
+              whileHover={currentPage !== 1 ? { scale: 1.05 } : {}}
+              whileTap={currentPage !== 1 ? { scale: 0.95 } : {}}
               onClick={() => paginate(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className={`px-3 py-2 rounded-lg ${
+              className={`px-3 py-1.5 rounded-lg ${
                 currentPage === 1 
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 shadow-sm'
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
               &laquo;
@@ -494,30 +516,28 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
             {pageNumbers.map(number => (
               <motion.button
                 key={number}
-                variants={buttonVariants}
-                whileHover={currentPage !== number ? "hover" : {}}
-                whileTap={currentPage !== number ? "tap" : {}}
                 onClick={() => paginate(number)}
-                className={`px-3 py-2 rounded-lg ${
+                className={`px-3 py-1.5 rounded-lg ${
                   currentPage === number 
-                    ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 shadow-sm'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
+                whileHover={currentPage !== number ? { scale: 1.05 } : {}}
+                whileTap={currentPage !== number ? { scale: 0.95 } : {}}
               >
                 {number}
               </motion.button>
             ))}
             
             <motion.button
-              variants={buttonVariants}
-              whileHover={currentPage !== Math.ceil(filteredPatients.length / patientsPerPage) ? "hover" : {}}
-              whileTap={currentPage !== Math.ceil(filteredPatients.length / patientsPerPage) ? "tap" : {}}
+              whileHover={currentPage !== Math.ceil(filteredPatients.length / patientsPerPage) ? { scale: 1.05 } : {}}
+              whileTap={currentPage !== Math.ceil(filteredPatients.length / patientsPerPage) ? { scale: 0.95 } : {}}
               onClick={() => paginate(Math.min(Math.ceil(filteredPatients.length / patientsPerPage), currentPage + 1))}
               disabled={currentPage === Math.ceil(filteredPatients.length / patientsPerPage)}
-              className={`px-3 py-2 rounded-lg ${
+              className={`px-3 py-1.5 rounded-lg ${
                 currentPage === Math.ceil(filteredPatients.length / patientsPerPage) 
-                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 shadow-sm'
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
               &raquo;

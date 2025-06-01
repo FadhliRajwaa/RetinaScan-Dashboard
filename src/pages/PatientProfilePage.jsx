@@ -15,7 +15,7 @@ import {
 function PatientProfilePageComponent() {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  const { darkMode } = useTheme();
+  const { theme } = useTheme();
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -175,14 +175,10 @@ function PatientProfilePageComponent() {
 
   if (loading) {
     return (
-      <div className={`flex justify-center items-center py-12 min-h-screen ${
-        darkMode ? 'bg-gray-900' : 'bg-gray-50'
-      }`}>
+      <div className="flex justify-center items-center py-12">
         <div className="flex flex-col items-center">
-          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 ${
-            darkMode ? 'border-blue-400' : 'border-blue-500'
-          } mb-3`}></div>
-          <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>Memuat profil pasien...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
+          <p className="text-gray-500">Memuat profil pasien...</p>
         </div>
       </div>
     );
@@ -193,21 +189,13 @@ function PatientProfilePageComponent() {
       <motion.div 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }}
-        className={`p-4 sm:p-6 lg:p-8 min-h-screen ${
-          darkMode ? 'bg-gray-900' : 'bg-gray-50'
-        }`}
+        className="p-4 sm:p-6 lg:p-8"
       >
-        <div className={`${
-          darkMode 
-            ? 'bg-red-900/20 border border-red-800/30 text-red-400' 
-            : 'bg-red-50 border border-red-100 text-red-600'
-        } p-4 rounded-lg flex flex-col items-start`}>
-          <p className="mb-4">{error}</p>
+        <div className="bg-red-50 p-4 rounded-lg flex flex-col items-start">
+          <p className="text-red-500 mb-4">{error}</p>
           <button 
             onClick={() => navigate('/patient-data')}
-            className={`flex items-center ${
-              darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
-            }`}
+            className="flex items-center text-blue-600 hover:text-blue-800"
           >
             <FaArrowLeft className="mr-2" />
             Kembali ke daftar pasien
@@ -218,11 +206,7 @@ function PatientProfilePageComponent() {
   }
 
   return (
-    <div className={`p-4 sm:p-6 lg:p-8 min-h-screen ${
-      darkMode 
-        ? 'bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900' 
-        : 'bg-gradient-to-b from-blue-50 to-white'
-    }`}>
+    <div className="p-4 sm:p-6 lg:p-8">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -236,9 +220,7 @@ function PatientProfilePageComponent() {
         >
           <button
             onClick={() => navigate('/patient-data')}
-            className={`${
-              darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
-            } flex items-center`}
+            className="text-blue-600 hover:text-blue-800 flex items-center"
           >
             <FaArrowLeft className="mr-2" />
             <span>Kembali ke daftar pasien</span>
@@ -248,17 +230,11 @@ function PatientProfilePageComponent() {
         {/* Profil Header */}
         <motion.div 
           variants={itemVariants}
-          className={`${
-            darkMode 
-              ? 'bg-gray-800 border border-gray-700' 
-              : 'bg-white border border-gray-100'
-          } rounded-xl shadow-lg overflow-hidden mb-6`}
+          className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 border border-gray-100"
         >
-          <div className="relative h-32 bg-gradient-to-r from-blue-600 to-indigo-700">
+          <div className="relative h-32 bg-gradient-to-r from-blue-500 to-indigo-600">
             <div className="absolute -bottom-16 left-8 flex items-end">
-              <div className={`h-32 w-32 rounded-full bg-gradient-to-br ${getGenderColor(patient?.gender)} border-4 ${
-                darkMode ? 'border-gray-800' : 'border-white'
-              } shadow-md flex items-center justify-center text-white text-3xl font-bold`}>
+              <div className={`h-32 w-32 rounded-full bg-gradient-to-br ${getGenderColor(patient?.gender)} border-4 border-white shadow-md flex items-center justify-center text-white text-3xl font-bold`}>
                 {getInitials(patient?.fullName || patient?.name)}
               </div>
             </div>
@@ -267,14 +243,10 @@ function PatientProfilePageComponent() {
           <div className="pt-20 pb-6 px-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between">
               <div>
-                <h1 className={`text-2xl font-bold ${
-                  darkMode ? 'text-white' : 'text-gray-800'
-                }`}>
+                <h1 className="text-2xl font-bold text-gray-800">
                   {patient?.fullName || patient?.name || 'Pasien'}
                 </h1>
-                <div className={`flex items-center mt-2 ${
-                  darkMode ? 'text-gray-300' : 'text-gray-600'
-                }`}>
+                <div className="flex items-center mt-2 text-gray-600">
                   {getGenderIcon(patient?.gender)}
                   <span className="ml-2">{getGenderLabel(patient?.gender)}</span>
                   <span className="mx-2">•</span>
@@ -295,11 +267,7 @@ function PatientProfilePageComponent() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleEditPatient}
-                  className={`flex items-center px-4 py-2 rounded-lg transition-all ${
-                    darkMode
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-md shadow-blue-900/20'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20'
-                  }`}
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <FaEdit className="mr-2" />
                   Edit Profil
@@ -308,11 +276,7 @@ function PatientProfilePageComponent() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowDeleteModal(true)}
-                  className={`flex items-center px-4 py-2 rounded-lg transition-all ${
-                    darkMode
-                      ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md shadow-red-900/20'
-                      : 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md shadow-red-500/20'
-                  }`}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   <FaTrash className="mr-2" />
                   Hapus
@@ -328,13 +292,9 @@ function PatientProfilePageComponent() {
           <motion.div
             variants={cardVariants}
             whileHover="hover"
-            className={`${
-              darkMode 
-                ? 'bg-gray-800 border border-gray-700' 
-                : 'bg-white border border-gray-100'
-            } rounded-xl shadow-md overflow-hidden`}
+            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
           >
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
               <h2 className="text-white text-lg font-bold flex items-center">
                 <FaUser className="mr-2" />
                 Informasi Pribadi
@@ -343,33 +303,33 @@ function PatientProfilePageComponent() {
             <div className="p-6">
               <ul className="space-y-4">
                 <li className="flex items-start">
-                  <FaIdCard className={`mt-1 mr-3 ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} />
+                  <FaIdCard className="mt-1 mr-3 text-blue-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nama Lengkap</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patient?.fullName || patient?.name || '-'}</p>
+                    <p className="text-sm text-gray-500">Nama Lengkap</p>
+                    <p className="font-medium">{patient?.fullName || patient?.name || '-'}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <FaCalendarAlt className={`mt-1 mr-3 ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} />
+                  <FaCalendarAlt className="mt-1 mr-3 text-blue-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Tanggal Lahir</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{formatDate(patient?.dateOfBirth)}</p>
+                    <p className="text-sm text-gray-500">Tanggal Lahir</p>
+                    <p className="font-medium">{formatDate(patient?.dateOfBirth)}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <div className="mt-1 mr-3">
+                  <div className="mt-1 mr-3 text-blue-500">
                     {getGenderIcon(patient?.gender)}
                   </div>
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Jenis Kelamin</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{getGenderLabel(patient?.gender)}</p>
+                    <p className="text-sm text-gray-500">Jenis Kelamin</p>
+                    <p className="font-medium">{getGenderLabel(patient?.gender)}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
                   <FaTint className="mt-1 mr-3 text-red-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Golongan Darah</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patient?.bloodType || '-'}</p>
+                    <p className="text-sm text-gray-500">Golongan Darah</p>
+                    <p className="font-medium">{patient?.bloodType || '-'}</p>
                   </div>
                 </li>
               </ul>
@@ -380,11 +340,7 @@ function PatientProfilePageComponent() {
           <motion.div
             variants={cardVariants}
             whileHover="hover"
-            className={`${
-              darkMode 
-                ? 'bg-gray-800 border border-gray-700' 
-                : 'bg-white border border-gray-100'
-            } rounded-xl shadow-md overflow-hidden`}
+            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
           >
             <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
               <h2 className="text-white text-lg font-bold flex items-center">
@@ -395,24 +351,24 @@ function PatientProfilePageComponent() {
             <div className="p-6">
               <ul className="space-y-4">
                 <li className="flex items-start">
-                  <FaPhone className={`mt-1 mr-3 ${darkMode ? 'text-green-400' : 'text-green-500'}`} />
+                  <FaPhone className="mt-1 mr-3 text-green-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Nomor Telepon</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patient?.phone || '-'}</p>
+                    <p className="text-sm text-gray-500">Nomor Telepon</p>
+                    <p className="font-medium">{patient?.phone || '-'}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <FaMapMarkerAlt className={`mt-1 mr-3 ${darkMode ? 'text-green-400' : 'text-green-500'}`} />
+                  <FaMapMarkerAlt className="mt-1 mr-3 text-green-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Alamat</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patient?.address || '-'}</p>
+                    <p className="text-sm text-gray-500">Alamat</p>
+                    <p className="font-medium">{patient?.address || '-'}</p>
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <FaPhoneVolume className={`mt-1 mr-3 ${darkMode ? 'text-green-400' : 'text-green-500'}`} />
+                  <FaPhoneVolume className="mt-1 mr-3 text-green-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Kontak Darurat</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{patient?.emergencyContact || '-'}</p>
+                    <p className="text-sm text-gray-500">Kontak Darurat</p>
+                    <p className="font-medium">{patient?.emergencyContact || '-'}</p>
                   </div>
                 </li>
               </ul>
@@ -423,13 +379,9 @@ function PatientProfilePageComponent() {
           <motion.div
             variants={cardVariants}
             whileHover="hover"
-            className={`${
-              darkMode 
-                ? 'bg-gray-800 border border-gray-700' 
-                : 'bg-white border border-gray-100'
-            } rounded-xl shadow-md overflow-hidden md:col-span-2`}
+            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 md:col-span-2"
           >
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
               <h2 className="text-white text-lg font-bold flex items-center">
                 <FaNotesMedical className="mr-2" />
                 Informasi Medis
@@ -438,28 +390,20 @@ function PatientProfilePageComponent() {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className={`${darkMode ? 'text-gray-200' : 'text-gray-700'} font-medium mb-2 flex items-center`}>
-                    <FaFileMedical className={`mr-2 ${darkMode ? 'text-purple-400' : 'text-purple-500'}`} />
+                  <h3 className="text-gray-700 font-medium mb-2 flex items-center">
+                    <FaFileMedical className="mr-2 text-purple-500" />
                     Riwayat Medis
                   </h3>
-                  <p className={`${
-                    darkMode 
-                      ? 'bg-gray-700/50 text-gray-300' 
-                      : 'bg-gray-50 text-gray-600'
-                  } p-3 rounded-lg min-h-[100px]`}>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[100px]">
                     {patient?.medicalHistory || 'Tidak ada riwayat medis yang tercatat.'}
                   </p>
                 </div>
                 <div>
-                  <h3 className={`${darkMode ? 'text-gray-200' : 'text-gray-700'} font-medium mb-2 flex items-center`}>
-                    <FaAllergies className={`mr-2 ${darkMode ? 'text-purple-400' : 'text-purple-500'}`} />
+                  <h3 className="text-gray-700 font-medium mb-2 flex items-center">
+                    <FaAllergies className="mr-2 text-purple-500" />
                     Alergi
                   </h3>
-                  <p className={`${
-                    darkMode 
-                      ? 'bg-gray-700/50 text-gray-300' 
-                      : 'bg-gray-50 text-gray-600'
-                  } p-3 rounded-lg min-h-[100px]`}>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[100px]">
                     {patient?.allergies || 'Tidak ada alergi yang tercatat.'}
                   </p>
                 </div>
@@ -467,10 +411,10 @@ function PatientProfilePageComponent() {
               
               <div className="mt-6 flex items-center justify-between">
                 <div className="flex items-start">
-                  <FaCalendarCheck className={`mt-1 mr-3 ${darkMode ? 'text-purple-400' : 'text-purple-500'}`} />
+                  <FaCalendarCheck className="mt-1 mr-3 text-purple-500" />
                   <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Pemeriksaan Terakhir</p>
-                    <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{formatDate(patient?.lastCheckup) || 'Belum pernah melakukan pemeriksaan'}</p>
+                    <p className="text-sm text-gray-500">Pemeriksaan Terakhir</p>
+                    <p className="font-medium">{formatDate(patient?.lastCheckup) || 'Belum pernah melakukan pemeriksaan'}</p>
                   </div>
                 </div>
                 
@@ -478,11 +422,7 @@ function PatientProfilePageComponent() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleViewHistory}
-                  className={`flex items-center px-4 py-2 rounded-lg transition-all ${
-                    darkMode
-                      ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md shadow-purple-900/20'
-                      : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md shadow-purple-500/20'
-                  }`}
+                  className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   <FaHistory className="mr-2" />
                   Lihat Riwayat Pemeriksaan
@@ -501,11 +441,7 @@ function PatientProfilePageComponent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/scan-retina')}
-            className={`flex items-center justify-center px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all ${
-              darkMode
-                ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white shadow-indigo-900/20'
-                : 'bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-indigo-500/20'
-            }`}
+            className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
           >
             <FaEye className="mr-2" />
             Lakukan Scan Retina
@@ -515,11 +451,7 @@ function PatientProfilePageComponent() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/patient-data')}
-            className={`flex items-center justify-center px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all ${
-              darkMode
-                ? 'bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white shadow-gray-900/20'
-                : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white shadow-gray-500/20'
-            }`}
+            className="flex items-center justify-center px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
           >
             <FaArrowLeft className="mr-2" />
             Kembali ke Daftar Pasien
@@ -540,38 +472,22 @@ function PatientProfilePageComponent() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className={`${
-                darkMode 
-                  ? 'bg-gray-800 border border-gray-700' 
-                  : 'bg-white'
-              } rounded-xl shadow-xl p-6 max-w-md w-full`}
+              className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full"
             >
-              <h3 className={`text-xl font-bold ${
-                darkMode ? 'text-white' : 'text-gray-800'
-              } mb-3`}>Konfirmasi Hapus</h3>
-              <p className={`${
-                darkMode ? 'text-gray-300' : 'text-gray-600'
-              } mb-6`}>
+              <h3 className="text-xl font-bold text-gray-800 mb-3">Konfirmasi Hapus</h3>
+              <p className="text-gray-600 mb-6">
                 Apakah Anda yakin ingin menghapus data pasien <span className="font-semibold">{patient?.fullName || patient?.name}</span>? Tindakan ini tidak dapat dibatalkan.
               </p>
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    darkMode
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
-                  }`}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleDeletePatient}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    darkMode
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-red-600 text-white hover:bg-red-700'
-                  }`}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Hapus
                 </button>

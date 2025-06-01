@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye } from 'react-icons/fi';
+import { FiAlertCircle, FiAlertTriangle, FiCheck, FiInfo, FiCpu, FiActivity, FiEye, FiZap } from 'react-icons/fi';
 import { getLatestAnalysis } from '../../services/api';
 import { getSeverityTextColor, getSeverityBgColor, getSeverityLabel } from '../../utils/severityUtils';
-import { useTheme } from '../../context/ThemeContext';
 
 // Glassmorphism style
 const glassEffect = {
-  background: 'rgba(255, 255, 255, 0.8)',
+  background: 'rgba(255, 255, 255, 0.85)',
   backdropFilter: 'blur(10px)',
   WebkitBackdropFilter: 'blur(10px)',
   boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
@@ -21,7 +20,6 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
   const [isLoading, setIsLoading] = useState(false);
   const [animateProgress, setAnimateProgress] = useState(false);
   const [analyzeStage, setAnalyzeStage] = useState(0); // 0: not started, 1: loading, 2: processing, 3: finalizing
-  const { darkMode } = useTheme();
 
   // Motion values untuk animasi
   const progressX = useMotionValue(0);
@@ -30,6 +28,32 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     [0, 33, 66, 100], 
     ['#3b82f6', '#6366f1', '#8b5cf6', '#10b981']
   );
+
+  // Variants untuk animasi
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        when: "beforeChildren",
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: 'spring',
+        stiffness: 400,
+        damping: 30
+      }
+    }
+  };
 
   // Auto-analyze when image is provided and no initial analysis
   useEffect(() => {
@@ -251,72 +275,14 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     }
   };
 
-  // Komponen untuk menampilkan status loading
-  const LoadingIndicator = ({ stage, stages }) => {
-    return (
-      <div className="w-full">
-        <div className={`h-2 w-full rounded-full overflow-hidden mb-2 ${
-          darkMode ? 'bg-gray-700' : 'bg-gray-200'
-        }`}>
-          <motion.div
-            className="h-full"
-            style={{ 
-              width: progressX, 
-              background: progressColor 
-            }}
-            animate={{ 
-              width: isLoading ? [`${stage * 100 / stages}%`, `${(stage + 1) * 100 / stages}%`] : '100%' 
-            }}
-            transition={{ 
-              duration: isLoading ? 1.5 : 0.5, 
-              ease: "easeInOut",
-              repeat: isLoading ? Infinity : 0
-            }}
-          />
-        </div>
-        <div className="flex justify-between text-xs">
-          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-            {getMessage(stage, stages)}
-          </span>
-          <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
-            {Math.round((stage + 1) * 100 / stages)}%
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  // Fungsi untuk mendapatkan pesan berdasarkan tahapan
-  const getMessage = (stage, stages) => {
-    const messages = [
-      'Mempersiapkan analisis...',
-      'Memproses gambar...',
-      'Menjalankan model AI...',
-      'Menghasilkan laporan...'
-    ];
-    return messages[stage % messages.length];
-  };
-
-  // Warna berdasarkan severity
-  const getSeverityColor = (severity) => {
-    if (!severity) return 'gray';
-    const level = severity.toLowerCase();
-    if (level.includes('tidak') || level.includes('normal') || level === 'no dr') return 'blue';
-    if (level.includes('ringan') || level === 'mild') return 'green';
-    if (level.includes('sedang') || level === 'moderate') return 'yellow';
-    if (level.includes('berat') || level === 'severe') return 'red';
-    if (level.includes('sangat') || level.includes('proliferative')) return 'pink';
-    return 'gray';
-  };
-
-  // Variasi animasi untuk komponen
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
       opacity: 1,
       transition: { 
         when: "beforeChildren",
-        staggerChildren: 0.1
+        staggerChildren: 0.2
       }
     }
   };
@@ -326,259 +292,449 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
     visible: { 
       y: 0, 
       opacity: 1,
-      transition: { type: 'spring', damping: 12 }
+      transition: { 
+        type: 'spring',
+        stiffness: 300,
+        damping: 20
+      }
     }
   };
+
+  const confidenceVariants = {
+    hidden: { width: '0%' },
+    visible: { 
+      width: analysis ? `${analysis.confidence * 100}%` : '0%',
+      transition: { duration: 1.5, ease: "easeOut" }
+    }
+  };
+
+  // Animasi untuk proses analisis
+  const processStages = [
+    { label: "Mempersiapkan Data", icon: <FiActivity className="w-8 h-8" />, color: "from-blue-500 to-cyan-400" },
+    { label: "Menganalisis Citra", icon: <FiEye className="w-8 h-8" />, color: "from-indigo-500 to-purple-400" },
+    { label: "Mendeteksi Pola", icon: <FiCpu className="w-8 h-8" />, color: "from-purple-500 to-pink-400" },
+    { label: "Menyelesaikan Analisis", icon: <FiCheck className="w-8 h-8" />, color: "from-emerald-500 to-green-400" }
+  ];
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-6"
+      className="w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl mx-auto"
+      style={{ transform: 'translateZ(0)' }}
     >
-      {/* Gambar Retina */}
+      <AnimatePresence>
+        {error && (
           <motion.div
-        variants={itemVariants}
-        className={`p-5 rounded-xl ${
-          darkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-        }`}
-      >
-        <div className="flex flex-col sm:flex-row gap-6">
-          <div className="w-full sm:w-1/2">
-            <h3 className={`text-lg font-medium mb-3 ${
-              darkMode ? 'text-white' : 'text-gray-800'
-            }`}>
-              Gambar Retina
-            </h3>
-            
-            <div className={`aspect-square rounded-lg overflow-hidden border ${
-              darkMode ? 'border-gray-600' : 'border-gray-200'
-            } shadow-md`}>
-              {image?.preview ? (
-                <img 
-                  src={image.preview} 
-                  alt="Retina" 
-                  className="w-full h-full object-cover"
-                />
-              ) : image ? (
-                <img 
-                  src={typeof image === 'string' ? image : URL.createObjectURL(image)} 
-                  alt="Retina" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className={`w-full h-full flex items-center justify-center ${
-                  darkMode ? 'bg-gray-800' : 'bg-gray-100'
-                }`}>
-                  <FiEye size={48} className={darkMode ? 'text-gray-600' : 'text-gray-400'} />
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            className="text-red-500 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start"
+            style={{ ...glassEffect, background: 'rgba(254, 226, 226, 0.7)' }}
+          >
+            <FiAlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+        
+        {/* Tambahkan indikator mode simulasi */}
+        {analysis && (analysis.isSimulation || analysis.simulation_mode || 
+          (analysis.raw_prediction && analysis.raw_prediction.is_simulation)) && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            className="text-amber-700 p-4 rounded-xl mb-5 text-sm sm:text-base flex items-start"
+            style={{ ...glassEffect, background: 'rgba(254, 240, 199, 0.7)' }}
+          >
+            <FiAlertTriangle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5 text-amber-600" />
+            <div>
+              <span className="font-bold block mb-1">PERHATIAN: Mode Simulasi Aktif</span> 
+              <span>Hasil analisis ini menggunakan data simulasi karena layanan AI tidak tersedia. Hasil ini TIDAK BOLEH digunakan untuk diagnosis. Silakan konsultasikan dengan dokter mata untuk diagnosis yang akurat.</span>
+              {analysis.errorMessage && (
+                <div className="mt-2 text-sm font-medium text-red-600">
+                  Alasan: {analysis.errorMessage}
                 </div>
               )}
+              <div className="mt-2 text-xs">
+                <span className="font-semibold">Gunakan script "npm run test:flask" untuk menguji koneksi ke Flask API dan memastikan mode simulasi dinonaktifkan.</span>
+              </div>
             </div>
-          </div>
-          
-          <div className="w-full sm:w-1/2">
-            <h3 className={`text-lg font-medium mb-3 ${
-              darkMode ? 'text-white' : 'text-gray-800'
-            }`}>
-              Status Analisis
-            </h3>
-            
-            {isLoading ? (
-              <div className={`p-5 rounded-lg ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              } shadow-md`}>
-                <div className="flex items-center mb-4">
-                  <div className={`p-2 rounded-full ${
-                    darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
-                  } mr-3`}>
-                    <FiCpu size={20} />
-                  </div>
-                  <h4 className={`font-medium ${
-                    darkMode ? 'text-gray-200' : 'text-gray-700'
-                  }`}>
-                    Memproses
-                  </h4>
-                </div>
-                
-                <LoadingIndicator stage={analyzeStage} stages={4} />
-                
-                <p className={`mt-4 text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Sistem AI sedang menganalisis gambar retina. Proses ini membutuhkan waktu beberapa detik.
-                </p>
-              </div>
-            ) : error ? (
-              <div className={`p-5 rounded-lg ${
-                darkMode ? 'bg-red-900/20 border border-red-800/30' : 'bg-red-50 border border-red-100'
-              } flex items-start`}>
-                <FiAlertCircle className={`mt-0.5 mr-3 flex-shrink-0 ${
-                  darkMode ? 'text-red-400' : 'text-red-500'
-                }`} />
-                <div>
-                  <h4 className={`font-medium ${
-                    darkMode ? 'text-red-400' : 'text-red-600'
-                  }`}>
-                    Gagal Menganalisis
-                  </h4>
-                  <p className={`text-sm mt-1 ${
-                    darkMode ? 'text-red-300' : 'text-red-500'
-                  }`}>
-                    {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left side - Image preview */}
+        {image && image.preview && (
+          <motion.div 
+            variants={itemVariants}
+            className="w-full md:w-1/2"
+          >
+            <motion.div 
+              className="rounded-xl overflow-hidden relative"
+              style={{ ...glassEffect }}
+              whileHover={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+            >
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              />
+              <motion.img 
+                src={image.preview} 
+                alt="Citra Retina" 
+                className="w-full h-64 object-contain p-2"
+                initial={{ filter: 'blur(10px)', scale: 0.9 }}
+                animate={{ filter: 'blur(0px)', scale: 1 }}
+                transition={{ duration: 0.5, type: 'spring', stiffness: 300 }}
+              />
+              
+              {/* Overlay untuk efek hover */}
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4"
+              >
+                <motion.div 
+                  initial={{ y: 20, opacity: 0 }}
+                  whileHover={{ y: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                >
+                  <p className="text-white text-sm font-medium">Gambar Retina</p>
+                  {image.patient && (
+                    <p className="text-white/80 text-xs mt-1">
+                      Pasien: {image.patient.fullName || image.patient.name}
+                    </p>
+                  )}
+                </motion.div>
+              </motion.div>
+              
+              <motion.div className="p-4 border-t border-gray-100">
+                <h3 className="text-sm font-medium text-gray-700">Citra Retina</h3>
+                {image.patient && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Pasien: {image.patient.fullName || image.patient.name}
                   </p>
-                  <button 
-                    onClick={handleAnalyze}
-                    className={`mt-3 px-4 py-2 text-sm font-medium rounded-lg ${
-                      darkMode 
-                        ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' 
-                        : 'bg-red-100 text-red-600 hover:bg-red-200'
-                    } transition-colors`}
-                  >
-                    Coba Lagi
-                  </button>
-                </div>
-              </div>
-            ) : analysis ? (
-              <div className={`p-5 rounded-lg ${
-                darkMode ? 'bg-gray-800' : 'bg-white'
-              } shadow-md`}>
-                <div className="flex items-center mb-4">
-                  <div className={`p-2 rounded-full ${
-                    darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-600'
-                  } mr-3`}>
-                    <FiCheck size={20} />
-                  </div>
-                  <h4 className={`font-medium ${
-                    darkMode ? 'text-gray-200' : 'text-gray-700'
-                  }`}>
-                    Analisis Selesai
-                  </h4>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <p className={`text-sm ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } mb-1`}>
-                      Tingkat Keparahan:
-                    </p>
-                    <div className={`inline-flex items-center px-3 py-1.5 rounded-lg ${
-                      getSeverityBgColor(analysis.severity, darkMode)
-                    }`}>
-                      <span className={`font-medium ${
-                        getSeverityTextColor(analysis.severity, darkMode)
-                      }`}>
-                        {getSeverityLabel(analysis.severity) || 'Tidak diketahui'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <p className={`text-sm ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    } mb-1`}>
-                      Tingkat Kepercayaan:
-                    </p>
-                    <div className={`w-full h-2 rounded-full ${
-                      darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                    }`}>
+                )}
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Right side - Analysis results or loading */}
+        <motion.div 
+          variants={itemVariants}
+          className="w-full md:w-1/2"
+        >
+          {isLoading ? (
+            <motion.div 
+              className="p-6 rounded-xl h-full flex flex-col justify-center"
+              style={{ ...glassEffect }}
+            >
+              <LoadingIndicator stage={analyzeStage} stages={processStages} />
+            </motion.div>
+          ) : analysis ? (
+            <motion.div 
+              className="rounded-xl overflow-hidden"
+              style={{ ...glassEffect }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            >
+              <motion.div 
+                className="p-5 border-b border-gray-100"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))'
+                }}
+              >
+                <h3 className="text-lg font-bold text-gray-800 flex items-center">
+                  <FiZap className="mr-2 text-indigo-500" />
+                  Hasil Analisis AI
+                </h3>
+              </motion.div>
+              
+              <div className="p-5">
+                <motion.div 
+                  className="mb-6"
+                  variants={itemVariants}
+                >
+                  <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan:</p>
+                  <div className="flex items-center">
                     <motion.div 
-                        className={`h-full rounded-full ${
-                          analysis.confidence > 0.7
-                            ? darkMode ? 'bg-green-500' : 'bg-green-500'
-                            : analysis.confidence > 0.5
-                              ? darkMode ? 'bg-yellow-500' : 'bg-yellow-500'
-                              : darkMode ? 'bg-red-500' : 'bg-red-500'
-                        }`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(analysis.confidence || 0) * 100}%` }}
-                        transition={{ duration: 0.8, type: 'spring', stiffness: 50 }}
+                      className={`text-lg font-bold ${getSeverityTextColor(analysis.severity)}`}
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.2, type: 'spring', stiffness: 400 }}
+                    >
+                      {analysis.severity}
+                    </motion.div>
+                    <motion.div 
+                      className={`ml-3 px-3 py-1 rounded-full text-xs ${getSeverityBgColor(analysis.severity)}`}
+                      initial={{ scale: 0.8, opacity: 0, x: -10 }}
+                      animate={{ scale: 1, opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4, type: 'spring', stiffness: 400 }}
+                    >
+                      {getSeverityLabel(analysis.severity)}
+                    </motion.div>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="mb-6"
+                  variants={itemVariants}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-sm font-medium text-gray-500">Tingkat Kepercayaan:</p>
+                    <motion.p 
+                      className="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      {(analysis.confidence * 100).toFixed(1)}%
+                    </motion.p>
+                  </div>
+                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                    <motion.div 
+                      className="h-full rounded-full relative overflow-hidden"
+                      style={{ 
+                        width: animateProgress ? `${analysis.confidence * 100}%` : '0%'
+                      }}
+                      initial={{ width: '0%' }}
+                      animate={{ width: animateProgress ? `${analysis.confidence * 100}%` : '0%' }}
+                      transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"
+                        animate={{
+                          x: ['-100%', '0%'],
+                        }}
+                        transition={{
+                          duration: 1,
+                          ease: "easeOut",
+                          delay: 0.3,
+                        }}
                       />
-                    </div>
-                    <p className={`text-right text-xs mt-1 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      {Math.round((analysis.confidence || 0) * 100)}%
-                    </p>
-                </div>
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)',
+                        }}
+                        animate={{
+                          x: ['-100%', '100%'],
+                        }}
+                        transition={{
+                          duration: 1.5,
+                          ease: "easeInOut",
+                          repeat: Infinity,
+                          repeatType: "loop",
+                        }}
+                      />
+                    </motion.div>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="p-4 rounded-xl mb-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100"
+                  variants={itemVariants}
+                >
+                  <p className="text-sm font-medium text-indigo-700 mb-1">Rekomendasi:</p>
+                  <p className="text-sm text-gray-700">{analysis.recommendation || 'Tidak ada rekomendasi spesifik.'}</p>
+                </motion.div>
                 
                 <motion.button
-                    variants={itemVariants}
                   onClick={handleViewResults}
-                    className={`w-full py-2.5 px-4 mt-4 rounded-lg font-medium ${
-                      darkMode
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800'
-                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
-                    } shadow-md hover:shadow-lg transition-all`}
-                    whileHover={{ scale: 1.02 }}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl transition-all"
+                  whileHover={{ 
+                    scale: 1.02,
+                    boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3), 0 4px 6px -2px rgba(99, 102, 241, 0.2)'
+                  }}
                   whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, type: 'spring' }}
                 >
                   Lihat Hasil Lengkap
                 </motion.button>
-                </div>
               </div>
-            ) : (
-              <div className={`p-5 rounded-lg ${
-                darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-              } shadow-md`}>
-                <div className="flex items-center mb-4">
-                  <div className={`p-2 rounded-full ${
-                    darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
-                  } mr-3`}>
-                    <FiActivity size={20} />
-                  </div>
-                  <h4 className={`font-medium ${
-                    darkMode ? 'text-gray-200' : 'text-gray-700'
-                  }`}>
-                    Siap Menganalisis
-                  </h4>
-                </div>
-                
-                <p className={`text-sm ${
-                  darkMode ? 'text-gray-400' : 'text-gray-500'
-                } mb-4`}>
-                  Sistem AI siap menganalisis gambar retina untuk mendeteksi tanda-tanda retinopati diabetik.
-                </p>
-                
+            </motion.div>
+          ) : (
+            <motion.div 
+              className="p-6 rounded-xl h-full flex flex-col justify-center items-center"
+              style={{ ...glassEffect }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+                className="text-center"
+              >
+                <motion.div 
+                  className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg"
+                  animate={{ 
+                    boxShadow: ['0 0 0 0 rgba(99, 102, 241, 0.4)', '0 0 0 20px rgba(99, 102, 241, 0)', '0 0 0 0 rgba(99, 102, 241, 0)'],
+                  }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 2,
+                  }}
+                >
+                  <FiCpu className="w-10 h-10 text-white" />
+                </motion.div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-3">Siap untuk Analisis</h3>
+                <p className="text-gray-600 mb-8 max-w-xs mx-auto">Klik tombol di bawah untuk memulai analisis citra retina dengan AI</p>
                 <motion.button
-                  variants={itemVariants}
                   onClick={handleAnalyze}
-                  className={`w-full py-2.5 px-4 rounded-lg font-medium ${
-                    darkMode
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
-                  } shadow-md hover:shadow-lg transition-all`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  className="px-8 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl shadow-md transition-all"
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.3), 0 4px 6px -2px rgba(99, 102, 241, 0.2)'
+                  }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Mulai Analisis
                 </motion.button>
-              </div>
+              </motion.div>
+            </motion.div>
           )}
-          </div>
+        </motion.div>
       </div>
-      </motion.div>
-      
-      {/* Disclaimer */}
-      <motion.div 
-        variants={itemVariants}
-        className={`p-4 rounded-lg border ${
-          darkMode 
-            ? 'bg-gray-800/50 border-gray-700 text-gray-300' 
-            : 'bg-blue-50 border-blue-100 text-blue-700'
-        } text-sm`}
-      >
-        <div className="flex items-start">
-          <FiInfo className="mt-0.5 mr-3 flex-shrink-0" />
-          <p>
-            Hasil analisis ini bersifat pendukung dan tidak menggantikan diagnosis dokter. 
-            Selalu konsultasikan hasil dengan profesional kesehatan.
-          </p>
-        </div>
-      </motion.div>
     </motion.div>
   );
 }
+
+const LoadingIndicator = ({ stage, stages }) => {
+  return (
+    <div className="text-center">
+      <motion.div 
+        className="w-28 h-28 mx-auto mb-8 relative"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300 }}
+      >
+        {/* Background circle */}
+        <motion.div 
+          className="absolute inset-0 rounded-full"
+          style={{ border: '4px solid rgba(99, 102, 241, 0.1)' }}
+        />
+        
+        {/* Spinning gradient circle */}
+        <motion.div 
+          className="absolute inset-0 rounded-full"
+          style={{ 
+            borderWidth: '4px', 
+            borderStyle: 'solid',
+            borderImage: 'linear-gradient(to right, #6366f1, #8b5cf6, #ec4899) 1',
+            borderRadius: '50%',
+            clipPath: 'inset(0 0 0 0 round 50%)',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        />
+        
+        {/* Pulsing inner circle with icon */}
+        <motion.div 
+          className="absolute inset-0 m-3 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600"
+          animate={{ 
+            boxShadow: ['0 0 0 0 rgba(99, 102, 241, 0.4)', '0 0 0 10px rgba(99, 102, 241, 0)', '0 0 0 0 rgba(99, 102, 241, 0)'],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 2,
+          }}
+        >
+          {stage === 1 && <FiActivity className="w-10 h-10 text-white" />}
+          {stage === 2 && <FiEye className="w-10 h-10 text-white" />}
+          {stage === 3 && <FiCpu className="w-10 h-10 text-white" />}
+          {stage === 0 && <FiCpu className="w-10 h-10 text-white" />}
+        </motion.div>
+      </motion.div>
+      
+      <motion.div
+        className="space-y-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <motion.h3 
+          className="text-xl font-semibold text-gray-800"
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          {getMessage(stage, stages)}
+        </motion.h3>
+        
+        <div className="w-full max-w-md mx-auto">
+          {/* Progress steps */}
+          <div className="flex justify-between relative mb-2">
+            {stages.map((s, index) => (
+              <motion.div
+                key={index}
+                className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
+                  index <= stage 
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white' 
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ 
+                  scale: index === stage ? [1, 1.1, 1] : 1, 
+                  opacity: 1,
+                  boxShadow: index === stage ? '0 0 0 4px rgba(99, 102, 241, 0.3)' : 'none'
+                }}
+                transition={{ 
+                  delay: index * 0.15,
+                  repeat: index === stage ? Infinity : 0,
+                  repeatType: "reverse",
+                  duration: index === stage ? 1.5 : 0.3
+                }}
+              >
+                {index < stage ? (
+                  <FiCheck className="w-4 h-4" />
+                ) : (
+                  <span className="text-xs font-medium">{index + 1}</span>
+                )}
+              </motion.div>
+            ))}
+            
+            {/* Progress line */}
+            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-100 -translate-y-1/2 z-0">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-indigo-500 to-purple-600"
+                initial={{ width: '0%' }}
+                animate={{ width: `${(stage / (stages.length - 1)) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
+          
+          {/* Step labels */}
+          <div className="flex justify-between">
+            {stages.map((s, index) => (
+              <motion.div
+                key={index}
+                className="w-20 text-center text-xs"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: index <= stage ? 1 : 0.5 }}
+                transition={{ delay: index * 0.15 + 0.2 }}
+              >
+                <p className={`font-medium ${index <= stage ? 'text-indigo-600' : 'text-gray-400'}`}>
+                  {s.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const getMessage = (stage, stages) => {
+  return stages[stage]?.label || 'Menganalisis...';
+};
 
 export default Analysis;

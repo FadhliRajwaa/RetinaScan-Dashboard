@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,8 +14,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
-import { ExclamationCircleIcon, ChartPieIcon } from '@heroicons/react/24/outline';
-import { useTheme } from '../../context/ThemeContext';
+import { ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 // Registrasi komponen Chart.js
 ChartJS.register(
@@ -32,7 +30,6 @@ ChartJS.register(
 );
 
 export default function EnhancedSeverityChart() {
-  const { darkMode } = useTheme();
   const [severityData, setSeverityData] = useState({
     labels: [],
     datasets: []
@@ -104,33 +101,15 @@ export default function EnhancedSeverityChart() {
 
   const chartOptions = {
     responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right',
-        labels: {
-          color: darkMode ? '#e5e7eb' : '#374151',
-          padding: 15,
-          font: {
-            size: 12
-          }
-        }
       },
       title: {
         display: true,
-        text: 'Distribusi Tingkat Keparahan',
-        color: darkMode ? '#e5e7eb' : '#374151',
-        font: {
-          size: 16,
-          weight: 'bold'
-        }
+        text: 'Distribusi Tingkat Keparahan'
       },
       tooltip: {
-        backgroundColor: darkMode ? 'rgba(17, 24, 39, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-        titleColor: darkMode ? '#e5e7eb' : '#111827',
-        bodyColor: darkMode ? '#e5e7eb' : '#374151',
-        borderColor: darkMode ? 'rgba(75, 85, 99, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-        borderWidth: 1,
         callbacks: {
           label: function(context) {
             const label = context.label || '';
@@ -149,38 +128,22 @@ export default function EnhancedSeverityChart() {
     setSelectedTimeRange(range);
   };
 
-  // Animation variants
-  const buttonVariants = {
-    hover: { 
-      scale: 1.05,
-      transition: { duration: 0.2 }
-    },
-    tap: { 
-      scale: 0.95,
-      transition: { duration: 0.1 }
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300 animate-pulse">Memuat data tingkat keparahan...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl p-6">
+      <div className="flex flex-col items-center justify-center h-64">
         <ExclamationCircleIcon className="w-12 h-12 text-red-500 mb-2" />
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">{error}</h2>
-        <p className="text-gray-600 dark:text-gray-300 text-center mt-2">Terjadi kesalahan saat memuat data tingkat keparahan.</p>
+        <h2 className="text-lg font-semibold text-gray-800">{error}</h2>
         <button 
           onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-300 transform hover:scale-105 active:scale-95"
+          className="mt-3 px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
         >
           Coba Lagi
         </button>
@@ -189,84 +152,59 @@ export default function EnhancedSeverityChart() {
   }
 
   return (
-    <motion.div 
-      whileHover={{ 
-        y: -5, 
-        boxShadow: darkMode 
-          ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)' 
-          : '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)' 
-      }}
-      className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700/50 transition-all duration-300"
-    >
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
-        <div className="flex items-center space-x-3 mb-4 md:mb-0">
-          <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-md">
-            <ChartPieIcon className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">Tingkat Keparahan</h3>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <motion.button 
+    <div className="bg-white p-4 rounded-lg shadow-sm">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium text-gray-800">Tingkat Keparahan</h3>
+        <div className="flex space-x-2">
+          <button 
             onClick={() => handleTimeRangeChange('week')}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1 text-sm rounded-md ${
               selectedTimeRange === 'week' 
-                ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-blue-500 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Minggu Ini
-          </motion.button>
-          <motion.button 
+          </button>
+          <button 
             onClick={() => handleTimeRangeChange('month')}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1 text-sm rounded-md ${
               selectedTimeRange === 'month' 
-                ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-blue-500 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Bulan Ini
-          </motion.button>
-          <motion.button 
+          </button>
+          <button 
             onClick={() => handleTimeRangeChange('year')}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1 text-sm rounded-md ${
               selectedTimeRange === 'year' 
-                ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-blue-500 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Tahun Ini
-          </motion.button>
-          <motion.button 
+          </button>
+          <button 
             onClick={() => handleTimeRangeChange('all')}
-            variants={buttonVariants}
-            whileHover="hover"
-            whileTap="tap"
-            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+            className={`px-3 py-1 text-sm rounded-md ${
               selectedTimeRange === 'all' 
-                ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-blue-500 text-white' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
             Semua
-          </motion.button>
+          </button>
         </div>
       </div>
       
-      <div className="h-[250px]">
+      <div className="h-64">
         <Doughnut options={chartOptions} data={severityData} />
       </div>
       
       {/* Legend dengan detail tambahan */}
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-2">
         {severityData.labels.map((label, index) => {
           const value = severityData.datasets[0].data[index];
           const total = severityData.datasets[0].data.reduce((acc, val) => acc + val, 0);
@@ -274,24 +212,18 @@ export default function EnhancedSeverityChart() {
           const bgColor = severityData.datasets[0].backgroundColor[index];
           
           return (
-            <motion.div 
-              key={index} 
-              className="flex items-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
+            <div key={index} className="flex items-center">
               <div 
                 className="w-4 h-4 mr-2 rounded-sm" 
                 style={{ backgroundColor: bgColor }}
               ></div>
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                {label}: <span className="font-medium">{value}</span> <span className="text-gray-500 dark:text-gray-400">({percentage}%)</span>
+              <span className="text-sm text-gray-700">
+                {label}: {value} ({percentage}%)
               </span>
-            </motion.div>
+            </div>
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 }
