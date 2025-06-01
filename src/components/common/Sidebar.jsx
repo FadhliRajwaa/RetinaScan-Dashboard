@@ -11,7 +11,9 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowLeftCircleIcon,
   Cog6ToothIcon,
-  BellIcon
+  BellIcon,
+  ChartBarIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
 // Environment variables
@@ -113,20 +115,6 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     }),
   };
 
-  // Modern gradient background with glassmorphism effect
-  const bgGradient = `linear-gradient(135deg, ${theme.primary}CC, ${theme.accent}CC)`;
-  const activeItemBg = `${theme.primary}`;
-  const hoverItemBg = `${theme.primary}40`;
-  
-  // Glassmorphism style
-  const glassEffect = {
-    background: bgGradient,
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-    borderRight: '1px solid rgba(255, 255, 255, 0.18)',
-  };
-
   return (
     <>
       {/* Overlay for Mobile Menu */}
@@ -149,9 +137,13 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         variants={sidebarVariants}
         initial="mobileClosed"
         animate={isMobileMenuOpen ? 'mobileOpen' : 'mobileClosed'}
-        className="lg:hidden fixed top-0 left-0 h-screen text-white w-[280px] z-50 overflow-hidden"
+        className="lg:hidden fixed top-0 left-0 h-screen w-[280px] z-50 overflow-hidden"
         style={{ 
-          ...glassEffect,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.8)',
           willChange: 'transform, opacity',
           transform: 'translateZ(0)'
         }}
@@ -160,7 +152,10 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           {/* Header: Logo and Close Button */}
           <motion.div 
             className="p-5 flex items-center justify-between"
-            style={{ backgroundColor: `${theme.accent}20` }}
+            style={{ 
+              background: `linear-gradient(135deg, ${theme.primary}10, ${theme.secondary}10)`,
+              borderBottom: '1px solid rgba(255, 255, 255, 0.8)'
+            }}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
@@ -173,7 +168,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             >
               <h1 className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
+                    background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>RetinaScan</h1>
@@ -181,326 +176,304 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 initial={{ width: 0 }}
                 animate={{ width: 120 }}
                 transition={{ delay: 0.2, duration: 0.4, type: 'spring' }}
-                className="h-1 bg-white/40 rounded-full mt-1"
-                style={{ willChange: 'width' }}
+                className="h-1 rounded-full mt-1"
+                style={{ 
+                  background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
+                  opacity: 0.7,
+                  willChange: 'width' 
+                }}
               />
             </motion.div>
             <motion.button
               onClick={toggleMobileMenu}
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.9, rotate: -5 }}
-              className="p-2 rounded-full"
+              className="p-2 rounded-full text-white"
               style={{ 
-                backgroundColor: `${theme.accent}60`,
-                backdropFilter: 'blur(4px)',
+                background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)',
                 willChange: 'transform'
               }}
             >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </motion.button>
           </motion.div>
-          
-          {/* Scrollable Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 scroll-smooth">
-            <AnimatePresence mode="wait">
-              {menuItems.map((item, index) => (
+
+          {/* Menu Items */}
+          <motion.nav 
+            className="flex-1 px-3 py-4 overflow-y-auto"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
+          >
+            {menuItems.map((item, index) => {
+              const isActive = index === activeIndex;
+              return (
                 <motion.div
-                  key={item.path}
+                  key={index}
                   custom={index}
                   variants={menuItemVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  style={{ willChange: 'transform, opacity' }}
-                  className="mb-2"
                 >
                   {item.external ? (
-                    <motion.a
+                    <a
                       href={item.path}
-                      onClick={toggleMobileMenu}
-                      className={`flex items-center p-4 rounded-xl transition-all duration-200 ${
-                        location.pathname === item.path ? 'shadow-inner' : ''
+                      className={`flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-200 ${
+                        isActive 
+                          ? 'text-white shadow-md' 
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
                       }`}
-                      style={{ 
-                        backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                        boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
-                        willChange: 'transform, background-color'
-                      }}
-                      whileHover={{ 
-                        backgroundColor: hoverItemBg, 
-                        scale: 1.02,
-                        x: 4,
-                        transition: { duration: 0.2, type: 'spring' }
-                      }}
-                      whileTap={{ scale: 0.98 }}
+                      style={
+                        isActive 
+                          ? {
+                              background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                              boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)'
+                            } 
+                          : {}
+                      }
                     >
-                      <item.icon className="h-6 w-6 mr-3" />
-                      <span className="text-base font-medium">{item.name}</span>
-                    </motion.a>
+                      <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                      <span className="ml-3 font-medium">{item.name}</span>
+                    </a>
                   ) : (
-                    <motion.div
-                      whileHover={{ 
-                        scale: 1.02,
-                        x: 4,
-                        transition: { duration: 0.2, type: 'spring' }
-                      }}
-                      whileTap={{ scale: 0.98 }}
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-200 ${
+                        isActive 
+                          ? 'text-white shadow-md' 
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                      style={
+                        isActive 
+                          ? {
+                              background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                              boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)'
+                            } 
+                          : {}
+                      }
                     >
-                      <Link
-                        to={item.path}
-                        onClick={toggleMobileMenu}
-                        className={`flex items-center p-4 rounded-xl transition-all duration-200 ${
-                          location.pathname === item.path ? 'shadow-inner' : ''
-                        }`}
-                        style={{ 
-                          backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                          boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
-                        }}
-                      >
-                        <item.icon className="h-6 w-6 mr-3" />
-                        <span className="text-base font-medium">{item.name}</span>
-                      </Link>
-                    </motion.div>
+                      <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                      <span className="ml-3 font-medium">{item.name}</span>
+                    </Link>
                   )}
                 </motion.div>
-              ))}
-            </AnimatePresence>
-          </nav>
-          
-          {/* Logout Button */}
-          <motion.div 
-            className="p-4 border-t border-white/10"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3, type: 'spring' }}
-          >
+              );
+            })}
+          </motion.nav>
+
+          {/* Footer with Logout Button */}
+          <div className="p-4 border-t border-gray-200">
             <motion.button
-              onClick={(e) => handleLogoutEvent(e, toggleMobileMenu, FRONTEND_URL)}
-              className="flex items-center p-4 w-full rounded-xl transition-all duration-200"
-              style={{ 
-                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
-                backdropFilter: 'blur(4px)',
-                willChange: 'transform, background-color'
-              }}
-              whileHover={{ scale: 1.03, backgroundColor: '#dc2626' }}
+              onClick={handleLogout}
+              whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.97 }}
+              className="w-full flex items-center px-4 py-3 rounded-xl text-gray-700 hover:text-white transition-all duration-200 hover:shadow-md"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                hover: {
+                  background: 'linear-gradient(135deg, #EF4444, #F87171)'
+                }
+              }}
             >
-              <ArrowLeftOnRectangleIcon className="h-6 w-6 mr-3" />
-              <span className="text-base font-medium">Logout</span>
+              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-500" />
+              <span className="ml-3 font-medium">Logout</span>
             </motion.button>
-          </motion.div>
+          </div>
         </div>
       </motion.aside>
 
-      {/* Desktop/Tablet Sidebar */}
+      {/* Desktop Sidebar */}
       <motion.aside
         variants={sidebarVariants}
+        initial="open"
         animate={isOpen ? 'open' : 'closed'}
-        className="hidden lg:flex flex-col h-screen sticky top-0 z-40 text-white"
+        className="hidden lg:block fixed top-0 left-0 h-screen z-40 overflow-hidden"
         style={{ 
-          ...glassEffect,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.8)',
           willChange: 'width',
           transform: 'translateZ(0)'
         }}
       >
-        <div className="p-5 flex justify-between items-center border-b border-white/10">
-          <AnimatePresence mode="wait">
-            {isOpen ? (
-              <motion.div 
-                key="full-logo"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.3, type: 'spring' }}
-                className="flex flex-col"
-              >
-                <h1 
-                  className="text-2xl font-extrabold tracking-tight"
-                  style={{
-                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  RetinaScan
-                </h1>
+        <div className="flex flex-col h-full">
+          {/* Header: Logo and Toggle Button */}
+          <div className="p-5 flex items-center justify-between">
+            <AnimatePresence>
+              {isOpen && (
                 <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: 120 }}
-                  transition={{ delay: 0.1, duration: 0.4, type: 'spring' }}
-                  className="h-1 bg-white/40 rounded-full mt-1"
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="logo-icon"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3, type: 'spring' }}
-                className="w-10 h-10 flex items-center justify-center"
-                style={{
-                  background: `linear-gradient(135deg, ${theme.accent}, ${theme.primary})`,
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)'
-                }}
-              >
-                <span className="text-xl font-extrabold text-white">R</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          <motion.button 
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-xl hover:bg-white/10 transition-colors duration-150"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            style={{ willChange: 'transform' }}
-          >
-            <svg 
-              className="w-6 h-6 text-white" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-              style={{
-                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.3s ease-out'
-              }}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </motion.button>
-        </div>
-        
-        <nav className="flex-1 overflow-y-auto px-4 py-5 pb-20">
-          {menuItems.map((item, index) => (
-            <motion.div
-              key={item.path}
-              custom={index}
-              variants={menuItemVariants}
-              initial="hidden"
-              animate="visible"
-              style={{ willChange: 'transform, opacity' }}
-              className="mb-2"
-            >
-              {item.external ? (
-                <motion.a
-                  href={item.path}
-                  className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                    location.pathname === item.path ? 'shadow-inner' : ''
-                  }`}
-                  style={{ 
-                    backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
-                  }}
-                  whileHover={{ 
-                    backgroundColor: hoverItemBg, 
-                    scale: 1.02,
-                    x: 4,
-                    transition: { duration: 0.2, type: 'spring' }
-                  }}
-                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex flex-col"
                 >
-                  <item.icon className="h-5 w-5 min-w-[1.25rem]" />
-                  {isOpen && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.3, type: 'spring' }}
-                      className="ml-3 text-sm font-medium whitespace-nowrap overflow-hidden"
-                      style={{ willChange: 'width, opacity' }}
-                    >
-                      {item.name}
-                    </motion.span>
-                  )}
-                </motion.a>
-              ) : (
-                <motion.div
-                  whileHover={{ 
-                    scale: 1.02,
-                    x: 4,
-                    backgroundColor: hoverItemBg,
-                    transition: { duration: 0.2, type: 'spring' }
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`flex items-center p-3 rounded-xl transition-all duration-200 ${
-                    location.pathname === item.path ? 'shadow-inner' : ''
-                  }`}
-                  style={{ 
-                    backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
-                    willChange: 'transform, background-color'
-                  }}
-                >
-                  <Link
-                    to={item.path}
-                    className="flex items-center w-full"
-                  >
-                    <item.icon className="h-5 w-5 min-w-[1.25rem]" />
-                    {isOpen && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={{ duration: 0.3, type: 'spring' }}
-                        className="ml-3 text-sm font-medium whitespace-nowrap overflow-hidden"
-                      >
-                        {item.name}
-                      </motion.span>
-                    )}
-                  </Link>
+                  <h1 className="text-2xl font-extrabold tracking-tight"
+                      style={{
+                        background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                      }}>RetinaScan</h1>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: 120 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    className="h-1 rounded-full mt-1"
+                    style={{ 
+                      background: `linear-gradient(90deg, ${theme.primary}, ${theme.secondary})`,
+                      opacity: 0.7
+                    }}
+                  />
                 </motion.div>
               )}
-            </motion.div>
-          ))}
-        </nav>
-        
-        {/* Logout Button for Desktop */}
-        <div className={`p-4 border-t border-white/10 ${isOpen ? 'block' : 'hidden'}`}>
-          <motion.button
-            onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
-            className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
-            style={{ 
-              background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
-              backdropFilter: 'blur(4px)',
-            }}
-            whileHover={{ scale: 1.03, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <ArrowLeftOnRectangleIcon className="h-5 w-5 min-w-[1.25rem]" />
-            {isOpen && (
-              <motion.span 
-                className="ml-3 text-sm font-medium whitespace-nowrap"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
-              >
-                Logout
-              </motion.span>
-            )}
-          </motion.button>
-        </div>
-        
-        {/* Logout icon only for collapsed sidebar */}
-        {!isOpen && (
-          <div className="p-4 border-t border-white/10">
+            </AnimatePresence>
             <motion.button
-              onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
-              className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
+              onClick={() => setIsOpen(!isOpen)}
+              whileHover={{ scale: 1.1, rotate: isOpen ? -5 : 5 }}
+              whileTap={{ scale: 0.9, rotate: isOpen ? 5 : -5 }}
+              className="p-2 rounded-full text-white"
               style={{ 
-                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
-                backdropFilter: 'blur(4px)',
+                background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)',
+                willChange: 'transform'
               }}
-              whileHover={{ scale: 1.1, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
-              whileTap={{ scale: 0.9 }}
             >
-              <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d={isOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} 
+                />
+              </svg>
             </motion.button>
           </div>
-        )}
+
+          {/* Menu Items */}
+          <nav className="flex-1 px-3 py-4 overflow-y-auto">
+            {menuItems.map((item, index) => {
+              const isActive = index === activeIndex;
+              return (
+                <motion.div
+                  key={index}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  variants={menuItemVariants}
+                >
+                  {item.external ? (
+                    <a
+                      href={item.path}
+                      className={`flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-200 ${
+                        isActive 
+                          ? 'text-white shadow-md' 
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                      style={
+                        isActive 
+                          ? {
+                              background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                              boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)'
+                            } 
+                          : {}
+                      }
+                    >
+                      <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                      <AnimatePresence>
+                        {isOpen && (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="ml-3 font-medium whitespace-nowrap"
+                          >
+                            {item.name}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </a>
+                  ) : (
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-4 py-3 mb-2 rounded-xl transition-all duration-200 ${
+                        isActive 
+                          ? 'text-white shadow-md' 
+                          : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                      style={
+                        isActive 
+                          ? {
+                              background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+                              boxShadow: '0 4px 10px rgba(79, 70, 229, 0.2)'
+                            } 
+                          : {}
+                      }
+                    >
+                      <item.icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
+                      <AnimatePresence>
+                        {isOpen && (
+                          <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            transition={{ duration: 0.2 }}
+                            className="ml-3 font-medium whitespace-nowrap"
+                          >
+                            {item.name}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </Link>
+                  )}
+                </motion.div>
+              );
+            })}
+          </nav>
+
+          {/* Footer with Logout Button */}
+          <div className="p-4 border-t border-gray-200">
+            <motion.button
+              onClick={handleLogout}
+              whileHover={{ scale: 1.03, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className="w-full flex items-center justify-center px-4 py-3 rounded-xl text-gray-700 hover:text-white transition-all duration-200 hover:shadow-md"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                hover: {
+                  background: 'linear-gradient(135deg, #EF4444, #F87171)'
+                }
+              }}
+            >
+              <ArrowLeftOnRectangleIcon className="h-5 w-5 text-red-500" />
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="ml-3 font-medium whitespace-nowrap"
+                  >
+                    Logout
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
+        </div>
       </motion.aside>
     </>
   );

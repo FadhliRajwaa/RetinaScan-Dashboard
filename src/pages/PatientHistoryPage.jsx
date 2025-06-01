@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
 import { getPatientHistory, deleteAnalysis } from '../services/api';
 import { API_URL } from '../utils/api';
@@ -16,7 +16,10 @@ import {
   FiBarChart2,
   FiRefreshCcw,
   FiTrash,
-  FiDownload
+  FiDownload,
+  FiClock,
+  FiActivity,
+  FiEye
 } from 'react-icons/fi';
 
 // Daftar URL endpoint alternatif yang akan dicoba jika URL utama gagal
@@ -92,6 +95,60 @@ const formatImageUrl = (imagePath) => {
   
   // Fallback jika API_URL tidak tersedia
   return `/uploads/${filename}?t=${timestamp}`;
+};
+
+// Animasi untuk container
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  },
+  exit: { 
+    opacity: 0,
+    transition: { duration: 0.3 }
+  }
+};
+
+// Animasi untuk item
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { type: 'spring', stiffness: 100, damping: 12 }
+  },
+  exit: {
+    y: -20,
+    opacity: 0,
+    transition: { duration: 0.2 }
+  }
+};
+
+// Animasi untuk fade in
+const fadeInVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
+// Animasi untuk slide in
+const slideInVariants = {
+  hidden: { x: 20, opacity: 0 },
+  visible: { 
+    x: 0,
+    opacity: 1,
+    transition: { 
+      type: 'spring',
+      stiffness: 100,
+      damping: 12
+    }
+  }
 };
 
 function PatientHistoryPageComponent() {
@@ -278,28 +335,6 @@ function PatientHistoryPageComponent() {
   const severityDistribution = calculateSeverityDistribution();
   const totalAnalyses = patientAnalyses.length;
 
-  // Container animation
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
-  };
-
-  // Child animation
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 100, damping: 12 }
-    }
-  };
-
   // Fungsi untuk mengunduh PDF
   const handleDownloadPdf = async () => {
     try {
@@ -324,99 +359,206 @@ function PatientHistoryPageComponent() {
         pdf.text(lines, x, y);
         return y + (lines.length * lineHeight);
       };
+
+      // Fungsi untuk membuat gradient background pada rectangle
+      const drawGradientRect = (x, y, width, height, color1, color2, direction = 'horizontal') => {
+        const totalSteps = 20;
+        const stepSize = direction === 'horizontal' ? width / totalSteps : height / totalSteps;
+        
+        for (let i = 0; i < totalSteps; i++) {
+          const ratio = i / (totalSteps - 1);
+          const r = Math.floor(color1.r + ratio * (color2.r - color1.r));
+          const g = Math.floor(color1.g + ratio * (color2.g - color1.g));
+          const b = Math.floor(color1.b + ratio * (color2.b - color1.b));
+          
+          pdf.setFillColor(r, g, b);
+          
+          if (direction === 'horizontal') {
+            pdf.rect(x + (i * stepSize), y, stepSize, height, 'F');
+          } else {
+            pdf.rect(x, y + (i * stepSize), width, stepSize, 'F');
+          }
+        }
+      };
       
-      // Header
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, 0, pageWidth, 40, 'F');
+      // Fungsi untuk membuat rounded rectangle
+      const drawRoundedRect = (x, y, width, height, radius, fillColor, strokeColor = null) => {
+        // Simpan state
+        const oldFillColor = pdf.getFillColor();
+        
+        // Set fill color
+        if (fillColor) {
+          pdf.setFillColor(fillColor.r, fillColor.g, fillColor.b);
+        }
+        
+        // Set stroke color jika ada
+        if (strokeColor) {
+          pdf.setDrawColor(strokeColor.r, strokeColor.g, strokeColor.b);
+          pdf.setLineWidth(0.5);
+        }
+        
+        // Draw rounded rectangle
+        pdf.roundedRect(x, y, width, height, radius, radius, fillColor ? 'F' : strokeColor ? 'D' : 'FD');
+        
+        // Restore state
+        pdf.setFillColor(oldFillColor);
+      };
       
-      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
+      // Warna untuk gradient
+      const primaryColor = { r: 79, g: 70, b: 229 }; // Indigo-600
+      const secondaryColor = { r: 139, g: 92, b: 246 }; // Violet-500
+      const lightBlueColor = { r: 219, g: 234, b: 254 }; // Blue-100
+      const whiteColor = { r: 255, g: 255, b: 255 };
+      const lightGrayColor = { r: 243, g: 244, b: 246 }; // Gray-100
+      
+      // Background gradient untuk seluruh halaman
+      drawGradientRect(0, 0, pageWidth, pageHeight, 
+        { r: 249, g: 250, b: 251 }, // Gray-50
+        { r: 243, g: 244, b: 246 }, // Gray-100
+        'vertical'
+      );
+      
+      // Header dengan gradient
+      drawGradientRect(0, 0, pageWidth, 50, primaryColor, secondaryColor, 'horizontal');
+      
+      // Tambahkan efek bayangan di bawah header (simulasi dengan rectangle semi-transparan)
+      pdf.setFillColor(0, 0, 0);
+      pdf.setGState(new pdf.GState({ opacity: 0.05 }));
+      pdf.rect(0, 50, pageWidth, 3, 'F');
+      pdf.setGState(new pdf.GState({ opacity: 1 }));
+      
+      // Logo atau icon (simulasi dengan lingkaran)
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(margin + 5, 25, 8, 'F');
+      
+      // Judul dan tanggal
+      pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(24);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Laporan Riwayat Pemeriksaan', pageWidth / 2, 20, { align: 'center' });
+      pdf.text('Laporan Pemeriksaan Retina', pageWidth / 2, 25, { align: 'center' });
       
-      pdf.setFontSize(12);
+      pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
-      pdf.text(`Tanggal: ${formatDate(analysis.createdAt)}`, pageWidth / 2, 30, { align: 'center' });
+      pdf.text(`Tanggal: ${formatDate(analysis.createdAt)}`, pageWidth / 2, 35, { align: 'center' });
       
-      let yPos = 50;
+      let yPos = 65;
       
-      // Informasi pasien
-      pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
+      // Informasi pasien dengan card design
+      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 40, 4, whiteColor);
       
-      pdf.setTextColor(0, 0, 0);
+      // Gradient strip di sisi kiri card
+      drawGradientRect(margin, yPos, 5, 40, primaryColor, secondaryColor, 'vertical');
+      
+      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Informasi Pasien', margin + 5, yPos + 10);
+      pdf.text('Informasi Pasien', margin + 15, yPos + 12);
       
       pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
-      pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age || '-'} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
+      pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 15, yPos + 22);
+      pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age || '-'} tahun`, margin + 15, yPos + 30);
       
-      yPos += 40;
+      yPos += 50;
       
-      // Hasil analisis
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
+      // Hasil analisis dengan card design
+      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 60, 4, whiteColor);
       
-      pdf.setTextColor(0, 0, 0);
+      // Gradient strip di sisi kiri card
+      drawGradientRect(margin, yPos, 5, 60, primaryColor, secondaryColor, 'vertical');
+      
+      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', margin + 5, yPos + 10);
+      pdf.text('Hasil Analisis', margin + 15, yPos + 12);
       
       // Tingkat keparahan
-      pdf.setFontSize(12);
+      pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
+      pdf.text('Tingkat Keparahan:', margin + 15, yPos + 25);
       
-      // Set warna berdasarkan tingkat keparahan
+      // Set warna berdasarkan tingkat keparahan dan buat badge
       const severityLevel = analysis.severity.toLowerCase();
+      let severityColor;
+      
       if (severityLevel === 'ringan' || severityLevel === 'rendah') {
-        pdf.setTextColor(39, 174, 96); // Hijau
+        severityColor = { r: 34, g: 197, b: 94 }; // Green-500
       } else if (severityLevel === 'sedang') {
-        pdf.setTextColor(241, 196, 15); // Kuning
+        severityColor = { r: 234, g: 179, b: 8 }; // Yellow-500
       } else if (severityLevel === 'berat' || severityLevel === 'parah' || severityLevel === 'sangat berat') {
-        pdf.setTextColor(231, 76, 60); // Merah
+        severityColor = { r: 239, g: 68, b: 68 }; // Red-500
       } else {
-        pdf.setTextColor(52, 152, 219); // Biru
+        severityColor = { r: 59, g: 130, b: 246 }; // Blue-500
       }
       
-      pdf.setFontSize(16);
+      // Badge untuk severity
+      const severityText = analysis.severity;
+      const textWidth = pdf.getStringUnitWidth(severityText) * pdf.getFontSize() / pdf.internal.scaleFactor;
+      const badgeWidth = textWidth + 10;
+      
+      drawRoundedRect(margin + 55, yPos + 21, badgeWidth, 8, 4, 
+        { r: severityColor.r, g: severityColor.g, b: severityColor.b, a: 0.1 }
+      );
+      
+      pdf.setTextColor(severityColor.r, severityColor.g, severityColor.b);
+      pdf.setFontSize(11);
       pdf.setFont(undefined, 'bold');
-      pdf.text(analysis.severity, margin + 50, yPos + 25);
+      pdf.text(severityText, margin + 60, yPos + 26);
       
       // Tingkat kepercayaan
-      pdf.setFontSize(12);
+      pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin + 5, yPos + 40);
+      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin + 15, yPos + 40);
       
-      // Gambar bar untuk confidence
-      const barWidth = 50;
+      // Progress bar untuk confidence dengan gradient
+      const barWidth = 80;
+      const barHeight = 6;
       const confidenceWidth = barWidth * analysis.confidence;
-      pdf.setFillColor(220, 220, 220); // Background bar
-      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
-      pdf.setFillColor(37, 99, 235); // Filled bar
-      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
       
-      yPos += 60;
+      // Background bar
+      drawRoundedRect(margin + 90, yPos + 37, barWidth, barHeight, 3, lightGrayColor);
+      
+      // Filled bar dengan gradient
+      if (confidenceWidth > 0) {
+        drawGradientRect(margin + 90, yPos + 37, confidenceWidth, barHeight, primaryColor, secondaryColor, 'horizontal');
+      }
+      
+      yPos += 70;
       
       // Gambar
       if (analysis.imageData) {
         try {
-          // Tambahkan gambar jika tersedia
-          const imgWidth = 100;
-          const imgHeight = 100;
-          pdf.addImage(analysis.imageData, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
-          yPos += imgHeight + 10;
+          // Tambahkan gambar jika tersedia dengan border dan shadow effect
+          const imgWidth = 120;
+          const imgHeight = 120;
+          const imgX = pageWidth / 2 - imgWidth / 2;
           
-          // Tambahkan label gambar
-          pdf.setFontSize(10);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
+          // Shadow effect (rectangle semi-transparan di bawah gambar)
+          pdf.setFillColor(0, 0, 0);
+          pdf.setGState(new pdf.GState({ opacity: 0.1 }));
+          pdf.roundedRect(imgX + 2, yPos + 2, imgWidth, imgHeight, 2, 2, 'F');
+          pdf.setGState(new pdf.GState({ opacity: 1 }));
+          
+          // Border untuk gambar
+          drawRoundedRect(imgX, yPos, imgWidth, imgHeight, 2, whiteColor);
+          
+          // Gambar
+          pdf.addImage(analysis.imageData, 'JPEG', imgX, yPos, imgWidth, imgHeight);
+          
+          yPos += imgHeight + 15;
+          
+          // Tambahkan label gambar dengan style yang lebih modern
+          pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b, 0.1);
+          const labelWidth = 80;
+          pdf.roundedRect(pageWidth / 2 - labelWidth / 2, yPos - 10, labelWidth, 8, 4, 4, 'F');
+          
+          pdf.setFontSize(9);
+          pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+          pdf.text('Gambar Retina', pageWidth / 2, yPos - 5, { align: 'center' });
+          
           yPos += 15;
         } catch (imgError) {
           console.error('Error adding image to PDF:', imgError);
@@ -425,16 +567,18 @@ function PatientHistoryPageComponent() {
         }
       }
       
-      // Rekomendasi
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
+      // Rekomendasi dengan card design
+      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 50, 4, whiteColor);
       
-      pdf.setTextColor(0, 0, 0);
+      // Gradient strip di sisi kiri card
+      drawGradientRect(margin, yPos, 5, 50, primaryColor, secondaryColor, 'vertical');
+      
+      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 5, yPos + 10);
+      pdf.text('Rekomendasi', margin + 15, yPos + 12);
       
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
       
@@ -455,25 +599,33 @@ function PatientHistoryPageComponent() {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
-      yPos += 15;
+      yPos = addWrappedText(recommendation, margin + 15, yPos + 22, pageWidth - (margin * 2) - 30, 5);
+      yPos += 20;
       
-      // Disclaimer
-      pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
+      // Disclaimer dengan style yang lebih modern
+      drawRoundedRect(margin, yPos, pageWidth - (margin * 2), 30, 4, 
+        { r: 254, g: 242, b: 242 } // Red-50
+      );
+      
+      pdf.setFontSize(8);
+      pdf.setTextColor(239, 68, 68); // Red-500
+      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      addWrappedText(disclaimer, margin + 10, yPos + 10, pageWidth - (margin * 2) - 20, 4);
+      
+      // Footer dengan gradient
+      drawGradientRect(0, pageHeight - 25, pageWidth, 25, primaryColor, secondaryColor, 'horizontal');
+      
+      // Logo RetinaScan di footer (simulasi dengan lingkaran)
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(margin + 10, pageHeight - 12.5, 4, 'F');
       
       pdf.setFontSize(9);
-      pdf.setTextColor(100, 100, 100);
-      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
-      
-      // Footer
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-      
-      pdf.setFontSize(10);
       pdf.setTextColor(255, 255, 255);
-      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 15, { align: 'center' });
+      
+      // QR code simulasi (kotak kecil di pojok kanan bawah)
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(pageWidth - margin - 10, pageHeight - 20, 10, 10, 'F');
       
       // Nama file
       const fileName = `RetinaScan_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -489,180 +641,295 @@ function PatientHistoryPageComponent() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto">
         {/* Header with back button */}
-        <div className="flex items-center mb-6">
-          <button 
+        <motion.div 
+          className="flex items-center mb-8"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInVariants}
+        >
+          <motion.button 
             onClick={handleBack}
-            className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="mr-4 p-3 rounded-full bg-white shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <FiArrowLeft className="text-gray-600" size={20} />
-          </button>
-          <h1 className="text-2xl font-bold text-gray-800">Riwayat Pasien</h1>
-        </div>
+            <FiArrowLeft className="text-indigo-600" size={20} />
+          </motion.button>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+              Riwayat Pasien
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Melihat riwayat pemeriksaan dan analisis retina pasien
+            </p>
+          </div>
+        </motion.div>
         
         {isLoading ? (
-          <div className="flex justify-center items-center py-20">
+          <motion.div 
+            className="flex justify-center items-center py-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-3"></div>
-              <p className="text-gray-500">Memuat data pasien...</p>
+              <div className="relative h-20 w-20">
+                <div className="absolute inset-0 rounded-full border-t-4 border-b-4 border-indigo-500 animate-spin"></div>
+                <div className="absolute inset-2 rounded-full border-r-4 border-l-4 border-violet-300 animate-spin animate-reverse"></div>
+              </div>
+              <p className="text-gray-500 mt-4 font-medium">Memuat data pasien...</p>
             </div>
-          </div>
+          </motion.div>
         ) : error ? (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-800 mb-2">{error}</h3>
-            <p className="text-gray-600 mb-6">Tidak dapat menemukan riwayat analisis untuk pasien ini.</p>
-            <button
+          <motion.div 
+            className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-8 text-center border border-white/20"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
+            <motion.div variants={itemVariants}>
+              <FiAlertTriangle className="text-amber-500 text-6xl mx-auto mb-4" />
+            </motion.div>
+            <motion.h3 variants={itemVariants} className="text-xl font-medium text-gray-800 mb-2">
+              {error}
+            </motion.h3>
+            <motion.p variants={itemVariants} className="text-gray-600 mb-6">
+              Tidak dapat menemukan riwayat analisis untuk pasien ini.
+            </motion.p>
+            <motion.button
+              variants={itemVariants}
               onClick={handleBack}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl hover:shadow-lg hover:from-indigo-700 hover:to-violet-700 transition-all"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
             >
               Kembali ke Daftar Pasien
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         ) : patientData && patientAnalyses.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <motion.div 
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
             {/* Patient Info Card */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <FiUser className="mr-2 text-blue-500" />
+            <motion.div 
+              className="lg:col-span-1"
+              variants={itemVariants}
+            >
+              <motion.div 
+                className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-6 mb-6 border border-white/20"
+                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.1)" }}
+                transition={{ duration: 0.2 }}
+              >
+                <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent mb-4 flex items-center">
+                  <FiUser className="mr-2 text-indigo-500" />
                   Informasi Pasien
                 </h3>
                 <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Nama Lengkap</p>
-                    <p className="font-medium">{patientData.fullName || patientData.name}</p>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <FiUser className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Nama Lengkap</p>
+                      <p className="font-medium text-gray-800">{patientData.fullName || patientData.name}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                    <p className="font-medium">{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <FiActivity className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Jenis Kelamin</p>
+                      <p className="font-medium text-gray-800">{patientData.gender === 'male' ? 'Laki-laki' : 'Perempuan'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Usia</p>
-                    <p className="font-medium">{patientData.age || '-'} tahun</p>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <FiCalendar className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Usia</p>
+                      <p className="font-medium text-gray-800">{patientData.age || '-'} tahun</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Tanggal Lahir</p>
-                    <p className="font-medium">
-                      {patientData.dateOfBirth ? formatDate(patientData.dateOfBirth).split(',')[0] : '-'}
-                    </p>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <FiCalendar className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Tanggal Lahir</p>
+                      <p className="font-medium text-gray-800">
+                        {patientData.dateOfBirth ? formatDate(patientData.dateOfBirth).split(',')[0] : '-'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Total Pemindaian</p>
-                    <p className="font-medium">{totalAnalyses} kali</p>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <FiEye className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Total Pemindaian</p>
+                      <p className="font-medium text-gray-800">{totalAnalyses} kali</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Pemindaian Terakhir</p>
-                    <p className="font-medium">
-                      {patientAnalyses[0] ? formatDate(patientAnalyses[0].createdAt) : '-'}
-                    </p>
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
+                      <FiClock className="text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Pemindaian Terakhir</p>
+                      <p className="font-medium text-gray-800">
+                        {patientAnalyses[0] ? formatDate(patientAnalyses[0].createdAt) : '-'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
               
               {/* Analysis History List */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <FiFileText className="mr-2 text-blue-500" />
+              <motion.div 
+                className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-6 border border-white/20"
+                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.1)" }}
+                transition={{ duration: 0.2 }}
+              >
+                <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent mb-4 flex items-center">
+                  <FiFileText className="mr-2 text-indigo-500" />
                   Riwayat Pemindaian
                 </h3>
-                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                  {patientAnalyses.map((analysis, index) => (
-                    <div 
-                      key={analysis.id}
-                      onClick={() => setSelectedAnalysisIndex(index)}
-                      className={`p-3 rounded-lg cursor-pointer transition-all ${
-                        selectedAnalysisIndex === index 
-                          ? 'bg-blue-50 border-l-4 border-blue-500' 
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-sm font-medium">
-                            {formatDate(analysis.createdAt)}
-                          </p>
-                          <div className="flex items-center mt-1">
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${getSeverityBadge(analysis.severity)}`}>
-                              {analysis.severity}
-                            </span>
-                            <span className="text-xs text-gray-500 ml-2">
-                              {(analysis.confidence * 100).toFixed(0)}% keyakinan
-                            </span>
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                  <AnimatePresence>
+                    {patientAnalyses.map((analysis, index) => (
+                      <motion.div 
+                        key={analysis.id}
+                        onClick={() => setSelectedAnalysisIndex(index)}
+                        className={`p-4 rounded-xl cursor-pointer transition-all ${
+                          selectedAnalysisIndex === index 
+                            ? 'bg-gradient-to-r from-indigo-50 to-violet-50 border-l-4 border-indigo-500 shadow-md' 
+                            : 'bg-gray-50 hover:bg-gray-100'
+                        }`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2, delay: index * 0.05 }}
+                        whileHover={{ 
+                          scale: 1.02,
+                          boxShadow: selectedAnalysisIndex === index ? "0 8px 15px -3px rgba(99, 102, 241, 0.2)" : "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">
+                              {formatDate(analysis.createdAt)}
+                            </p>
+                            <div className="flex items-center mt-2">
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${getSeverityBadge(analysis.severity)}`}>
+                                {analysis.severity}
+                              </span>
+                              <div className="flex items-center ml-2 bg-white/80 px-2 py-1 rounded-full">
+                                <div className="w-2 h-2 rounded-full bg-indigo-500 mr-1"></div>
+                                <span className="text-xs text-gray-600">
+                                  {(analysis.confidence * 100).toFixed(0)}% keyakinan
+                                </span>
+                              </div>
+                            </div>
                           </div>
+                          {selectedAnalysisIndex === index && (
+                            <div className="h-3 w-3 rounded-full bg-indigo-500 animate-pulse"></div>
+                          )}
                         </div>
-                        {selectedAnalysisIndex === index && (
-                          <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
             
             {/* Analysis Details */}
-            <div className="lg:col-span-2">
+            <motion.div 
+              className="lg:col-span-2"
+              variants={itemVariants}
+            >
               {patientAnalyses[selectedAnalysisIndex] && (
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <motion.div 
+                  className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-6 border border-white/20"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  key={patientAnalyses[selectedAnalysisIndex].id}
+                  layoutId={`analysis-${patientAnalyses[selectedAnalysisIndex].id}`}
+                >
                   <div className="flex justify-between items-start mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800">
+                    <h3 className="text-lg font-semibold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
                       Detail Analisis
                     </h3>
                     <div className="flex space-x-2">
-                      <button
+                      <motion.button
                         onClick={handleDownloadPdf}
                         disabled={isPdfLoading}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full transition-all"
                         title="Unduh PDF"
+                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(99, 102, 241, 0.1)' }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         {isPdfLoading ? (
-                          <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                          <div className="animate-spin h-5 w-5 border-2 border-indigo-500 border-t-transparent rounded-full"></div>
                         ) : (
                           <FiDownload size={18} />
                         )}
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={(e) => handleDelete(patientAnalyses[selectedAnalysisIndex].id, e)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
                         title="Hapus Analisis"
+                        whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.1)' }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         <FiTrash size={18} />
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                   
                   {/* Image Preview */}
-                  <div className="bg-gray-100 p-4 rounded-lg">
+                  <motion.div 
+                    className="bg-gradient-to-br from-gray-50 to-indigo-50 p-6 rounded-xl mb-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                  >
                     <div className="flex justify-between items-center">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Gambar Retina</p>
-                      <div className="flex gap-1">
-                        <button 
-                          onClick={() => {
-                            const imgEl = document.getElementById('retina-image');
-                            if (imgEl) {
-                              delete imgEl.dataset.fallbackAttempted;
-                              setImageStatus('loading');
-                              setImageLoadAttempt(prev => prev + 1);
-                              
-                              // Enforce re-rendering with a small delay
-                              setTimeout(() => {
-                                if (patientAnalyses[selectedAnalysisIndex].imagePath) {
-                                imgEl.src = formatImageUrl(patientAnalyses[selectedAnalysisIndex].imagePath);
-                                } else if (patientAnalyses[selectedAnalysisIndex].imageData) {
-                                  imgEl.src = patientAnalyses[selectedAnalysisIndex].imageData;
-                                }
-                              }, 50);
-                            }
-                          }}
-                          className="px-2 py-1 bg-green-500 text-white rounded text-xs flex items-center"
-                          title="Muat ulang gambar"
-                        >
-                          <FiRefreshCcw className="mr-1" /> Refresh
-                        </button>
-                      </div>
+                      <p className="text-sm font-medium text-gray-700 mb-2">Gambar Retina</p>
+                      <motion.button 
+                        onClick={() => {
+                          const imgEl = document.getElementById('retina-image');
+                          if (imgEl) {
+                            delete imgEl.dataset.fallbackAttempted;
+                            setImageStatus('loading');
+                            setImageLoadAttempt(prev => prev + 1);
+                            
+                            // Enforce re-rendering with a small delay
+                            setTimeout(() => {
+                              if (patientAnalyses[selectedAnalysisIndex].imagePath) {
+                              imgEl.src = formatImageUrl(patientAnalyses[selectedAnalysisIndex].imagePath);
+                              } else if (patientAnalyses[selectedAnalysisIndex].imageData) {
+                                imgEl.src = patientAnalyses[selectedAnalysisIndex].imageData;
+                              }
+                            }, 50);
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-violet-500 text-white rounded-lg text-xs flex items-center shadow-md hover:shadow-lg"
+                        title="Muat ulang gambar"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FiRefreshCcw className="mr-1.5" /> Refresh
+                      </motion.button>
                     </div>
                     
                     {/* Debug info panel (tersembunyi) */}
@@ -676,22 +943,36 @@ function PatientHistoryPageComponent() {
                       )}
                     </div>
                     
-                    <div className="relative aspect-w-16 aspect-h-9 bg-gray-200 rounded-lg overflow-hidden">
+                    <div className="relative aspect-w-16 aspect-h-9 bg-white/50 rounded-lg overflow-hidden shadow-inner mt-2">
                       {patientAnalyses[selectedAnalysisIndex] ? (
                         <>
                           {imageStatus === 'loading' && (
-                            <div className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80">
+                            <motion.div 
+                              className="absolute inset-0 flex items-center justify-center z-10 bg-gray-100/80"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                            >
                               <div className="flex flex-col items-center space-y-2">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                                <div className="relative h-12 w-12">
+                                  <div className="absolute inset-0 rounded-full border-t-2 border-b-2 border-indigo-500 animate-spin"></div>
+                                  <div className="absolute inset-1 rounded-full border-r-2 border-l-2 border-violet-300 animate-spin animate-reverse"></div>
+                                </div>
                                 <p className="text-xs text-gray-600">Memuat gambar...</p>
                               </div>
-                            </div>
+                            </motion.div>
                           )}
-                          <img 
+                          <motion.img 
                             id="retina-image"
                             src={patientAnalyses[selectedAnalysisIndex].imageData || activeImageUrl || DEFAULT_IMAGE}
                             alt="Retina scan"
-                            className="object-cover w-full h-full"
+                            className="object-contain w-full h-full"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ 
+                              opacity: imageStatus === 'success' ? 1 : 0.7,
+                              scale: imageStatus === 'success' ? 1 : 0.95
+                            }}
+                            transition={{ duration: 0.3 }}
                             onLoad={() => setImageStatus('success')}
                             onError={(e) => {
                               console.error('Error loading image:', e.target.src.substring(0, 50) + '...');
@@ -728,9 +1009,14 @@ function PatientHistoryPageComponent() {
                           />
                           
                           {imageStatus === 'error' && (
-                            <div className="absolute bottom-0 left-0 right-0 bg-red-500/80 p-2 text-xs text-white text-center">
+                            <motion.div 
+                              className="absolute bottom-0 left-0 right-0 bg-red-500/90 p-2 text-xs text-white text-center"
+                              initial={{ y: 20, opacity: 0 }}
+                              animate={{ y: 0, opacity: 1 }}
+                              transition={{ duration: 0.3 }}
+                            >
                               Gagal memuat gambar. Silakan coba tombol Refresh atau API alternatif.
-                            </div>
+                            </motion.div>
                           )}
                         </>
                       ) : (
@@ -739,63 +1025,101 @@ function PatientHistoryPageComponent() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                   
                   {/* Analysis Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Nama File</p>
-                      <p className="text-base font-medium break-words">
+                  <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    variants={containerVariants}
+                  >
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl shadow-sm"
+                      whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                      variants={itemVariants}
+                    >
+                      <p className="text-sm font-medium text-gray-700 mb-2">Nama File</p>
+                      <p className="text-base font-medium break-words text-gray-800">
                         {patientAnalyses[selectedAnalysisIndex].originalFilename}
                       </p>
-                    </div>
+                    </motion.div>
                     
-                    <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Keparahan</p>
-                      <span className={`px-3 py-1 rounded-full text-sm inline-block ${
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl shadow-sm"
+                      whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                      variants={itemVariants}
+                    >
+                      <p className="text-sm font-medium text-gray-700 mb-2">Tingkat Keparahan</p>
+                      <span className={`px-4 py-1.5 rounded-full text-sm inline-block font-medium ${
                         getSeverityBadge(patientAnalyses[selectedAnalysisIndex].severity)
                       }`}>
                         {patientAnalyses[selectedAnalysisIndex].severity}
                       </span>
-                    </div>
+                    </motion.div>
                     
-                    <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Tingkat Kepercayaan</p>
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl shadow-sm"
+                      whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                      variants={itemVariants}
+                    >
+                      <p className="text-sm font-medium text-gray-700 mb-2">Tingkat Kepercayaan</p>
                       <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
-                          <div 
-                            className="bg-blue-600 h-2.5 rounded-full" 
-                            style={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
-                          ></div>
+                        <div className="w-full bg-white/60 rounded-full h-3 mr-2 overflow-hidden">
+                          <motion.div 
+                            className="bg-gradient-to-r from-indigo-500 to-violet-500 h-3 rounded-full" 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(0)}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                          ></motion.div>
                         </div>
-                        <span className="text-base font-medium min-w-[60px] text-right">
+                        <span className="text-base font-medium min-w-[60px] text-right text-indigo-700">
                           {(patientAnalyses[selectedAnalysisIndex].confidence * 100).toFixed(1)}%
                         </span>
                       </div>
-                    </div>
+                    </motion.div>
                     
-                    <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Tanggal Analisis</p>
-                      <p className="text-base font-medium">
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl shadow-sm"
+                      whileHover={{ y: -3, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                      variants={itemVariants}
+                    >
+                      <p className="text-sm font-medium text-gray-700 mb-2">Tanggal Analisis</p>
+                      <p className="text-base font-medium text-gray-800 flex items-center">
+                        <FiCalendar className="mr-2 text-indigo-500" />
                         {formatDate(patientAnalyses[selectedAnalysisIndex].createdAt)}
                       </p>
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
                   
                   {/* Notes */}
                   {patientAnalyses[selectedAnalysisIndex].notes && (
-                    <div className="bg-gray-100 p-4 rounded-lg">
-                      <p className="text-sm font-medium text-gray-500 mb-2">Catatan</p>
-                      <p className="text-base">
+                    <motion.div 
+                      className="bg-gradient-to-br from-gray-50 to-indigo-50 p-4 rounded-xl shadow-sm mb-6"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      <p className="text-sm font-medium text-gray-700 mb-2">Catatan</p>
+                      <p className="text-base text-gray-800">
                         {patientAnalyses[selectedAnalysisIndex].notes}
                       </p>
-                    </div>
+                    </motion.div>
                   )}
                   
                   {/* Recommendations based on severity */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm font-medium text-blue-800 mb-2">Rekomendasi</p>
-                    <p className="text-base text-blue-700">
+                  <motion.div 
+                    className="bg-gradient-to-r from-indigo-50 to-violet-50 p-6 rounded-xl shadow-sm border border-indigo-100"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <p className="text-sm font-medium text-indigo-800 mb-2 flex items-center">
+                      <FiFileText className="mr-2" />
+                      Rekomendasi
+                    </p>
+                    <p className="text-base text-indigo-700">
                       {patientAnalyses[selectedAnalysisIndex].notes ? (
                         patientAnalyses[selectedAnalysisIndex].notes
                       ) : patientAnalyses[selectedAnalysisIndex].severity.toLowerCase() === 'tidak ada' ? (
@@ -812,49 +1136,81 @@ function PatientHistoryPageComponent() {
                         'Lakukan pemeriksaan rutin setiap tahun.'
                       )}
                     </p>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <FiAlertTriangle className="text-yellow-500 text-5xl mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-800 mb-2">Data Tidak Ditemukan</h3>
-            <p className="text-gray-600 mb-6">Tidak dapat menemukan data pasien atau riwayat analisis.</p>
-            <button
+          <motion.div 
+            className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-8 text-center border border-white/20"
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+          >
+            <motion.div variants={itemVariants}>
+              <FiAlertTriangle className="text-amber-500 text-6xl mx-auto mb-4" />
+            </motion.div>
+            <motion.h3 variants={itemVariants} className="text-xl font-medium text-gray-800 mb-2">
+              Data Tidak Ditemukan
+            </motion.h3>
+            <motion.p variants={itemVariants} className="text-gray-600 mb-6">
+              Tidak dapat menemukan data pasien atau riwayat analisis.
+            </motion.p>
+            <motion.button
+              variants={itemVariants}
               onClick={handleBack}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl hover:shadow-lg hover:from-indigo-700 hover:to-violet-700 transition-all"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
             >
               Kembali ke Daftar Pasien
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         )}
       </div>
       
       {/* Confirmation Dialog for Delete */}
-      {showConfirmDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
-            <p className="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus analisis ini? Tindakan ini tidak dapat dibatalkan.</p>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowConfirmDelete(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showConfirmDelete && (
+          <motion.div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.div 
+              className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl"
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Konfirmasi Hapus</h3>
+              <p className="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus analisis ini? Tindakan ini tidak dapat dibatalkan.</p>
+              <div className="flex justify-end space-x-3">
+                <motion.button
+                  onClick={() => setShowConfirmDelete(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Batal
+                </motion.button>
+                <motion.button
+                  onClick={handleConfirmDelete}
+                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Hapus
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

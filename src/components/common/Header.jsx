@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { BellIcon, Cog6ToothIcon, UserCircleIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   const { theme, isMobile } = useTheme();
@@ -47,24 +47,19 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       console.error('toggleMobileMenu is not a function!');
     }
   };
-
-  // Glassmorphism style
-  const glassEffect = {
-    background: 'rgba(255, 255, 255, 0.8)',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-  };
   
   return (
     <motion.header 
       variants={headerVariants}
       initial="hidden"
       animate="visible"
-      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
+      className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl glass-effect"
       style={{
-        ...glassEffect,
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.08)',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
         willChange: 'transform, opacity',
         transform: 'translateZ(0)'
       }}
@@ -75,13 +70,13 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
           whileHover={{ 
             scale: 1.05,
             rotate: 3,
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)'
+            boxShadow: '0 15px 30px -10px rgba(79, 70, 229, 0.3)'
           }}
           whileTap={{ scale: 0.95, rotate: -3 }}
           className="w-12 h-12 rounded-xl mr-4 flex items-center justify-center shadow-lg"
           style={{ 
-            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            boxShadow: `0 10px 15px -3px ${theme.primary}40`,
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+            boxShadow: `0 10px 15px -3px ${theme.primary}30`,
             willChange: 'transform',
             transform: 'translateZ(0)'
           }}
@@ -124,12 +119,31 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
             }}
             className="h-1 rounded-full mt-1 max-w-[120px]"
             style={{ 
-              background: `linear-gradient(to right, ${theme.primary}, ${theme.accent})`,
+              background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
               willChange: 'width, opacity'
             }}
           />
         </div>
       </div>
+
+      {/* Search Bar - New Addition */}
+      <motion.div 
+        initial={{ opacity: 0, width: 0 }}
+        animate={{ opacity: 1, width: 'auto' }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="hidden md:flex items-center relative mx-4 flex-1 max-w-md"
+      >
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary bg-white/50 backdrop-blur-sm text-gray-700 transition-all duration-300"
+            placeholder="Cari..."
+          />
+        </div>
+      </motion.div>
 
       {/* Header Actions */}
       <motion.div 
@@ -139,25 +153,26 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         className="hidden md:flex items-center space-x-3"
       >
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          className="p-2 rounded-lg bg-white hover:bg-gray-50 shadow-sm hover:shadow transition-all duration-200 relative"
         >
           <BellIcon className="h-5 w-5 text-gray-600" />
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">2</span>
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          className="p-2 rounded-lg bg-white hover:bg-gray-50 shadow-sm hover:shadow transition-all duration-200"
         >
           <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
         </motion.button>
         <motion.div
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
-          className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+          className="p-1 rounded-lg bg-white hover:bg-gray-50 shadow-sm hover:shadow transition-all duration-200"
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center text-white font-medium">
             A
           </div>
         </motion.div>
@@ -170,10 +185,10 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleMenuClick}
-          className="p-3 rounded-lg text-white shadow-lg z-50"
+          className="p-3 rounded-xl text-white shadow-lg z-50"
           style={{ 
-            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`,
+            boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.3)',
             willChange: 'transform',
             transform: 'translateZ(0)',
             position: 'relative' // Ensure it's above other elements
