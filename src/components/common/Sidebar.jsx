@@ -56,24 +56,24 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     }
   };
 
-  // Enhanced animation variants with smoother transitions
+  // Enhanced animation variants
   const sidebarVariants = {
     open: { 
       width: '280px', 
       transition: { 
         type: 'spring',
-        stiffness: 400,
-        damping: 40,
-        duration: 0.4
+        stiffness: 300,
+        damping: 30,
+        duration: 0.3
       } 
     },
     closed: { 
       width: '80px', 
       transition: { 
         type: 'spring',
-        stiffness: 400,
-        damping: 40,
-        duration: 0.4
+        stiffness: 300,
+        damping: 30,
+        duration: 0.3
       } 
     },
     mobileOpen: { 
@@ -81,9 +81,9 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
       opacity: 1, 
       transition: { 
         type: 'spring',
-        stiffness: 400,
-        damping: 40,
-        duration: 0.4
+        stiffness: 300,
+        damping: 30,
+        duration: 0.3
       } 
     },
     mobileClosed: { 
@@ -91,9 +91,9 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
       opacity: 0, 
       transition: { 
         type: 'spring',
-        stiffness: 400,
-        damping: 40,
-        duration: 0.4
+        stiffness: 300,
+        damping: 30,
+        duration: 0.3
       } 
     },
   };
@@ -105,25 +105,32 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
       x: 0,
       transition: { 
         type: 'spring',
-        stiffness: 400,
-        damping: 40,
+        stiffness: 300,
+        damping: 30,
         delay: i * 0.05, 
-        duration: 0.3
+        duration: 0.2
       },
     }),
   };
 
-  // Modern white background with subtle shadows
-  const bgColor = 'white';
-  const textColor = theme.primary;
-  const activeItemBg = `${theme.primary}10`;
-  const hoverItemBg = `${theme.primary}05`;
+  // Modern white background with subtle glassmorphism effect
+  const activeItemBg = `${theme.primary}20`;
+  const hoverItemBg = `${theme.primary}10`;
   
-  // Modern style with subtle shadows
-  const modernStyle = {
-    background: bgColor,
-    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.05)',
+  // White glassmorphism style
+  const glassEffect = {
+    background: 'white',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
     borderRight: '1px solid rgba(0, 0, 0, 0.05)',
+  };
+
+  // Text color for white background
+  const textColor = {
+    primary: theme.primary,
+    secondary: '#4B5563', // gray-600
+    muted: '#9CA3AF', // gray-400
   };
 
   return (
@@ -150,7 +157,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         animate={isMobileMenuOpen ? 'mobileOpen' : 'mobileClosed'}
         className="lg:hidden fixed top-0 left-0 h-screen w-[280px] z-50 overflow-hidden"
         style={{ 
-          ...modernStyle,
+          ...glassEffect,
           willChange: 'transform, opacity',
           transform: 'translateZ(0)'
         }}
@@ -159,7 +166,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           {/* Header: Logo and Close Button */}
           <motion.div 
             className="p-5 flex items-center justify-between"
-            style={{ backgroundColor: `${theme.primary}05` }}
+            style={{ backgroundColor: `${theme.primary}10` }}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
@@ -172,7 +179,6 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             >
               <h1 className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    color: textColor,
                     background: `linear-gradient(90deg, ${theme.primary}, ${theme.accent})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -181,11 +187,8 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 initial={{ width: 0 }}
                 animate={{ width: 120 }}
                 transition={{ delay: 0.2, duration: 0.4, type: 'spring' }}
-                className="h-1 rounded-full mt-1"
-                style={{ 
-                  background: `linear-gradient(90deg, ${theme.primary}, ${theme.accent})`,
-                  willChange: 'width' 
-                }}
+                className="h-1 bg-gray-200 rounded-full mt-1"
+                style={{ willChange: 'width' }}
               />
             </motion.div>
             <motion.button
@@ -194,8 +197,9 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               whileTap={{ scale: 0.9, rotate: -5 }}
               className="p-2 rounded-full"
               style={{ 
-                color: textColor,
-                backgroundColor: `${theme.primary}10`,
+                backgroundColor: `${theme.accent}20`,
+                backdropFilter: 'blur(4px)',
+                color: textColor.primary,
                 willChange: 'transform'
               }}
             >
@@ -204,65 +208,79 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               </svg>
             </motion.button>
           </motion.div>
-
-          {/* Navigation Menu */}
-          <div className="flex-1 overflow-y-auto py-4">
-            <nav className="px-3 space-y-1">
-              {menuItems.map((item, index) => {
-                const isActive = activeIndex === index;
-                
-                return (
-                  <motion.div
-                    key={item.name}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    variants={menuItemVariants}
-                    whileHover={{ x: 5 }}
-                    className="mb-2"
-                  >
-                    {item.external ? (
-                      <a
-                        href={item.path}
-                        className={`
-                          flex items-center px-4 py-3 rounded-xl transition-all duration-200
-                          ${isActive ? 'font-medium' : 'font-normal'}
-                        `}
-                        style={{ 
-                          backgroundColor: isActive ? activeItemBg : 'transparent',
-                          color: textColor,
-                        }}
-                        onClick={toggleMobileMenu}
-                      >
-                        <item.icon className="h-6 w-6 mr-4" style={{ color: isActive ? theme.primary : textColor }} />
-                        <span>{item.name}</span>
-                      </a>
-                    ) : (
+          
+          {/* Scrollable Navigation */}
+          <nav className="flex-1 overflow-y-auto p-4 scroll-smooth">
+            <AnimatePresence mode="wait">
+              {menuItems.map((item, index) => (
+                <motion.div
+                  key={item.path}
+                  custom={index}
+                  variants={menuItemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  style={{ willChange: 'transform, opacity' }}
+                  className="mb-2"
+                >
+                  {item.external ? (
+                    <motion.a
+                      href={item.path}
+                      onClick={toggleMobileMenu}
+                      className={`flex items-center p-4 rounded-xl transition-all duration-200 ${
+                        location.pathname === item.path ? 'shadow-inner' : ''
+                      }`}
+                      style={{ 
+                        backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
+                        boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)' : 'none',
+                        color: textColor.secondary,
+                        willChange: 'transform, background-color'
+                      }}
+                      whileHover={{ 
+                        backgroundColor: hoverItemBg, 
+                        scale: 1.02,
+                        x: 4,
+                        transition: { duration: 0.2, type: 'spring' }
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <item.icon className="h-6 w-6 mr-3" style={{ color: textColor.primary }} />
+                      <span className="text-base font-medium">{item.name}</span>
+                    </motion.a>
+                  ) : (
+                    <motion.div
+                      whileHover={{ 
+                        scale: 1.02,
+                        x: 4,
+                        transition: { duration: 0.2, type: 'spring' }
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                    >
                       <Link
                         to={item.path}
-                        className={`
-                          flex items-center px-4 py-3 rounded-xl transition-all duration-200
-                          ${isActive ? 'font-medium' : 'font-normal'}
-                        `}
-                        style={{ 
-                          backgroundColor: isActive ? activeItemBg : 'transparent',
-                          color: textColor,
-                        }}
                         onClick={toggleMobileMenu}
+                        className={`flex items-center p-4 rounded-xl transition-all duration-200 ${
+                          location.pathname === item.path ? 'shadow-inner' : ''
+                        }`}
+                        style={{ 
+                          backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
+                          boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)' : 'none',
+                          color: textColor.secondary
+                        }}
                       >
-                        <item.icon className="h-6 w-6 mr-4" style={{ color: isActive ? theme.primary : textColor }} />
-                        <span>{item.name}</span>
+                        <item.icon className="h-6 w-6 mr-3" style={{ color: textColor.primary }} />
+                        <span className="text-base font-medium">{item.name}</span>
                       </Link>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </nav>
-          </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </nav>
           
           {/* Logout Button */}
           <motion.div 
-            className="p-4 border-t border-white/10"
+            className="p-4 border-t border-gray-100"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.3, type: 'spring' }}
@@ -273,6 +291,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               style={{ 
                 background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
                 backdropFilter: 'blur(4px)',
+                color: 'white',
                 willChange: 'transform, background-color'
               }}
               whileHover={{ scale: 1.03, backgroundColor: '#dc2626' }}
@@ -289,14 +308,14 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
       <motion.aside
         variants={sidebarVariants}
         animate={isOpen ? 'open' : 'closed'}
-        className="hidden lg:flex flex-col h-screen sticky top-0 z-40 text-white"
+        className="hidden lg:flex flex-col h-screen sticky top-0 z-40"
         style={{ 
-          ...modernStyle,
+          ...glassEffect,
           willChange: 'width',
           transform: 'translateZ(0)'
         }}
       >
-        <div className="p-5 flex justify-between items-center border-b border-white/10">
+        <div className="p-5 flex justify-between items-center border-b border-gray-100">
           <AnimatePresence mode="wait">
             {isOpen ? (
               <motion.div 
@@ -310,7 +329,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 <h1 
                   className="text-2xl font-extrabold tracking-tight"
                   style={{
-                    background: 'linear-gradient(90deg, white, rgba(255,255,255,0.8))',
+                    background: `linear-gradient(90deg, ${theme.primary}, ${theme.accent})`,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -321,7 +340,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   initial={{ width: 0 }}
                   animate={{ width: 120 }}
                   transition={{ delay: 0.1, duration: 0.4, type: 'spring' }}
-                  className="h-1 bg-white/40 rounded-full mt-1"
+                  className="h-1 bg-gray-200 rounded-full mt-1"
                 />
               </motion.div>
             ) : (
@@ -335,7 +354,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 style={{
                   background: `linear-gradient(135deg, ${theme.accent}, ${theme.primary})`,
                   borderRadius: '12px',
-                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)'
+                  boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 <span className="text-xl font-extrabold text-white">R</span>
@@ -345,13 +364,13 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           
           <motion.button 
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-xl hover:bg-white/10 transition-colors duration-150"
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-150"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            style={{ willChange: 'transform' }}
+            style={{ willChange: 'transform', color: textColor.primary }}
           >
             <svg 
-              className="w-6 h-6 text-white" 
+              className="w-6 h-6" 
               fill="none" 
               viewBox="0 0 24 24" 
               stroke="currentColor"
@@ -384,7 +403,8 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   }`}
                   style={{ 
                     backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none'
+                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)' : 'none',
+                    color: textColor.secondary
                   }}
                   whileHover={{ 
                     backgroundColor: hoverItemBg, 
@@ -394,7 +414,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <item.icon className="h-5 w-5 min-w-[1.25rem]" />
+                  <item.icon className="h-5 w-5 min-w-[1.25rem]" style={{ color: textColor.primary }} />
                   {isOpen && (
                     <motion.span
                       initial={{ opacity: 0, width: 0 }}
@@ -422,15 +442,16 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   }`}
                   style={{ 
                     backgroundColor: location.pathname === item.path ? activeItemBg : 'transparent',
-                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.2)' : 'none',
-                    willChange: 'transform, background-color'
+                    boxShadow: location.pathname === item.path ? 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)' : 'none',
+                    willChange: 'transform, background-color',
+                    color: textColor.secondary
                   }}
                 >
                   <Link
                     to={item.path}
                     className="flex items-center w-full"
                   >
-                    <item.icon className="h-5 w-5 min-w-[1.25rem]" />
+                    <item.icon className="h-5 w-5 min-w-[1.25rem]" style={{ color: textColor.primary }} />
                     {isOpen && (
                       <motion.span
                         initial={{ opacity: 0, width: 0 }}
@@ -449,35 +470,51 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           ))}
         </nav>
         
-        {/* Logout Button */}
-        <div className="p-4 border-t border-gray-100">
+        {/* Logout Button for Desktop */}
+        <div className={`p-4 border-t border-gray-100 ${isOpen ? 'block' : 'hidden'}`}>
           <motion.button
-            onClick={handleLogout}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="flex items-center px-4 py-3 rounded-xl w-full"
+            onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
+            className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
             style={{ 
-              color: textColor,
-              backgroundColor: `${theme.primary}10`,
-              transition: 'all 0.2s ease'
+              background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+              backdropFilter: 'blur(4px)',
+              color: 'white'
             }}
+            whileHover={{ scale: 1.03, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
+            whileTap={{ scale: 0.97 }}
           >
-            <ArrowLeftOnRectangleIcon className="h-5 w-5 flex-shrink-0" />
-            <AnimatePresence mode="wait">
-              {isOpen && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.3, type: 'spring' }}
-                  className="ml-3 whitespace-nowrap"
-                >
-                  Logout
-                </motion.span>
-              )}
-            </AnimatePresence>
+            <ArrowLeftOnRectangleIcon className="h-5 w-5 min-w-[1.25rem]" />
+            {isOpen && (
+              <motion.span 
+                className="ml-3 text-sm font-medium whitespace-nowrap"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
+              >
+                Logout
+              </motion.span>
+            )}
           </motion.button>
         </div>
+        
+        {/* Logout icon only for collapsed sidebar */}
+        {!isOpen && (
+          <div className="p-4 border-t border-gray-100">
+            <motion.button
+              onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
+              className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
+              style={{ 
+                background: 'linear-gradient(135deg, #ef4444cc, #f87171cc)',
+                backdropFilter: 'blur(4px)',
+                color: 'white'
+              }}
+              whileHover={{ scale: 1.1, boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)' }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <ArrowLeftOnRectangleIcon className="h-5 w-5" />
+            </motion.button>
+          </div>
+        )}
       </motion.aside>
     </>
   );
