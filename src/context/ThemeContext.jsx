@@ -8,7 +8,10 @@ export const ThemeContext = createContext();
 // Theme Provider Component
 export const ThemeProvider = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const [theme, setTheme] = useState(globalTheme);
+  const [theme, setTheme] = useState({
+    ...globalTheme,
+    animations: sharedAnimations // Pastikan animations tersedia di theme
+  });
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Cek localStorage untuk preferensi tema yang tersimpan
     const savedMode = localStorage.getItem('darkMode');
@@ -31,7 +34,8 @@ export const ThemeProvider = ({ children }) => {
     setTheme(prevTheme => ({
       ...prevTheme,
       // Tema akan diupdate dari theme.js berdasarkan mode
-      ...(isDarkMode ? globalTheme.dark : globalTheme.light)
+      ...(isDarkMode ? globalTheme.dark : globalTheme.light),
+      animations: sharedAnimations // Pastikan animations tetap tersedia setelah update
     }));
   }, [isDarkMode]);
 
@@ -55,7 +59,16 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, isMobile, isDarkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ 
+      theme: {
+        ...theme,
+        animations: sharedAnimations // Pastikan animations selalu tersedia di context
+      }, 
+      setTheme, 
+      isMobile, 
+      isDarkMode, 
+      toggleDarkMode 
+    }}>
       {children}
     </ThemeContext.Provider>
   );
