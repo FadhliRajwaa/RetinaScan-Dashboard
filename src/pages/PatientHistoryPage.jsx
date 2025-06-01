@@ -24,7 +24,6 @@ import {
   FiActivity,
   FiAlertCircle,
   FiClock,
-  FiCalendar,
   FiPhone
 } from 'react-icons/fi';
 
