@@ -1170,7 +1170,7 @@ function Report({ result }) {
               <span>Jadwalkan pemeriksaan lanjutan sesuai rekomendasi</span>
               </motion.div>
             </motion.div>
-          </motion.div>
+          </div>
           
         {/* Disclaimer with improved design */}
           <motion.div 
@@ -1224,7 +1224,7 @@ function Report({ result }) {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
         
       {/* Footer with improved design */}
         <motion.div 
