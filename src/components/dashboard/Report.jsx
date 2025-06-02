@@ -148,11 +148,11 @@ function Report({ result }) {
 
   if (!result) {
     return (
-      <motion.div 
+        <motion.div 
         className="flex flex-col items-center justify-center p-8 rounded-xl"
         style={adaptiveGlassEffect}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
         transition={{ 
           type: 'spring', 
           stiffness: 300,
@@ -204,7 +204,7 @@ function Report({ result }) {
               }}
             >
               <FiFileText className="w-12 h-12 text-white" />
-            </motion.div>
+        </motion.div>
           </motion.div>
           <motion.h2 
             className="text-2xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600"
@@ -702,30 +702,30 @@ function Report({ result }) {
         whileHover={{ scale: 1.05 }}
         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
       >
-        <img
-          src={getImageSource()}
-          alt="Retina scan"
-          className="w-full h-full object-contain"
-          onLoad={(e) => {
-            // Hide loading overlay
-            if (e.target.previousSibling) {
-              e.target.previousSibling.style.display = 'none';
-            }
-          }}
-          onError={(e) => {
-            handleImageError();
-            if (e.target.previousSibling) {
-              e.target.previousSibling.style.display = 'none';
-            }
-            e.target.onerror = null;
-            e.target.src = '/images/default-retina.jpg';
-          }}
-        />
+      <img
+        src={getImageSource()}
+        alt="Retina scan"
+        className="w-full h-full object-contain"
+        onLoad={(e) => {
+          // Hide loading overlay
+          if (e.target.previousSibling) {
+            e.target.previousSibling.style.display = 'none';
+          }
+        }}
+        onError={(e) => {
+          handleImageError();
+          if (e.target.previousSibling) {
+            e.target.previousSibling.style.display = 'none';
+          }
+          e.target.onerror = null;
+          e.target.src = '/images/default-retina.jpg';
+        }}
+      />
       </motion.div>
       
       {/* Error overlay with improved animation */}
       <AnimatePresence>
-        {imageError && (
+      {imageError && (
           <motion.div 
             className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20"
             initial={{ opacity: 0 }}
@@ -737,7 +737,7 @@ function Report({ result }) {
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 10 }}
             >
-              <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
+          <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
             </motion.div>
             <motion.p 
               className="text-white text-center font-medium"
@@ -748,34 +748,34 @@ function Report({ result }) {
               Gambar tidak dapat ditampilkan
             </motion.p>
             <motion.button 
-              onClick={() => {
-                setImageError(false);
-                // Force reload image with timestamp
-                const img = document.querySelector('img[alt="Retina scan"]');
-                if (img) {
-                  const imgSrc = getImageSource();
-                  img.src = imgSrc.includes('?') 
-                    ? `${imgSrc}&reload=${new Date().getTime()}`
-                    : `${imgSrc}?reload=${new Date().getTime()}`;
-                }
-              }}
+            onClick={() => {
+              setImageError(false);
+              // Force reload image with timestamp
+              const img = document.querySelector('img[alt="Retina scan"]');
+              if (img) {
+                const imgSrc = getImageSource();
+                img.src = imgSrc.includes('?') 
+                  ? `${imgSrc}&reload=${new Date().getTime()}`
+                  : `${imgSrc}?reload=${new Date().getTime()}`;
+              }
+            }}
               className="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-md"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
               whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}
               whileTap={{ scale: 0.95 }}
-            >
-              Coba Lagi
+          >
+            Coba Lagi
             </motion.button>
           </motion.div>
-        )}
+      )}
       </AnimatePresence>
     </div>
   );
 
   return (
-    <motion.div 
+      <motion.div
       className="w-full max-w-5xl mx-auto"
       initial="hidden"
       animate="visible"
@@ -838,8 +838,8 @@ function Report({ result }) {
           <div className="mb-4 md:mb-0">
             <motion.h2 
               className="text-3xl md:text-4xl font-bold text-white mb-2"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
               transition={{ 
                 delay: 0.2,
                 type: "spring",
@@ -847,7 +847,7 @@ function Report({ result }) {
                 damping: 20
               }}
             >
-              Hasil Analisis Retina
+          Hasil Analisis Retina
             </motion.h2>
             <motion.div 
               className="flex items-center text-indigo-100 text-sm"
@@ -866,43 +866,43 @@ function Report({ result }) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
           >
-            <motion.button
+          <motion.button
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              onClick={handleDownload}
-              disabled={isLoading}
+            onClick={handleDownload}
+            disabled={isLoading}
               className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all text-sm font-medium shadow-md border border-white/20"
-            >
+          >
               <FiDownload className="text-white" />
-              {isLoading ? 'Memproses...' : 'Unduh PDF'}
-            </motion.button>
-            <motion.button
+            {isLoading ? 'Memproses...' : 'Unduh PDF'}
+          </motion.button>
+          <motion.button
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              onClick={handlePrint}
+            onClick={handlePrint}
               className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all text-sm font-medium shadow-md border border-white/20"
-            >
+          >
               <FiPrinter className="text-white" />
-              Cetak
-            </motion.button>
-            <motion.button
+            Cetak
+          </motion.button>
+          <motion.button
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
               className="flex items-center justify-center w-10 h-10 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all shadow-md border border-white/20"
-              onClick={handleShare}
-              disabled={isShareLoading}
-            >
-              {isShareLoading ? (
+            onClick={handleShare}
+            disabled={isShareLoading}
+          >
+            {isShareLoading ? (
                 <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
-              ) : shareSuccess ? (
+            ) : shareSuccess ? (
                 <FiCheck className="text-white" />
-              ) : (
+            ) : (
                 <FiShare2 className="text-white" />
-              )}
-            </motion.button>
+            )}
+          </motion.button>
           </motion.div>
         </div>
         
@@ -934,7 +934,7 @@ function Report({ result }) {
           <div className="bg-amber-500 h-full w-1.5"></div>
           <div className="p-4">
             <div className="flex items-start">
-              <motion.div
+            <motion.div 
                 animate={{ 
                   rotate: [0, 5, 0, -5, 0],
                   scale: [1, 1.1, 1, 1.1, 1]
@@ -947,7 +947,7 @@ function Report({ result }) {
                 }}
               >
                 <FiAlertTriangle className="w-5 h-5 mr-2 flex-shrink-0 text-amber-600 mt-0.5" />
-              </motion.div>
+            </motion.div>
               <div>
                 <p className="font-bold mb-1 text-sm text-amber-800">Mode Simulasi</p>
                 <p className="text-xs text-amber-700">Hasil analisis ini menggunakan data simulasi. Tidak untuk diagnosis klinis.</p>
@@ -976,16 +976,16 @@ function Report({ result }) {
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
                   <FiUser className="text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800">Informasi Pasien</h3>
               </div>
+                <h3 className="text-lg font-semibold text-gray-800">Informasi Pasien</h3>
+            </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-xs text-gray-500 mb-1">Nama Lengkap</p>
                   <p className="font-medium text-gray-800">{patient.fullName || patient.name || 'Tidak ada nama'}</p>
-                </div>
-                
+          </div>
+          
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-xs text-gray-500 mb-1">Jenis Kelamin / Usia</p>
                   <div className="flex items-center">
@@ -999,16 +999,16 @@ function Report({ result }) {
                     }`}>
                       {patient.gender === 'male' ? 'M' : 'F'}
                     </span>
-                  </div>
-                </div>
-                
+          </div>
+        </div>
+
                 {patient.dateOfBirth && (
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <p className="text-xs text-gray-500 mb-1">Tanggal Lahir</p>
                     <div className="flex items-center">
                       <FiCalendar className="text-gray-400 mr-2 text-sm" />
                       <p className="font-medium text-gray-800">{new Date(patient.dateOfBirth).toLocaleDateString('id-ID')}</p>
-                    </div>
+              </div>
                   </div>
                 )}
                 
@@ -1020,17 +1020,17 @@ function Report({ result }) {
                       <p className="font-medium text-gray-800">{patient.bloodType}</p>
                       <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
                         {patient.bloodType}
-                      </span>
+              </span>
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          </motion.div>
+              </motion.div>
         )}
         
         {/* Severity Summary Card */}
-        <motion.div 
+              <motion.div 
           className="rounded-xl overflow-hidden shadow-md"
           style={adaptiveGlassEffect}
           whileHover={{ 
@@ -1089,8 +1089,8 @@ function Report({ result }) {
               </motion.button>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+                </motion.div>
+                </motion.div>
       
       {/* Main content container */}
       <div id="hasil-detail" className="rounded-xl overflow-hidden shadow-xl">
@@ -1101,21 +1101,21 @@ function Report({ result }) {
           variants={itemVariants}
         >
           {/* Main Content Grid */}
-          <div className="p-8">
+        <div className="p-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               {/* Left Column - Retina Image */}
-              <motion.div 
+            <motion.div 
                 className="lg:col-span-5 flex flex-col space-y-6"
-                variants={itemVariants}
-              >
+              variants={itemVariants}
+            >
                 <div className="flex items-center mb-2">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                    <FiEye className="text-white" />
-                  </div>
+                  <FiEye className="text-white" />
+                </div>
                   <h3 className="text-lg font-semibold text-gray-800">Citra Retina</h3>
                 </div>
-                
-                <motion.div 
+              
+              <motion.div 
                   className="rounded-xl shadow-md relative overflow-hidden bg-white"
                   whileHover={{ 
                     y: -5, 
@@ -1124,10 +1124,10 @@ function Report({ result }) {
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 >
                   <div className="relative aspect-square w-full">
-                    <ImageViewer />
-                    
+                <ImageViewer />
+            
                     {/* Image Controls Overlay */}
-                    <motion.div 
+            <motion.div 
                       className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -1142,14 +1142,14 @@ function Report({ result }) {
                           <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
                             <FiDownload className="text-white text-sm" />
                           </button>
-                        </div>
+                </div>
                       </div>
                     </motion.div>
                   </div>
                 </motion.div>
                 
                 {/* Image Analysis Card */}
-                <motion.div
+              <motion.div 
                   className="rounded-xl shadow-md overflow-hidden"
                   style={adaptiveGlassEffect}
                   whileHover={{ 
@@ -1178,7 +1178,7 @@ function Report({ result }) {
                       
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <p className="text-xs text-gray-500 mb-1">Kualitas</p>
-                        <div className="flex items-center">
+                <div className="flex items-center">
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <div 
@@ -1186,12 +1186,12 @@ function Report({ result }) {
                                 className={`w-2 h-4 rounded-sm mr-0.5 ${i < 4 ? 'bg-indigo-500' : 'bg-gray-300'}`}
                               />
                             ))}
-                          </div>
+                  </div>
                           <span className="ml-2 text-xs font-medium text-gray-700">Baik</span>
                         </div>
                       </div>
-                    </div>
                   </div>
+                </div>
                 </motion.div>
               </motion.div>
               
@@ -1203,12 +1203,12 @@ function Report({ result }) {
                 <div className="flex items-center mb-2">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
                     <FiActivity className="text-white" />
-                  </div>
+                </div>
                   <h3 className="text-lg font-semibold text-gray-800">Detail Analisis</h3>
                 </div>
                 
                 {/* Severity Card with Radar Chart */}
-                <motion.div 
+                  <motion.div 
                   className="rounded-xl shadow-md overflow-hidden bg-white"
                   whileHover={{ 
                     y: -5, 
@@ -1297,9 +1297,9 @@ function Report({ result }) {
                               <div className="w-24 text-xs text-gray-700">{factor.name}</div>
                               <div className="flex-grow">
                                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                  <motion.div 
+                    <motion.div
                                     className="h-full"
-                                    style={{ 
+                      style={{
                                       background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
                                       width: `${factor.value * 100}%`
                                     }}
@@ -1317,11 +1317,11 @@ function Report({ result }) {
                         </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-                
+                </div>
+              </motion.div>
+              
                 {/* Recommendation Card */}
-                <motion.div 
+              <motion.div 
                   className="rounded-xl shadow-md overflow-hidden"
                   style={{
                     ...adaptiveGlassEffect,
@@ -1336,8 +1336,8 @@ function Report({ result }) {
                   <div className="p-6">
                     <div className="flex items-center mb-4">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                        <FiInfo className="text-white text-sm" />
-                      </div>
+                    <FiInfo className="text-white text-sm" />
+                  </div>
                       <h4 className="text-sm font-semibold text-gray-700">Rekomendasi Lengkap</h4>
                     </div>
                     
@@ -1384,14 +1384,14 @@ function Report({ result }) {
                       </div>
                     </div>
                   </div>
-                </motion.div>
               </motion.div>
-            </div>
-            
+            </motion.div>
+          </div>
+          
             {/* Recommendation and Additional Info Section */}
-            <motion.div 
+          <motion.div 
               className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8"
-              variants={itemVariants}
+            variants={itemVariants}
             >
               {/* Detailed Recommendations */}
               <div className="lg:col-span-7">
@@ -1458,11 +1458,11 @@ function Report({ result }) {
                       
                       <div className="space-y-3">
                         {/* Medical Follow-up */}
-                        <div className="flex items-start">
+            <div className="flex items-start">
                           <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
                             <FiClock className="text-indigo-600 text-sm" />
-                          </div>
-                          <div>
+              </div>
+              <div>
                             <p className="text-sm font-medium text-gray-700">Tindak Lanjut Medis</p>
                             <p className="text-xs text-gray-500">
                               {severity === 'Tidak ada' || severity === 'Normal' ? (
@@ -1521,11 +1521,11 @@ function Report({ result }) {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
               </div>
-              
+            </div>
+          </motion.div>
+        </div>
+        
               {/* Notes and Additional Resources */}
               <div className="lg:col-span-5">
                 <div className="flex items-center mb-4">
@@ -1536,7 +1536,7 @@ function Report({ result }) {
                 </div>
                 
                 {/* Notes Card */}
-                <motion.div 
+        <motion.div 
                   className="rounded-xl shadow-md overflow-hidden mb-6"
                   style={adaptiveGlassEffect}
                   whileHover={{ 
@@ -1569,7 +1569,7 @@ function Report({ result }) {
                 </motion.div>
                 
                 {/* Resources Card */}
-                <motion.div 
+          <motion.div 
                   className="rounded-xl shadow-md overflow-hidden"
                   style={adaptiveGlassEffect}
                   whileHover={{ 
@@ -1664,18 +1664,18 @@ function Report({ result }) {
                     )}
                     {shareSuccess ? 'Dibagikan' : 'Bagikan'}
                   </motion.button>
-                </div>
-                
+          </div>
+          
                 <p className="text-xs text-gray-500 max-w-lg mx-auto">
                   RetinaScan menggunakan teknologi AI untuk membantu deteksi dini retinopati diabetik. 
                   Hasil analisis ini bukan pengganti diagnosis medis profesional.
                   <br />© {new Date().getFullYear()} RetinaScan | AI-Powered Retinopathy Detection
                 </p>
-              </div>
-            </motion.div>
           </div>
         </motion.div>
-      </div>
+          </div>
+      </motion.div>
+    </div>
     </motion.div>
   );
 }
