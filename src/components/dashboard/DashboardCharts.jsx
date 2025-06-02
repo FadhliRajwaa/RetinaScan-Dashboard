@@ -501,7 +501,7 @@ export default function DashboardCharts() {
         >
           <div className="h-64">
             <Line ref={chartRefs.lineChart} options={lineOptions} data={chartData.scanTrends} />
-          </div>
+        </div>
         </motion.div>
         
         {/* Pie Chart - Condition Distribution */}
@@ -516,7 +516,7 @@ export default function DashboardCharts() {
         >
           <div className="h-64">
             <Pie ref={chartRefs.pieChart} options={pieOptions} data={chartData.conditionDistribution} />
-          </div>
+        </div>
         </motion.div>
         
         {/* Bar Chart - Age Distribution */}
@@ -531,7 +531,7 @@ export default function DashboardCharts() {
         >
           <div className="h-64">
             <Bar ref={chartRefs.barChart} options={barOptions} data={chartData.ageDistribution} />
-          </div>
+        </div>
         </motion.div>
         
         {/* Enhanced Severity Chart */}
@@ -541,7 +541,7 @@ export default function DashboardCharts() {
           initial="hidden"
           animate="visible"
         >
-          <EnhancedSeverityChart />
+        <EnhancedSeverityChart />
         </motion.div>
       </div>
     </div>

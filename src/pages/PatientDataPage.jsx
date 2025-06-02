@@ -164,10 +164,10 @@ function PatientDataPageComponent() {
       </motion.div>
 
       <motion.div variants={itemVariants}>
-        <PatientTable 
-          onDelete={handleDeletePatient}
-          refreshTrigger={refreshTrigger}
-        />
+      <PatientTable 
+        onDelete={handleDeletePatient}
+        refreshTrigger={refreshTrigger}
+      />
       </motion.div>
 
       {/* Modal Konfirmasi Hapus dengan Animasi */}
