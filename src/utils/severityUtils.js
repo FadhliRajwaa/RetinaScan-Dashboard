@@ -4,9 +4,9 @@ export const getSeverityTextColor = (severity) => {
   if (!severity) return 'text-gray-600';
   
   const level = severity.toLowerCase();
-  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'text-blue-600';
-  if (level === 'ringan' || level === 'mild') return 'text-green-600';
-  if (level === 'sedang' || level === 'moderate') return 'text-yellow-600';
+  if (level === 'tidak ada' || level === 'normal' || level === 'no dr') return 'text-blue-700';
+  if (level === 'ringan' || level === 'mild') return 'text-emerald-600';
+  if (level === 'sedang' || level === 'moderate') return 'text-amber-600';
   if (level === 'berat' || level === 'severe') return 'text-orange-600';
   return 'text-red-600';
 };

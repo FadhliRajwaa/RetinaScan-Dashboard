@@ -363,9 +363,9 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                 src={image.preview} 
                 alt="Citra Retina" 
                 className="w-full h-64 object-contain p-2"
-                initial={{ filter: 'blur(10px)', scale: 0.9 }}
-                animate={{ filter: 'blur(0px)', scale: 1 }}
-                transition={{ duration: 0.5, type: 'spring', stiffness: 300 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
               />
               
               {/* Overlay untuk efek hover */}

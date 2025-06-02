@@ -850,7 +850,7 @@ function Report({ result }) {
           Hasil Analisis Retina
             </motion.h2>
             <motion.div 
-              className="flex items-center text-indigo-100 text-sm"
+              className="flex items-center text-white text-sm font-medium drop-shadow-md"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -872,7 +872,7 @@ function Report({ result }) {
               whileTap="tap"
             onClick={handleDownload}
             disabled={isLoading}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all text-sm font-medium shadow-md border border-white/20"
+              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600/90 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
           >
               <FiDownload className="text-white" />
             {isLoading ? 'Memproses...' : 'Unduh PDF'}
@@ -882,7 +882,7 @@ function Report({ result }) {
               whileHover="hover"
               whileTap="tap"
             onClick={handlePrint}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all text-sm font-medium shadow-md border border-white/20"
+              className="flex items-center gap-2 px-5 py-2.5 bg-purple-600/90 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
           >
               <FiPrinter className="text-white" />
             Cetak
@@ -891,7 +891,7 @@ function Report({ result }) {
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              className="flex items-center justify-center w-10 h-10 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all shadow-md border border-white/20"
+              className="flex items-center justify-center w-10 h-10 bg-blue-600/90 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border-2 border-white/30 drop-shadow-lg"
             onClick={handleShare}
             disabled={isShareLoading}
           >
@@ -1216,7 +1216,7 @@ function Report({ result }) {
                   }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 >
-                  <div className="p-6">
+                  <div className="p-6 bg-gradient-to-br from-white via-white to-indigo-50">
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-1">Tingkat Keparahan</h4>
@@ -1270,8 +1270,9 @@ function Report({ result }) {
                             {/* Gradient definition */}
                             <defs>
                               <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#6366F1" />
-                                <stop offset="100%" stopColor="#8B5CF6" />
+                                <stop offset="0%" stopColor="#4F46E5" />
+                                <stop offset="50%" stopColor="#8B5CF6" />
+                                <stop offset="100%" stopColor="#EC4899" />
                               </linearGradient>
                             </defs>
                           </svg>
@@ -1288,19 +1289,18 @@ function Report({ result }) {
                         <p className="text-xs text-gray-500 mb-2">Faktor Risiko</p>
                         <div className="space-y-2">
                           {[
-                            { name: 'Mikroaneurisma', value: 0.75 },
-                            { name: 'Hemorrhage', value: 0.3 },
-                            { name: 'Hard Exudate', value: 0.5 },
-                            { name: 'Cotton Wool Spots', value: 0.2 },
+                            { name: 'Mikroaneurisma', value: 0.75, color: 'from-indigo-500 to-blue-600' },
+                            { name: 'Hemorrhage', value: 0.3, color: 'from-rose-500 to-red-600' },
+                            { name: 'Hard Exudate', value: 0.5, color: 'from-amber-500 to-yellow-600' },
+                            { name: 'Cotton Wool Spots', value: 0.2, color: 'from-emerald-500 to-green-600' },
                           ].map((factor, index) => (
                             <div key={index} className="flex items-center">
                               <div className="w-24 text-xs text-gray-700">{factor.name}</div>
                               <div className="flex-grow">
                                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                                    className="h-full"
-                      style={{
-                                      background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
+                                  <motion.div
+                                    className={`h-full bg-gradient-to-r ${factor.color}`}
+                                    style={{
                                       width: `${factor.value * 100}%`
                                     }}
                                     initial={{ width: '0%' }}
@@ -1333,53 +1333,57 @@ function Report({ result }) {
                   }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 >
-                  <div className="p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                    <FiInfo className="text-white text-sm" />
-                  </div>
-                      <h4 className="text-sm font-semibold text-gray-700">Rekomendasi Lengkap</h4>
+                  <div className="p-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-100/30 to-purple-100/30 rounded-full -mr-20 -mt-20 z-0"></div>
+                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-100/30 to-cyan-100/30 rounded-full -ml-16 -mb-16 z-0"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center mb-4">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
+                      <FiInfo className="text-white text-sm" />
                     </div>
-                    
-                    <div className="pl-11">
-                      <p className="text-gray-700 mb-4">
-                        {severity === 'Tidak ada' || severity === 'Normal' ? (
-                          'Tidak Ada Tanda Retinopati'
-                        ) : severity === 'Ringan' || severity === 'Mild' ? (
-                          'Retinopati Diabetik Non-proliferatif Ringan'
-                        ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                          'Retinopati Diabetik Non-proliferatif Sedang'
-                        ) : severity === 'Berat' || severity === 'Severe' ? (
-                          'Retinopati Diabetik Non-proliferatif Berat'
-                        ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                          'Retinopati Diabetik Proliferatif'
-                        ) : (
-                          'Status Tidak Diketahui'
-                        )}
-                      </p>
+                        <h4 className="text-sm font-semibold text-gray-700">Rekomendasi Lengkap</h4>
+                      </div>
                       
-                      <div className="bg-white/80 rounded-lg p-4 border border-gray-100">
-                        <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
-                          <FiClock className="mr-1 text-indigo-500" />
-                          Tindak Lanjut
-                        </h5>
-                        <div className="flex items-center">
-                          <div className="w-2 h-2 rounded-full bg-indigo-500 mr-2"></div>
-                          <p className="text-sm text-gray-700">
-                            {severity === 'Tidak ada' || severity === 'Normal' ? (
-                              'Pemeriksaan rutin setiap 12 bulan'
-                            ) : severity === 'Ringan' || severity === 'Mild' ? (
-                              'Pemeriksaan ulang dalam 9-12 bulan'
-                            ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                              'Pemeriksaan ulang dalam 6 bulan'
-                            ) : severity === 'Berat' || severity === 'Severe' ? (
-                              'Pemeriksaan ulang dalam 2-3 bulan'
-                            ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                              'Konsultasi segera dengan dokter spesialis mata'
-                            ) : (
-                              'Konsultasi dengan dokter untuk jadwal pemeriksaan'
-                            )}
-                          </p>
+                      <div className="pl-11">
+                        <p className="text-gray-700 mb-4 font-medium">
+                          {severity === 'Tidak ada' || severity === 'Normal' ? (
+                            'Tidak Ada Tanda Retinopati'
+                          ) : severity === 'Ringan' || severity === 'Mild' ? (
+                            'Retinopati Diabetik Non-proliferatif Ringan'
+                          ) : severity === 'Sedang' || severity === 'Moderate' ? (
+                            'Retinopati Diabetik Non-proliferatif Sedang'
+                          ) : severity === 'Berat' || severity === 'Severe' ? (
+                            'Retinopati Diabetik Non-proliferatif Berat'
+                          ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
+                            'Retinopati Diabetik Proliferatif'
+                          ) : (
+                            'Status Tidak Diketahui'
+                          )}
+                        </p>
+                        
+                        <div className="bg-white/80 rounded-lg p-4 border border-gray-100 shadow-sm">
+                          <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
+                            <FiClock className="mr-1 text-indigo-500" />
+                            Tindak Lanjut
+                          </h5>
+                          <div className="flex items-center">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getSeverityColor(severity) }}></div>
+                            <p className="ml-2 text-sm text-gray-700">
+                              {severity === 'Tidak ada' || severity === 'Normal' ? (
+                                'Pemeriksaan rutin setiap 12 bulan'
+                              ) : severity === 'Ringan' || severity === 'Mild' ? (
+                                'Pemeriksaan ulang dalam 9-12 bulan'
+                              ) : severity === 'Sedang' || severity === 'Moderate' ? (
+                                'Pemeriksaan ulang dalam 6 bulan'
+                              ) : severity === 'Berat' || severity === 'Severe' ? (
+                                'Pemeriksaan ulang dalam 2-3 bulan'
+                              ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
+                                'Konsultasi segera dengan dokter spesialis mata'
+                              ) : (
+                                'Konsultasi dengan dokter untuk jadwal pemeriksaan'
+                              )}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1630,7 +1634,7 @@ function Report({ result }) {
                     whileTap="tap"
                     onClick={handleDownload}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-medium shadow-md"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600/90 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
                   >
                     <FiDownload className="text-white" />
                     {isLoading ? 'Memproses...' : 'Unduh PDF'}
@@ -1641,9 +1645,9 @@ function Report({ result }) {
                     whileHover="hover"
                     whileTap="tap"
                     onClick={handlePrint}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all text-sm font-medium shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600/90 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
                   >
-                    <FiPrinter className="text-indigo-600" />
+                    <FiPrinter className="text-white" />
                     Cetak
                   </motion.button>
                   
@@ -1653,14 +1657,14 @@ function Report({ result }) {
                     whileTap="tap"
                     onClick={handleShare}
                     disabled={isShareLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all text-sm font-medium shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border-2 border-white/30 drop-shadow-lg"
                   >
                     {isShareLoading ? (
-                      <div className="w-4 h-4 border-t-2 border-b-2 border-indigo-600 rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
                     ) : shareSuccess ? (
-                      <FiCheck className="text-indigo-600" />
+                      <FiCheck className="text-white" />
                     ) : (
-                      <FiShare2 className="text-indigo-600" />
+                      <FiShare2 className="text-white" />
                     )}
                     {shareSuccess ? 'Dibagikan' : 'Bagikan'}
                   </motion.button>
