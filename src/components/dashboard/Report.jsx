@@ -1643,7 +1643,7 @@ function Report({ result }) {
                   <div className="text-center text-xs text-gray-500 mt-2">Jadwal kontrol</div>
                 </motion.div>
               </div>
-            </motion.div>
+            </div>
             
             {/* Right side - Recommendation content */}
             <div className="flex-1">
@@ -1807,7 +1807,7 @@ function Report({ result }) {
                 </motion.button>
               </motion.div>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
           
         {/* Disclaimer with improved design */}
