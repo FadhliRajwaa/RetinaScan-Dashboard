@@ -347,12 +347,12 @@ function Report({ result }) {
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
         pdf.text('Nama Lengkap:', margin + 10, yPos + 22);
-        
+      
         pdf.setFontSize(11);
         pdf.setTextColor(15, 23, 42);
-        pdf.setFont(undefined, 'bold');
+      pdf.setFont(undefined, 'bold');
         pdf.text(patient.fullName || patient.name || '-', margin + 10, yPos + 27);
-        
+      
         // Kolom kanan
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
@@ -389,7 +389,7 @@ function Report({ result }) {
       // Tingkat keparahan dengan visualisasi
       const severityColor = getSeverityPdfColor(severity);
       
-      pdf.setFontSize(10);
+          pdf.setFontSize(10);
       pdf.setTextColor(100, 116, 139);
       pdf.text('Tingkat Keparahan:', margin + 10, yPos + 25);
       
@@ -727,7 +727,7 @@ function Report({ result }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
+          <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
           </motion.div>
           <motion.p 
             className="text-white text-center"
@@ -826,7 +826,7 @@ function Report({ result }) {
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               />
             ) : (
-              <FiDownload className="text-blue-100" />
+            <FiDownload className="text-blue-100" />
             )}
             {isLoading ? 'Memproses...' : 'Unduh PDF'}
           </motion.button>
@@ -866,7 +866,7 @@ function Report({ result }) {
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
-                <FiCheck className="text-green-600" />
+              <FiCheck className="text-green-600" />
               </motion.div>
             ) : (
               <FiShare2 className="text-gray-600" />
