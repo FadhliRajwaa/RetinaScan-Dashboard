@@ -685,43 +685,35 @@ function Report({ result }) {
         <motion.div 
           className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10"
           initial={{ opacity: 1 }}
-          animate={{ opacity: [1, 0.8, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <motion.div 
-            className="h-16 w-16 rounded-full border-t-3 border-b-3 border-white"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-          />
+          <div className="h-16 w-16 rounded-full border-t-3 border-b-3 border-white" />
         </motion.div>
       )}
       
-      {/* Actual image with zoom effect on hover */}
-      <motion.div
-        className="w-full h-full"
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-      >
-      <img
-        src={getImageSource()}
-        alt="Retina scan"
-        className="w-full h-full object-contain"
-        onLoad={(e) => {
-          // Hide loading overlay
-          if (e.target.previousSibling) {
-            e.target.previousSibling.style.display = 'none';
-          }
-        }}
-        onError={(e) => {
-          handleImageError();
-          if (e.target.previousSibling) {
-            e.target.previousSibling.style.display = 'none';
-          }
-          e.target.onerror = null;
-          e.target.src = '/images/default-retina.jpg';
-        }}
-      />
-      </motion.div>
+      {/* Actual image without zoom effect on hover */}
+      <div className="w-full h-full">
+        <img
+          src={getImageSource()}
+          alt="Retina scan"
+          className="w-full h-full object-contain"
+          onLoad={(e) => {
+            // Hide loading overlay
+            if (e.target.previousSibling) {
+              e.target.previousSibling.style.display = 'none';
+            }
+          }}
+          onError={(e) => {
+            handleImageError();
+            if (e.target.previousSibling) {
+              e.target.previousSibling.style.display = 'none';
+            }
+            e.target.onerror = null;
+            e.target.src = '/images/default-retina.jpg';
+          }}
+        />
+      </div>
       
       {/* Error overlay with improved animation */}
       <AnimatePresence>
@@ -732,41 +724,27 @@ function Report({ result }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div
-              initial={{ scale: 0.8, rotate: -10 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-            >
-          <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
-            </motion.div>
-            <motion.p 
-              className="text-white text-center font-medium"
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
+            <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
+            <p className="text-white text-center font-medium">
               Gambar tidak dapat ditampilkan
-            </motion.p>
+            </p>
             <motion.button 
-            onClick={() => {
-              setImageError(false);
-              // Force reload image with timestamp
-              const img = document.querySelector('img[alt="Retina scan"]');
-              if (img) {
-                const imgSrc = getImageSource();
-                img.src = imgSrc.includes('?') 
-                  ? `${imgSrc}&reload=${new Date().getTime()}`
-                  : `${imgSrc}?reload=${new Date().getTime()}`;
-              }
-            }}
+              onClick={() => {
+                setImageError(false);
+                // Force reload image with timestamp
+                const img = document.querySelector('img[alt="Retina scan"]');
+                if (img) {
+                  const imgSrc = getImageSource();
+                  img.src = imgSrc.includes('?') 
+                    ? `${imgSrc}&reload=${new Date().getTime()}`
+                    : `${imgSrc}?reload=${new Date().getTime()}`;
+                }
+              }}
               className="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-md"
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
               whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}
               whileTap={{ scale: 0.95 }}
-          >
-            Coba Lagi
+            >
+              Coba Lagi
             </motion.button>
           </motion.div>
       )}
@@ -872,26 +850,26 @@ function Report({ result }) {
               whileTap="tap"
             onClick={handleDownload}
             disabled={isLoading}
-              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600/90 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
+              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
           >
               <FiDownload className="text-white" />
-            {isLoading ? 'Memproses...' : 'Unduh PDF'}
+              <span className="text-white drop-shadow-md">{isLoading ? 'Memproses...' : 'Unduh PDF'}</span>
           </motion.button>
           <motion.button
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
             onClick={handlePrint}
-              className="flex items-center gap-2 px-5 py-2.5 bg-purple-600/90 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
+              className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
           >
               <FiPrinter className="text-white" />
-            Cetak
+              <span className="text-white drop-shadow-md">Cetak</span>
           </motion.button>
           <motion.button
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              className="flex items-center justify-center w-10 h-10 bg-blue-600/90 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border-2 border-white/30 drop-shadow-lg"
+              className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border border-white/30 drop-shadow-lg"
             onClick={handleShare}
             disabled={isShareLoading}
           >
@@ -964,7 +942,7 @@ function Report({ result }) {
         {/* Patient Info Card */}
         {patient && (
           <motion.div 
-            className="md:col-span-2 rounded-xl overflow-hidden shadow-md"
+            className="md:col-span-3 rounded-xl overflow-hidden shadow-md"
             style={adaptiveGlassEffect}
             whileHover={{ 
               y: -5, 
@@ -1028,69 +1006,7 @@ function Report({ result }) {
             </div>
               </motion.div>
         )}
-        
-        {/* Severity Summary Card */}
-              <motion.div 
-          className="rounded-xl overflow-hidden shadow-md"
-          style={adaptiveGlassEffect}
-          whileHover={{ 
-            y: -5, 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-        >
-          <div className="p-6">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                <FiActivity className="text-white" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800">Hasil Analisis</h3>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <p className="text-xs text-gray-500 mb-1">Tingkat Keparahan</p>
-              <div className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-2`} style={{ backgroundColor: getSeverityColor(severity) }}></div>
-                <p className="font-semibold text-lg" style={{ color: getSeverityColor(severity) }}>
-                  {severity}
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between mb-1">
-                <p className="text-xs text-gray-500">Tingkat Kepercayaan</p>
-                <p className="text-xs font-medium text-indigo-600">{formatPercentage(confidence)}</p>
-              </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full"
-                  style={{ 
-                    background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
-                    width: formatPercentage(confidence)
-                  }}
-                  initial={{ width: '0%' }}
-                  animate={{ width: formatPercentage(confidence) }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                />
-              </div>
-            </div>
-            
-            <div className="mt-4 flex justify-center">
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg text-xs font-medium"
-                onClick={() => document.getElementById('hasil-detail')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                Lihat Detail
-                <FiArrowRight size={14} />
-              </motion.button>
-            </div>
-          </div>
-                </motion.div>
-                </motion.div>
+      </motion.div>
       
       {/* Main content container */}
       <div id="hasil-detail" className="rounded-xl overflow-hidden shadow-xl">
@@ -1201,7 +1117,7 @@ function Report({ result }) {
                 variants={itemVariants}
               >
                 <div className="flex items-center mb-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center mr-3 shadow-lg">
                     <FiActivity className="text-white" />
                 </div>
                   <h3 className="text-lg font-semibold text-gray-800">Detail Analisis</h3>
@@ -1216,15 +1132,19 @@ function Report({ result }) {
                   }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 >
-                  <div className="p-6 bg-gradient-to-br from-white via-white to-indigo-50">
-                    <div className="flex justify-between items-start mb-4">
+                  <div className="p-6 bg-gradient-to-br from-white via-white to-indigo-50/70">
+                    <div className="flex justify-between items-start mb-6">
                       <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-1">Tingkat Keparahan</h4>
-                        <p className="text-2xl font-bold" style={{ color: getSeverityColor(severity) }}>
+                        <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r" 
+                           style={{ 
+                             backgroundImage: getSeverityGradient(severity),
+                             color: getSeverityColor(severity)
+                           }}>
                           {severity}
                         </p>
                       </div>
-                      <div className="px-3 py-1.5 rounded-full" style={{ 
+                      <div className="px-3 py-1.5 rounded-full shadow-md" style={{ 
                         backgroundColor: getSeverityCardColor(severity).bg,
                         color: getSeverityColor(severity),
                         borderColor: getSeverityCardColor(severity).border,
@@ -1278,7 +1198,7 @@ function Report({ result }) {
                           </svg>
                           
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-2xl font-bold text-gray-800">{formatPercentage(confidence)}</span>
+                            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">{formatPercentage(confidence)}</span>
                             <span className="text-xs text-gray-500">Confidence</span>
                           </div>
                         </div>
@@ -1295,21 +1215,23 @@ function Report({ result }) {
                             { name: 'Cotton Wool Spots', value: 0.2, color: 'from-emerald-500 to-green-600' },
                           ].map((factor, index) => (
                             <div key={index} className="flex items-center">
-                              <div className="w-24 text-xs text-gray-700">{factor.name}</div>
+                              <div className="w-24 text-xs font-medium text-gray-700">{factor.name}</div>
                               <div className="flex-grow">
-                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
                                   <motion.div
-                                    className={`h-full bg-gradient-to-r ${factor.color}`}
+                                    className={`h-full bg-gradient-to-r ${factor.color} relative`}
                                     style={{
                                       width: `${factor.value * 100}%`
                                     }}
                                     initial={{ width: '0%' }}
                                     animate={{ width: `${factor.value * 100}%` }}
                                     transition={{ duration: 1, ease: "easeOut", delay: 0.2 + index * 0.1 }}
-                                  />
+                                  >
+                                    <div className="absolute inset-0 bg-white/20 rounded-r-full" />
+                                  </motion.div>
                                 </div>
                               </div>
-                              <div className="w-12 text-right text-xs font-medium text-indigo-600 ml-2">
+                              <div className="w-12 text-right text-xs font-medium bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 ml-2">
                                 {Math.round(factor.value * 100)}%
                               </div>
                             </div>
@@ -1634,10 +1556,10 @@ function Report({ result }) {
                     whileTap="tap"
                     onClick={handleDownload}
                     disabled={isLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600/90 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
                   >
                     <FiDownload className="text-white" />
-                    {isLoading ? 'Memproses...' : 'Unduh PDF'}
+                    <span className="text-white drop-shadow-md">{isLoading ? 'Memproses...' : 'Unduh PDF'}</span>
                   </motion.button>
                   
                   <motion.button
@@ -1645,10 +1567,10 @@ function Report({ result }) {
                     whileHover="hover"
                     whileTap="tap"
                     onClick={handlePrint}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600/90 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border-2 border-white/30 drop-shadow-lg"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
                   >
                     <FiPrinter className="text-white" />
-                    Cetak
+                    <span className="text-white drop-shadow-md">Cetak</span>
                   </motion.button>
                   
                   <motion.button
@@ -1657,7 +1579,7 @@ function Report({ result }) {
                     whileTap="tap"
                     onClick={handleShare}
                     disabled={isShareLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border-2 border-white/30 drop-shadow-lg"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border border-white/30 drop-shadow-lg"
                   >
                     {isShareLoading ? (
                       <div className="w-4 h-4 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
@@ -1666,7 +1588,7 @@ function Report({ result }) {
                     ) : (
                       <FiShare2 className="text-white" />
                     )}
-                    {shareSuccess ? 'Dibagikan' : 'Bagikan'}
+                    <span className="text-white drop-shadow-md">{shareSuccess ? 'Dibagikan' : 'Bagikan'}</span>
                   </motion.button>
           </div>
           
