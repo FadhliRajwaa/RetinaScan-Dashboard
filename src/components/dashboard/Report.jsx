@@ -1,13 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiDownload, FiPrinter, FiExternalLink, FiCalendar, FiUser, FiInfo, FiAlertTriangle, FiCheck, FiShare2, FiFileText, FiEye, FiActivity, FiArrowRight, FiClock, FiHeart, FiShield } from 'react-icons/fi';
+import { useState, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { FiDownload, FiPrinter, FiExternalLink, FiCalendar, FiUser, FiInfo, FiAlertTriangle, FiCheck, FiShare2, FiFileText, FiEye, FiActivity } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import { getSeverityBgColor } from '../../utils/severityUtils';
-import { 
-  getGlassmorphismStyle, 
-  prefersReducedMotion, 
-  getAccessibleAnimationVariants 
-} from '../../utils/compatibilityUtils';
 
 // Glassmorphism style
 const glassEffect = {
@@ -19,241 +14,29 @@ const glassEffect = {
   borderRadius: '16px',
 };
 
-// Modern color palette
-const colors = {
-  primary: {
-    light: '#6366F1', // Indigo
-    main: '#4F46E5',
-    dark: '#4338CA',
-  },
-  secondary: {
-    light: '#10B981', // Emerald
-    main: '#059669',
-    dark: '#047857',
-  },
-  accent: {
-    light: '#F472B6', // Pink
-    main: '#EC4899',
-    dark: '#DB2777',
-  },
-  neutral: {
-    50: '#F9FAFB',
-    100: '#F3F4F6',
-    200: '#E5E7EB',
-    300: '#D1D5DB',
-    400: '#9CA3AF',
-    500: '#6B7280',
-    600: '#4B5563',
-    700: '#374151',
-    800: '#1F2937',
-    900: '#111827',
-  },
-  severity: {
-    normal: { bg: '#DBEAFE', text: '#1E40AF', border: '#93C5FD' },
-    mild: { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7' },
-    moderate: { bg: '#FEF3C7', text: '#92400E', border: '#FCD34D' },
-    severe: { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
-  }
-};
-
 function Report({ result }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isShareLoading, setIsShareLoading] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
   const reportRef = useRef(null);
-
-  // Periksa preferensi reduced motion saat komponen dimount
-  useEffect(() => {
-    setReducedMotion(prefersReducedMotion());
-    
-    // Tambahkan listener untuk perubahan preferensi
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handleChange = () => setReducedMotion(mediaQuery.matches);
-    
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    } else if (typeof mediaQuery.addListener === 'function') {
-      // Fallback untuk browser lama
-      mediaQuery.addListener(handleChange);
-      return () => mediaQuery.removeListener(handleChange);
-    }
-  }, []);
-
-  // Terapkan glassmorphism style dengan fallback
-  const adaptiveGlassEffect = getGlassmorphismStyle(glassEffect);
-
-  // Enhanced animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: reducedMotion ? 0.05 : 0.12,
-        delayChildren: reducedMotion ? 0.05 : 0.1,
-        duration: reducedMotion ? 0.3 : 0.6
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: reducedMotion ? 10 : 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { 
-        type: reducedMotion ? 'tween' : 'spring', 
-        damping: reducedMotion ? 7 : 12,
-        stiffness: reducedMotion ? 100 : 200,
-        duration: reducedMotion ? 0.3 : undefined
-      }
-    }
-  };
-
-  const headerVariants = {
-    hidden: { y: reducedMotion ? -20 : -50, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1, 
-      transition: {
-        type: reducedMotion ? 'tween' : 'spring',
-        damping: reducedMotion ? 10 : 20,
-        stiffness: reducedMotion ? 150 : 300,
-        duration: reducedMotion ? 0.3 : undefined
-      }
-    }
-  };
-
-  const buttonVariants = {
-    hover: !reducedMotion ? { 
-      scale: 1.05, 
-      boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3), 0 4px 6px -2px rgba(79, 70, 229, 0.2)',
-      transition: {
-        type: 'spring',
-        stiffness: 400,
-        damping: 10
-      }
-    } : {},
-    tap: !reducedMotion ? { 
-      scale: 0.95,
-      transition: {
-        type: 'spring',
-        stiffness: 400,
-        damping: 10
-      }
-    } : {}
-  };
 
   if (!result) {
     return (
+      <div className="flex flex-col items-center justify-center p-6 rounded-xl" style={glassEffect}>
         <motion.div 
-        className="flex flex-col items-center justify-center p-8 rounded-xl"
-        style={adaptiveGlassEffect}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-        transition={{ 
-          type: 'spring', 
-          stiffness: 300,
-          damping: 20
-        }}
-      >
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ 
-            opacity: 1, 
-            y: 0,
-            transition: {
-              delay: 0.2,
-              duration: 0.8,
-              type: 'spring',
-              stiffness: 200
-            }
-          }}
-          className="text-center p-10 max-w-md"
+          transition={{ type: 'spring', stiffness: 300 }}
+          className="text-center p-10"
         >
-          <motion.div 
-            className="w-24 h-24 mx-auto mb-8 rounded-full flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-lg"
-            initial={{ scale: 0.5, rotate: -10 }}
-            animate={{ 
-              scale: 1, 
-              rotate: 0,
-              transition: {
-                type: 'spring',
-                stiffness: 260,
-                damping: 20,
-                delay: 0.3
-              }
-            }}
-            whileHover={{
-              scale: 1.05,
-              rotate: 5,
-              transition: { type: 'spring', stiffness: 300 }
-            }}
-          >
-            <motion.div
-              animate={{
-                opacity: [0.7, 1, 0.7],
-                scale: [1, 1.05, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-            >
-              <FiFileText className="w-12 h-12 text-white" />
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg">
+            <FiFileText className="w-10 h-10 text-white" />
+          </div>
+          <p className="text-gray-500 text-lg mb-2">Belum ada data analisis tersedia</p>
+          <p className="text-gray-400 text-sm">Silakan unggah dan analisis gambar retina terlebih dahulu</p>
         </motion.div>
-          </motion.div>
-          <motion.h2 
-            className="text-2xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600"
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: 1,
-              transition: { delay: 0.5, duration: 0.5 }
-            }}
-          >
-            Belum Ada Data Analisis
-          </motion.h2>
-          <motion.p 
-            className="text-gray-500 text-base mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: 1,
-              transition: { delay: 0.7, duration: 0.5 }
-            }}
-          >
-            Silakan unggah dan analisis gambar retina terlebih dahulu untuk melihat hasil analisis lengkap
-          </motion.p>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ 
-              opacity: 1, 
-              y: 0,
-              transition: {
-                delay: 0.9,
-                duration: 0.5
-              }
-            }}
-          >
-            <motion.button
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-md font-medium flex items-center justify-center gap-2 w-full"
-              whileHover={{ 
-                scale: 1.05, 
-                boxShadow: '0 10px 25px -5px rgba(79, 70, 229, 0.4)'
-              }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.href = '/scan-retina'}
-            >
-              <FiEye className="text-indigo-100" />
-              Mulai Analisis Baru
-              <FiArrowRight className="ml-1" />
-            </motion.button>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+      </div>
     );
   }
 
@@ -359,29 +142,27 @@ function Report({ result }) {
   // Get severity color
   const getSeverityColor = (severity) => {
     const level = severity.toLowerCase();
-    if (level === 'ringan' || level === 'mild') return colors.severity.mild.text;
-    if (level === 'sedang' || level === 'moderate') return colors.severity.moderate.text;
-    if (level === 'berat' || level === 'severe' || level === 'sangat berat') return colors.severity.severe.text;
-    return colors.severity.normal.text;
+    if (level === 'ringan') return 'text-green-600';
+    if (level === 'sedang') return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   // Get severity card color
   const getSeverityCardColor = (severity) => {
     const level = severity.toLowerCase();
-    if (level === 'ringan' || level === 'mild') return colors.severity.mild;
-    if (level === 'sedang' || level === 'moderate') return colors.severity.moderate;
-    if (level === 'berat' || level === 'severe' || level === 'sangat berat') return colors.severity.severe;
-    return colors.severity.normal;
+    if (level === 'ringan') return 'bg-green-50 border-green-200';
+    if (level === 'sedang') return 'bg-yellow-50 border-yellow-200';
+    return 'bg-red-50 border-red-200';
   };
 
   // Get severity gradient
   const getSeverityGradient = (severity) => {
     const level = severity.toLowerCase();
-    if (level === 'tidak ada' || level === 'normal') return 'linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%)';
-    if (level === 'ringan' || level === 'mild') return 'linear-gradient(135deg, #6EE7B7 0%, #059669 100%)';
-    if (level === 'sedang' || level === 'moderate') return 'linear-gradient(135deg, #FCD34D 0%, #D97706 100%)';
-    if (level === 'berat' || level === 'severe') return 'linear-gradient(135deg, #FCA5A5 0%, #DC2626 100%)';
-    return 'linear-gradient(135deg, #FB7185 0%, #BE185D 100%)';
+    if (level === 'tidak ada' || level === 'normal') return 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)';
+    if (level === 'ringan') return 'linear-gradient(135deg, #34d399 0%, #10b981 100%)';
+    if (level === 'sedang') return 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)';
+    if (level === 'berat') return 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)';
+    return 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)';
   };
 
   // Get severity icon
@@ -389,9 +170,9 @@ function Report({ result }) {
     const level = severity.toLowerCase();
     if (level === 'tidak ada' || level === 'normal') {
       return <FiCheck className="text-blue-500" size={24} />;
-    } else if (level === 'ringan' || level === 'mild') {
+    } else if (level === 'ringan') {
       return <FiInfo className="text-green-500" size={24} />;
-    } else if (level === 'sedang' || level === 'moderate') {
+    } else if (level === 'sedang') {
       return <FiInfo className="text-yellow-500" size={24} />;
     } else {
       return <FiAlertTriangle className="text-red-500" size={24} />;
@@ -645,6 +426,25 @@ function Report({ result }) {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { type: 'spring', damping: 12 }
+    }
+  };
+
   // Safely extract values with defaults
   const extractValueWithDefault = (obj, path, defaultValue) => {
     try {
@@ -682,224 +482,109 @@ function Report({ result }) {
     <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg">
       {/* Loading overlay */}
       {!imageError && (
-        <motion.div 
-          className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="h-16 w-16 rounded-full border-t-3 border-b-3 border-white" />
-        </motion.div>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
       )}
       
-      {/* Actual image without zoom effect on hover */}
-      <div className="w-full h-full">
-        <img
-          src={getImageSource()}
-          alt="Retina scan"
-          className="w-full h-full object-contain"
-          onLoad={(e) => {
-            // Hide loading overlay
-            if (e.target.previousSibling) {
-              e.target.previousSibling.style.display = 'none';
-            }
-          }}
-          onError={(e) => {
-            handleImageError();
-            if (e.target.previousSibling) {
-              e.target.previousSibling.style.display = 'none';
-            }
-            e.target.onerror = null;
-            e.target.src = '/images/default-retina.jpg';
-          }}
-        />
-      </div>
+      {/* Actual image */}
+      <img
+        src={getImageSource()}
+        alt="Retina scan"
+        className="w-full h-full object-contain"
+        onLoad={(e) => {
+          // Hide loading overlay
+          if (e.target.previousSibling) {
+            e.target.previousSibling.style.display = 'none';
+          }
+        }}
+        onError={(e) => {
+          handleImageError();
+          if (e.target.previousSibling) {
+            e.target.previousSibling.style.display = 'none';
+          }
+          e.target.onerror = null;
+          e.target.src = '/images/default-retina.jpg';
+        }}
+      />
       
-      {/* Error overlay with improved animation */}
-      <AnimatePresence>
+      {/* Error overlay */}
       {imageError && (
-          <motion.div 
-            className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20">
+          <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
+          <p className="text-white text-center">Gambar tidak dapat ditampilkan</p>
+          <button 
+            onClick={() => {
+              setImageError(false);
+              // Force reload image with timestamp
+              const img = document.querySelector('img[alt="Retina scan"]');
+              if (img) {
+                const imgSrc = getImageSource();
+                img.src = imgSrc.includes('?') 
+                  ? `${imgSrc}&reload=${new Date().getTime()}`
+                  : `${imgSrc}?reload=${new Date().getTime()}`;
+              }
+            }}
+            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
           >
-            <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
-            <p className="text-white text-center font-medium">
-              Gambar tidak dapat ditampilkan
-            </p>
-            <motion.button 
-              onClick={() => {
-                setImageError(false);
-                // Force reload image with timestamp
-                const img = document.querySelector('img[alt="Retina scan"]');
-                if (img) {
-                  const imgSrc = getImageSource();
-                  img.src = imgSrc.includes('?') 
-                    ? `${imgSrc}&reload=${new Date().getTime()}`
-                    : `${imgSrc}?reload=${new Date().getTime()}`;
-                }
-              }}
-              className="mt-4 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-md"
-              whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Coba Lagi
-            </motion.button>
-          </motion.div>
+            Coba Lagi
+          </button>
+        </div>
       )}
-      </AnimatePresence>
     </div>
   );
 
   return (
+    <div className="w-full max-w-4xl mx-auto">
       <motion.div
-      className="w-full max-w-5xl mx-auto"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      {/* Modern Header with Gradient Background */}
-      <motion.div
-        className="relative overflow-hidden rounded-2xl mb-8 shadow-xl"
-        variants={headerVariants}
-      >
-        {/* Background gradient with pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800"></div>
-        
-        {/* Animated pattern overlay */}
-        <motion.div 
-          className="absolute inset-0 opacity-10"
-          animate={{ 
-            backgroundPosition: ['0% 0%', '100% 100%'],
-          }}
-          transition={{ 
-            duration: 20, 
-            repeat: Infinity, 
-            repeatType: 'reverse',
-            ease: 'linear'
-          }}
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        
-        {/* Floating particles */}
-        {!reducedMotion && Array.from({ length: 8 }).map((_, i) => (
-          <motion.div
-            key={`particle-${i}`}
-            className="absolute rounded-full bg-white/20"
-            style={{
-              width: Math.random() * 60 + 20,
-              height: Math.random() * 60 + 20,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              zIndex: 1
-            }}
-            animate={{ 
-              opacity: [0, 0.5, 0],
-              scale: [0, 1, 0],
-              x: [0, Math.random() * 100 - 50],
-              y: [0, Math.random() * 100 - 50],
-            }}
-            transition={{
-              duration: Math.random() * 5 + 5,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: "easeInOut"
-            }}
-          />
-        ))}
-        
-        {/* Header content */}
-        <div className="relative z-10 p-8 flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div className="mb-4 md:mb-0">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold text-white mb-2"
+        className="flex justify-between items-center mb-6"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 0.2,
-                type: "spring",
-                stiffness: 200,
-                damping: 20
-              }}
-            >
+      >
+        <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
           Hasil Analisis Retina
-            </motion.h2>
-            <motion.div 
-              className="flex items-center text-white text-sm font-medium drop-shadow-md"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <FiCalendar className="mr-2" />
-              <span>{formatDate(result.createdAt || new Date())}</span>
-            </motion.div>
-          </div>
-          
-          <motion.div 
-            className="flex gap-2"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
+        </h3>
+        <div className="flex gap-3">
           <motion.button
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
+            whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2)' }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleDownload}
             disabled={isLoading}
-              className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-md"
           >
-              <FiDownload className="text-white" />
-              <span className="text-white drop-shadow-md">{isLoading ? 'Memproses...' : 'Unduh PDF'}</span>
+            <FiDownload className="text-blue-100" />
+            {isLoading ? 'Memproses...' : 'Unduh PDF'}
           </motion.button>
           <motion.button
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
+            whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}
+            whileTap={{ scale: 0.95 }}
             onClick={handlePrint}
-              className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shadow-md"
+            style={glassEffect}
           >
-              <FiPrinter className="text-white" />
-              <span className="text-white drop-shadow-md">Cetak</span>
+            <FiPrinter className="text-gray-600" />
+            Cetak
           </motion.button>
           <motion.button
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-              className="flex items-center justify-center w-10 h-10 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border border-white/30 drop-shadow-lg"
+            whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center justify-center w-10 h-10 rounded-full"
+            style={glassEffect}
             onClick={handleShare}
             disabled={isShareLoading}
           >
             {isShareLoading ? (
-                <div className="w-5 h-5 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+              <div className="w-5 h-5 border-t-2 border-b-2 border-gray-600 rounded-full animate-spin"></div>
             ) : shareSuccess ? (
-                <FiCheck className="text-white" />
+              <FiCheck className="text-green-600" />
             ) : (
-                <FiShare2 className="text-white" />
+              <FiShare2 className="text-gray-600" />
             )}
           </motion.button>
-          </motion.div>
-        </div>
-        
-        {/* Bottom wave */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 160" className="w-full">
-            <motion.path 
-              fill="#ffffff" 
-              fillOpacity="1" 
-              d="M0,128L48,117.3C96,107,192,85,288,90.7C384,96,480,128,576,128C672,128,768,96,864,80C960,64,1056,64,1152,74.7C1248,85,1344,107,1392,117.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8 }}
-            />
-          </svg>
         </div>
       </motion.div>
 
-      {/* Simulation Mode Warning */}
+      {/* Tambahkan indikator mode simulasi */}
       {result && (result.isSimulation || result.simulation_mode || 
         (result.raw_prediction && result.raw_prediction.is_simulation)) && (
         <motion.div
@@ -907,702 +592,393 @@ function Report({ result }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           className="mb-6 text-sm flex items-start rounded-xl overflow-hidden"
-          style={{ background: 'rgba(254, 240, 199, 0.7)', ...adaptiveGlassEffect }}
+          style={{ ...glassEffect, background: 'rgba(254, 240, 199, 0.7)' }}
         >
-          <div className="bg-amber-500 h-full w-1.5"></div>
-          <div className="p-4">
+          <div className="bg-amber-500 h-full w-2"></div>
+          <div className="p-5">
             <div className="flex items-start">
-            <motion.div 
-                animate={{ 
-                  rotate: [0, 5, 0, -5, 0],
-                  scale: [1, 1.1, 1, 1.1, 1]
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "loop",
-                  repeatDelay: 3
-                }}
-              >
-                <FiAlertTriangle className="w-5 h-5 mr-2 flex-shrink-0 text-amber-600 mt-0.5" />
-            </motion.div>
+              <FiAlertTriangle className="w-6 h-6 mr-3 flex-shrink-0 text-amber-600" />
               <div>
-                <p className="font-bold mb-1 text-sm text-amber-800">Mode Simulasi</p>
-                <p className="text-xs text-amber-700">Hasil analisis ini menggunakan data simulasi. Tidak untuk diagnosis klinis.</p>
+                <p className="font-bold mb-2 text-base text-amber-800">PERHATIAN: Laporan dalam Mode Simulasi</p>
+                <p className="mb-2 text-amber-700">Hasil analisis ini menggunakan <span className="font-bold underline">data simulasi</span> karena layanan AI tidak tersedia saat ini.</p>
+                <p className="text-amber-800 font-bold">Hasil ini TIDAK BOLEH digunakan untuk diagnosis klinis. Silakan konsultasikan dengan dokter mata untuk evaluasi yang akurat.</p>
               </div>
             </div>
+            <motion.div 
+              className="mt-3 p-3 rounded-md border border-amber-200"
+              style={{ background: 'rgba(254, 243, 199, 0.7)' }}
+              initial={{ opacity: 0.8 }}
+              whileHover={{ opacity: 1, scale: 1.01 }}
+            >
+              <p className="text-xs font-semibold text-amber-700">Untuk menggunakan model AI sebenarnya, jalankan script pengujian koneksi:</p>
+              <code className="text-xs bg-white/70 p-2 rounded mt-1 block text-amber-800 font-mono">npm run test:flask</code>
+            </motion.div>
           </div>
         </motion.div>
       )}
 
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-        variants={itemVariants}
+        ref={reportRef}
+        className="rounded-xl overflow-hidden shadow-xl pdf-container"
+        style={{ ...glassEffect, background: 'rgba(255, 255, 255, 0.9)' }}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
       >
-        {/* Patient Info Card */}
-        {patient && (
+        {/* Header */}
+        <div className="relative overflow-hidden">
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
+          
+          {/* Background pattern */}
           <motion.div 
-            className="md:col-span-3 rounded-xl overflow-hidden shadow-md"
-            style={adaptiveGlassEffect}
-            whileHover={{ 
-              y: -5, 
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            className="absolute inset-0 opacity-10"
+            initial={{ backgroundPositionX: '0%' }}
+            animate={{ backgroundPositionX: '100%' }}
+            transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+              backgroundSize: '30px 30px'
             }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          >
-            <div className="p-6">
-              <div className="flex items-center mb-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                  <FiUser className="text-white" />
+          ></motion.div>
+          
+          {/* Content */}
+          <div className="relative p-8 text-white z-10">
+            <div className="flex justify-between items-start">
+              <div>
+                <motion.h2 
+                  className="text-3xl font-bold mb-2"
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  Laporan Analisis Retina
+                </motion.h2>
+                <motion.div 
+                  className="flex items-center text-blue-100"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <FiCalendar className="mr-2" />
+                  <span className="text-sm">{formatDate(new Date())}</span>
+                </motion.div>
               </div>
-                <h3 className="text-lg font-semibold text-gray-800">Informasi Pasien</h3>
+              <motion.div 
+                className="text-right"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="text-lg font-semibold text-white">RetinaScan AI</div>
+                <div className="text-sm text-blue-100">Deteksi Retinopati Diabetik</div>
+                {/* Tambahkan label simulasi jika dalam mode simulasi */}
+                {result && (result.isSimulation || result.simulation_mode || 
+                  (result.raw_prediction && result.raw_prediction.is_simulation)) && (
+                  <motion.div 
+                    className="mt-2"
+                    animate={{ 
+                      opacity: [0.7, 1, 0.7],
+                      scale: [1, 1.02, 1]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatType: "reverse"
+                    }}
+                  >
+                    <span className="bg-amber-600 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
+                      SIMULASI - BUKAN HASIL SEBENARNYA
+                    </span>
+                  </motion.div>
+                )}
+              </motion.div>
             </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Nama Lengkap</p>
-                  <p className="font-medium text-gray-800">{patient.fullName || patient.name || 'Tidak ada nama'}</p>
           </div>
           
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">Jenis Kelamin / Usia</p>
-                  <div className="flex items-center">
-                    <p className="font-medium text-gray-800">
-                      {patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, {patient.age} tahun
-                    </p>
-                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                      patient.gender === 'male' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-pink-100 text-pink-800'
-                    }`}>
-                      {patient.gender === 'male' ? 'M' : 'F'}
-                    </span>
+          {/* Decorative bottom wave */}
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full h-12">
+              <path fill="rgba(255, 255, 255, 0.9)" fillOpacity="1" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,53.3C672,43,768,21,864,16C960,11,1056,21,1152,32C1248,43,1344,53,1392,58.7L1440,64L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"></path>
+            </svg>
           </div>
         </div>
 
-                {patient.dateOfBirth && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Tanggal Lahir</p>
-                    <div className="flex items-center">
-                      <FiCalendar className="text-gray-400 mr-2 text-sm" />
-                      <p className="font-medium text-gray-800">{new Date(patient.dateOfBirth).toLocaleDateString('id-ID')}</p>
+        {/* Patient Information */}
+        {patient && (
+          <motion.div 
+            className="p-6 border-b bg-blue-50"
+            variants={itemVariants}
+          >
+            <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
+              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 shadow-md">
+                <FiUser className="text-white" />
               </div>
-                  </div>
-                )}
-                
-                {patient.bloodType && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-xs text-gray-500 mb-1">Golongan Darah</p>
-                    <div className="flex items-center">
-                      <FiHeart className="text-red-400 mr-2 text-sm" />
-                      <p className="font-medium text-gray-800">{patient.bloodType}</p>
-                      <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
-                        {patient.bloodType}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                Informasi Pasien
               </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-              </motion.div>
-        )}
-      </motion.div>
-      
-      {/* Main content container */}
-      <div id="hasil-detail" className="rounded-xl overflow-hidden shadow-xl">
-        <motion.div
-          ref={reportRef}
-          className="pdf-container"
-          style={{ ...adaptiveGlassEffect, background: 'rgba(255, 255, 255, 0.9)' }}
-          variants={itemVariants}
-        >
-          {/* Main Content Grid */}
-        <div className="p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Left Column - Retina Image */}
+            </h3>
             <motion.div 
-                className="lg:col-span-5 flex flex-col space-y-6"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 rounded-xl"
+              style={glassEffect}
+              whileHover={{ boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div 
+                className="p-4 rounded-lg bg-white/50"
+                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+              >
+                <p className="text-sm text-blue-500 font-medium mb-1">Nama Lengkap</p>
+                <p className="font-semibold text-gray-800 text-lg">{patientName}</p>
+              </motion.div>
+              <motion.div 
+                className="p-4 rounded-lg bg-white/50"
+                whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+              >
+                <p className="text-sm text-blue-500 font-medium mb-1">Jenis Kelamin / Umur</p>
+                <p className="font-semibold text-gray-800 text-lg">
+                  {patientGender}, {patientAge} tahun
+                </p>
+              </motion.div>
+              {patient.dateOfBirth && (
+                <motion.div 
+                  className="p-4 rounded-lg bg-white/50"
+                  whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                >
+                  <p className="text-sm text-blue-500 font-medium mb-1">Tanggal Lahir</p>
+                  <p className="font-semibold text-gray-800 text-lg">{new Date(patient.dateOfBirth).toLocaleDateString('id-ID')}</p>
+                </motion.div>
+              )}
+              {patient.bloodType && (
+                <motion.div 
+                  className="p-4 rounded-lg bg-white/50"
+                  whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                >
+                  <p className="text-sm text-blue-500 font-medium mb-1">Golongan Darah</p>
+                  <p className="font-semibold text-gray-800 text-lg">{patient.bloodType}</p>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Content */}
+        <div className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Gambar Retina */}
+            <motion.div 
+              className="flex flex-col space-y-6"
               variants={itemVariants}
             >
-                <div className="flex items-center mb-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
+              <h3 className="font-semibold mb-4 text-gray-700 text-lg flex items-center">
+                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center mr-3 shadow-md">
                   <FiEye className="text-white" />
                 </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Citra Retina</h3>
-                </div>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600">
+                  Citra Retina
+                </span>
+              </h3>
               
               <motion.div 
-                  className="rounded-xl shadow-md relative overflow-hidden bg-white"
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 30px -10px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <div className="relative aspect-square w-full">
-                <ImageViewer />
-            
-                    {/* Image Controls Overlay */}
-            <motion.div 
-                      className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="text-white text-xs font-medium">Gambar Retina</span>
-                        <div className="flex gap-2">
-                          <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                            <FiEye className="text-white text-sm" />
-                          </button>
-                          <button className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors">
-                            <FiDownload className="text-white text-sm" />
-                          </button>
-                </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </motion.div>
-                
-                {/* Image Analysis Card */}
-              <motion.div 
-                  className="rounded-xl shadow-md overflow-hidden"
-                  style={adaptiveGlassEffect}
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  }}
-                >
-                  <div className="p-5">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Detail Gambar</h4>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-1">Resolusi</p>
-                        <p className="font-medium text-gray-800 text-sm">1280 x 720 px</p>
-                      </div>
-                      
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-1">Format</p>
-                        <p className="font-medium text-gray-800 text-sm">JPEG</p>
-                      </div>
-                      
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-1">Tanggal Scan</p>
-                        <p className="font-medium text-gray-800 text-sm">{formatDate(result.createdAt || new Date()).split(',')[0]}</p>
-                      </div>
-                      
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 mb-1">Kualitas</p>
-                <div className="flex items-center">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <div 
-                                key={i} 
-                                className={`w-2 h-4 rounded-sm mr-0.5 ${i < 4 ? 'bg-indigo-500' : 'bg-gray-300'}`}
-                              />
-                            ))}
-                  </div>
-                          <span className="ml-2 text-xs font-medium text-gray-700">Baik</span>
-                        </div>
-                      </div>
-                  </div>
-                </div>
-                </motion.div>
-              </motion.div>
-              
-              {/* Right Column - Analysis Results */}
-              <motion.div 
-                className="lg:col-span-7 flex flex-col space-y-6"
+                className="p-6 mb-6 rounded-xl shadow-md relative overflow-hidden"
+                style={{ ...glassEffect }}
                 variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
               >
-                <div className="flex items-center mb-2">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center mr-3 shadow-lg">
-                    <FiActivity className="text-white" />
+                <ImageViewer />
+              </motion.div>
+            </motion.div>
+            
+            {/* Right Column - Analysis Results */}
+            <motion.div 
+              className="flex flex-col h-full"
+              variants={itemVariants}
+            >
+              <h3 className="font-semibold mb-4 text-gray-700 text-lg flex items-center">
+                <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center mr-3 shadow-md">
+                  <FiActivity className="text-white" />
                 </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Detail Analisis</h3>
-                </div>
-                
-                {/* Severity Card with Radar Chart */}
-                  <motion.div 
-                  className="rounded-xl shadow-md overflow-hidden bg-white"
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                  Hasil Analisis
+                </span>
+              </h3>
+              
+              {/* Severity */}
+              <motion.div 
+                className={`p-6 rounded-xl mb-6 shadow-md overflow-hidden relative`}
+                style={{ ...glassEffect }}
+                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+              >
+                <motion.div 
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    background: getSeverityGradient(resultSeverity),
+                    zIndex: -1
                   }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <div className="p-6 bg-gradient-to-br from-white via-white to-indigo-50/70">
-                    <div className="flex justify-between items-start mb-6">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-1">Tingkat Keparahan</h4>
-                        <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r" 
-                           style={{ 
-                             backgroundImage: getSeverityGradient(severity),
-                             color: getSeverityColor(severity)
-                           }}>
-                          {severity}
-                        </p>
-                      </div>
-                      <div className="px-3 py-1.5 rounded-full shadow-md" style={{ 
-                        backgroundColor: getSeverityCardColor(severity).bg,
-                        color: getSeverityColor(severity),
-                        borderColor: getSeverityCardColor(severity).border,
-                        borderWidth: '1px'
-                      }}>
-                        {getSeverityIcon(severity)}
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Confidence Gauge */}
-                      <div>
-                        <p className="text-xs text-gray-500 mb-2 text-center">Tingkat Kepercayaan</p>
-                        <div className="relative flex items-center justify-center">
-                          <svg className="w-32 h-32" viewBox="0 0 120 120">
-                            {/* Background arc */}
-                            <path 
-                              d="M10,60 A50,50 0 1,1 110,60" 
-                              fill="none" 
-                              stroke="#E5E7EB" 
-                              strokeWidth="10" 
-                              strokeLinecap="round"
-                            />
-                            
-                            {/* Foreground arc with dynamic length based on confidence */}
-                            <motion.path 
-                              d={`M10,60 A50,50 0 ${confidence > 0.5 ? 1 : 0},1 ${
-                                10 + 100 * confidence
-                              },${
-                                confidence <= 0.5 
-                                  ? 60 - Math.sin(Math.PI * confidence) * 50
-                                  : 60 - Math.sin(Math.PI * (1 - confidence)) * 50
-                              }`} 
-                              fill="none" 
-                              stroke="url(#gradient)" 
-                              strokeWidth="10" 
-                              strokeLinecap="round"
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 1.5, ease: "easeOut" }}
-                            />
-                            
-                            {/* Gradient definition */}
-                            <defs>
-                              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="#4F46E5" />
-                                <stop offset="50%" stopColor="#8B5CF6" />
-                                <stop offset="100%" stopColor="#EC4899" />
-                              </linearGradient>
-                            </defs>
-                          </svg>
-                          
-                          <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">{formatPercentage(confidence)}</span>
-                            <span className="text-xs text-gray-500">Confidence</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Risk Factors */}
-                      <div>
-                        <p className="text-xs text-gray-500 mb-2">Faktor Risiko</p>
-                        <div className="space-y-2">
-                          {[
-                            { name: 'Mikroaneurisma', value: 0.75, color: 'from-indigo-500 to-blue-600' },
-                            { name: 'Hemorrhage', value: 0.3, color: 'from-rose-500 to-red-600' },
-                            { name: 'Hard Exudate', value: 0.5, color: 'from-amber-500 to-yellow-600' },
-                            { name: 'Cotton Wool Spots', value: 0.2, color: 'from-emerald-500 to-green-600' },
-                          ].map((factor, index) => (
-                            <div key={index} className="flex items-center">
-                              <div className="w-24 text-xs font-medium text-gray-700">{factor.name}</div>
-                              <div className="flex-grow">
-                                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                  <motion.div
-                                    className={`h-full bg-gradient-to-r ${factor.color} relative`}
-                                    style={{
-                                      width: `${factor.value * 100}%`
-                                    }}
-                                    initial={{ width: '0%' }}
-                                    animate={{ width: `${factor.value * 100}%` }}
-                                    transition={{ duration: 1, ease: "easeOut", delay: 0.2 + index * 0.1 }}
-                                  >
-                                    <div className="absolute inset-0 bg-white/20 rounded-r-full" />
-                                  </motion.div>
-                                </div>
-                              </div>
-                              <div className="w-12 text-right text-xs font-medium bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 ml-2">
-                                {Math.round(factor.value * 100)}%
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                />
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full" style={{ background: getSeverityBgColor(resultSeverity) }}>
+                    {getSeverityIcon(resultSeverity)}
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
+                    <p className={`text-2xl font-bold ${getSeverityColor(resultSeverity)}`}>
+                      {resultSeverity}
+                    </p>
+                  </div>
                 </div>
               </motion.div>
               
-                {/* Recommendation Card */}
+              {/* Confidence */}
               <motion.div 
-                  className="rounded-xl shadow-md overflow-hidden"
+                className="mb-6 p-5 rounded-xl shadow-md"
+                style={{ ...glassEffect }}
+                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+              >
+                <div className="flex justify-between mb-2">
+                  <p className="text-sm text-gray-700 font-medium">Tingkat Kepercayaan</p>
+                  <p className="text-sm font-bold text-blue-600">{formatPercentage(resultConfidence)}</p>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full relative overflow-hidden"
+                    style={{ width: formatPercentage(resultConfidence) }}
+                    initial={{ width: '0%' }}
+                    animate={{ width: formatPercentage(resultConfidence) }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></div>
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                      }}
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatType: "loop",
+                      }}
+                    />
+                  </motion.div>
+                </div>
+              </motion.div>
+              
+              {/* Recommendation */}
+              <motion.div 
+                className="p-6 rounded-xl mt-auto shadow-md relative overflow-hidden"
+                style={{ ...glassEffect }}
+                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+              >
+                <motion.div 
+                  className="absolute inset-0 opacity-10"
                   style={{
-                    ...adaptiveGlassEffect,
-                    background: `linear-gradient(to right, ${getSeverityCardColor(severity).bg}40, white)`
+                    background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+                    zIndex: -1
                   }}
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <div className="p-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-indigo-100/30 to-purple-100/30 rounded-full -mr-20 -mt-20 z-0"></div>
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-blue-100/30 to-cyan-100/30 rounded-full -ml-16 -mb-16 z-0"></div>
-                    <div className="relative z-10">
-                      <div className="flex items-center mb-4">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                      <FiInfo className="text-white text-sm" />
-                    </div>
-                        <h4 className="text-sm font-semibold text-gray-700">Rekomendasi Lengkap</h4>
-                      </div>
-                      
-                      <div className="pl-11">
-                        <p className="text-gray-700 mb-4 font-medium">
-                          {severity === 'Tidak ada' || severity === 'Normal' ? (
-                            'Tidak Ada Tanda Retinopati'
-                          ) : severity === 'Ringan' || severity === 'Mild' ? (
-                            'Retinopati Diabetik Non-proliferatif Ringan'
-                          ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                            'Retinopati Diabetik Non-proliferatif Sedang'
-                          ) : severity === 'Berat' || severity === 'Severe' ? (
-                            'Retinopati Diabetik Non-proliferatif Berat'
-                          ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                            'Retinopati Diabetik Proliferatif'
-                          ) : (
-                            'Status Tidak Diketahui'
-                          )}
-                        </p>
-                        
-                        <div className="bg-white/80 rounded-lg p-4 border border-gray-100 shadow-sm">
-                          <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center">
-                            <FiClock className="mr-1 text-indigo-500" />
-                            Tindak Lanjut
-                          </h5>
-                          <div className="flex items-center">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getSeverityColor(severity) }}></div>
-                            <p className="ml-2 text-sm text-gray-700">
-                              {severity === 'Tidak ada' || severity === 'Normal' ? (
-                                'Pemeriksaan rutin setiap 12 bulan'
-                              ) : severity === 'Ringan' || severity === 'Mild' ? (
-                                'Pemeriksaan ulang dalam 9-12 bulan'
-                              ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                                'Pemeriksaan ulang dalam 6 bulan'
-                              ) : severity === 'Berat' || severity === 'Severe' ? (
-                                'Pemeriksaan ulang dalam 2-3 bulan'
-                              ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                                'Konsultasi segera dengan dokter spesialis mata'
-                              ) : (
-                                'Konsultasi dengan dokter untuk jadwal pemeriksaan'
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                />
+                <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                  <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center mr-2 shadow-md">
+                    <FiInfo className="text-white text-sm" />
                   </div>
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                    Rekomendasi
+                  </span>
+                </h4>
+                <p className="text-blue-700">
+                  {resultNotes || 'Tidak ada catatan atau rekomendasi tersedia.'}
+                </p>
               </motion.div>
             </motion.div>
           </div>
           
-            {/* Recommendation and Additional Info Section */}
+          {/* Disclaimer */}
           <motion.div 
-              className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8"
+            className="mt-8 p-5 rounded-xl text-sm text-gray-500"
+            style={{ ...glassEffect }}
             variants={itemVariants}
-            >
-              {/* Detailed Recommendations */}
-              <div className="lg:col-span-7">
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                    <FiShield className="text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Rekomendasi Lengkap</h3>
-                </div>
-                
-                <motion.div 
-                  className="rounded-xl shadow-md overflow-hidden"
-                  style={{
-                    ...adaptiveGlassEffect,
-                    background: `linear-gradient(to right, ${getSeverityCardColor(severity).bg}40, white)`
-                  }}
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <div className="p-6">
-                    <div className="flex items-start mb-4">
-                      <div className={`p-2 rounded-full mr-4 flex-shrink-0`} style={{ backgroundColor: getSeverityCardColor(severity).bg }}>
-                        {getSeverityIcon(severity)}
-                      </div>
-                      <div>
-                        <h4 className="text-base font-semibold mb-2" style={{ color: getSeverityColor(severity) }}>
-                          {severity === 'Tidak ada' || severity === 'Normal' ? (
-                            'Tidak Ada Tanda Retinopati'
-                          ) : severity === 'Ringan' || severity === 'Mild' ? (
-                            'Retinopati Diabetik Non-proliferatif Ringan'
-                          ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                            'Retinopati Diabetik Non-proliferatif Sedang'
-                          ) : severity === 'Berat' || severity === 'Severe' ? (
-                            'Retinopati Diabetik Non-proliferatif Berat'
-                          ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                            'Retinopati Diabetik Proliferatif'
-                          ) : (
-                            'Status Tidak Diketahui'
-                          )}
-                        </h4>
-                        <p className="text-gray-600 text-sm">
-                          {severity === 'Tidak ada' || severity === 'Normal' ? (
-                            'Tidak ditemukan tanda-tanda retinopati diabetik. Lakukan pemeriksaan rutin setiap tahun.'
-                          ) : severity === 'Ringan' || severity === 'Mild' ? (
-                            'Terdapat tanda-tanda ringan retinopati diabetik. Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.'
-                          ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                            'Terdapat tanda-tanda sedang retinopati diabetik. Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.'
-                          ) : severity === 'Berat' || severity === 'Severe' ? (
-                            'Terdapat tanda-tanda berat retinopati diabetik. Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.'
-                          ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                            'Terdapat tanda-tanda sangat berat retinopati diabetik. Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
-                          ) : (
-                            'Tidak ada rekomendasi spesifik. Konsultasikan dengan dokter untuk evaluasi lebih lanjut.'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 space-y-4">
-                      <h5 className="text-sm font-semibold text-gray-700 border-b border-gray-100 pb-2">Langkah-langkah yang Disarankan:</h5>
-                      
-                      <div className="space-y-3">
-                        {/* Medical Follow-up */}
+            whileHover={{ boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+          >
             <div className="flex items-start">
-                          <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center mr-3 flex-shrink-0">
-                            <FiClock className="text-indigo-600 text-sm" />
+              <div className="bg-gray-100 p-2 rounded-full mr-3">
+                <FiAlertTriangle className="w-5 h-5 text-gray-500" />
               </div>
               <div>
-                            <p className="text-sm font-medium text-gray-700">Tindak Lanjut Medis</p>
-                            <p className="text-xs text-gray-500">
-                              {severity === 'Tidak ada' || severity === 'Normal' ? (
-                                'Pemeriksaan rutin setiap 12 bulan'
-                              ) : severity === 'Ringan' || severity === 'Mild' ? (
-                                'Pemeriksaan ulang dalam 9-12 bulan'
-                              ) : severity === 'Sedang' || severity === 'Moderate' ? (
-                                'Pemeriksaan ulang dalam 6 bulan'
-                              ) : severity === 'Berat' || severity === 'Severe' ? (
-                                'Pemeriksaan ulang dalam 2-3 bulan'
-                              ) : severity === 'Sangat Berat' || severity === 'Proliferative' ? (
-                                'Konsultasi segera dengan dokter spesialis mata'
-                              ) : (
-                                'Konsultasi dengan dokter untuk jadwal pemeriksaan'
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Blood Sugar Control */}
-                        <div className="flex items-start">
-                          <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-3 flex-shrink-0">
-                            <FiActivity className="text-green-600 text-sm" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Kontrol Gula Darah</p>
-                            <p className="text-xs text-gray-500">
-                              Pertahankan kadar HbA1c di bawah 7.0% dan monitor gula darah secara teratur
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Blood Pressure Control */}
-                        <div className="flex items-start">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mr-3 flex-shrink-0">
-                            <FiHeart className="text-blue-600 text-sm" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Kontrol Tekanan Darah</p>
-                            <p className="text-xs text-gray-500">
-                              Pertahankan tekanan darah di bawah 130/80 mmHg
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Lifestyle */}
-                        <div className="flex items-start">
-                          <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center mr-3 flex-shrink-0">
-                            <FiUser className="text-purple-600 text-sm" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Gaya Hidup</p>
-                            <p className="text-xs text-gray-500">
-                              Pertahankan diet seimbang, aktivitas fisik teratur, dan hindari merokok
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                <p className="mb-1"><span className="font-bold text-gray-700">Disclaimer:</span> Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.</p>
+                <p>Analisis dilakukan menggunakan gambar fundus retina dengan teknologi AI yang telah dilatih pada kasus retinopati diabetik.</p>
               </div>
             </div>
           </motion.div>
         </div>
         
-              {/* Notes and Additional Resources */}
-              <div className="lg:col-span-5">
-                <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-md">
-                    <FiFileText className="text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Catatan & Sumber Daya</h3>
-                </div>
-                
-                {/* Notes Card */}
+        {/* Footer */}
         <motion.div 
-                  className="rounded-xl shadow-md overflow-hidden mb-6"
-                  style={adaptiveGlassEffect}
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <div className="p-5">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                      <FiInfo className="mr-2 text-indigo-500" />
-                      Catatan Penting
-                    </h4>
-                    
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
-                      <p className="text-xs text-yellow-800">
-                        Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. 
-                        Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.
-                      </p>
-                    </div>
-                    
-                    {result.notes && (
-                      <div className="mt-4">
-                        <p className="text-sm text-gray-600">
-                          {result.notes}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-                
-                {/* Resources Card */}
+          className="p-6 text-center text-white relative overflow-hidden"
+          variants={itemVariants}
+        >
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
+          
+          {/* Background pattern */}
           <motion.div 
-                  className="rounded-xl shadow-md overflow-hidden"
-                  style={adaptiveGlassEffect}
-                  whileHover={{ 
-                    y: -5, 
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <div className="p-5">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Sumber Daya</h4>
-                    
-                    <div className="space-y-3">
-                      <a 
-                        href="https://www.idf.org/our-activities/care-prevention/eye-health/dr-guide.html" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 flex-shrink-0">
-                          <FiExternalLink className="text-blue-600 text-sm" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Panduan IDF untuk Retinopati Diabetik</p>
-                          <p className="text-xs text-gray-500">International Diabetes Federation</p>
-                        </div>
-                      </a>
-                      
-                      <a 
-                        href="https://www.nei.nih.gov/learn-about-eye-health/eye-conditions-and-diseases/diabetic-retinopathy" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3 flex-shrink-0">
-                          <FiExternalLink className="text-blue-600 text-sm" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Informasi Retinopati Diabetik</p>
-                          <p className="text-xs text-gray-500">National Eye Institute</p>
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-            
-            {/* Footer */}
-            <motion.div 
-              className="mt-12 text-center"
-              variants={itemVariants}
+            className="absolute inset-0 opacity-10"
+            initial={{ backgroundPositionX: '0%' }}
+            animate={{ backgroundPositionX: '100%' }}
+            transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+              backgroundSize: '30px 30px'
+            }}
+          ></motion.div>
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <motion.p 
+              className="font-semibold text-lg"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
-              <div className="p-6 rounded-xl" style={adaptiveGlassEffect}>
-                <div className="flex justify-center space-x-6 mb-4">
-                  <motion.button
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handleDownload}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
-                  >
-                    <FiDownload className="text-white" />
-                    <span className="text-white drop-shadow-md">{isLoading ? 'Memproses...' : 'Unduh PDF'}</span>
-                  </motion.button>
-                  
-                  <motion.button
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handlePrint}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all text-sm font-medium shadow-md border border-white/30 drop-shadow-lg"
-                  >
-                    <FiPrinter className="text-white" />
-                    <span className="text-white drop-shadow-md">Cetak</span>
-                  </motion.button>
-                  
-                  <motion.button
-                    variants={buttonVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={handleShare}
-                    disabled={isShareLoading}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md border border-white/30 drop-shadow-lg"
-                  >
-                    {isShareLoading ? (
-                      <div className="w-4 h-4 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
-                    ) : shareSuccess ? (
-                      <FiCheck className="text-white" />
-                    ) : (
-                      <FiShare2 className="text-white" />
-                    )}
-                    <span className="text-white drop-shadow-md">{shareSuccess ? 'Dibagikan' : 'Bagikan'}</span>
-                  </motion.button>
+              RetinaScan &copy; {new Date().getFullYear()}
+            </motion.p>
+            <motion.p 
+              className="text-sm text-blue-100 mt-1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              AI-Powered Retinopathy Detection
+            </motion.p>
+            <motion.div 
+              className="mt-3 flex justify-center"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <motion.a 
+                href="https://retinascan.example.com" 
+                className="text-white flex items-center justify-center gap-1 hover:underline bg-white/10 px-4 py-2 rounded-full"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>www.retinascan.example.com</span>
+                <FiExternalLink size={14} />
+              </motion.a>
+            </motion.div>
           </div>
           
-                <p className="text-xs text-gray-500 max-w-lg mx-auto">
-                  RetinaScan menggunakan teknologi AI untuk membantu deteksi dini retinopati diabetik. 
-                  Hasil analisis ini bukan pengganti diagnosis medis profesional.
-                  <br />© {new Date().getFullYear()} RetinaScan | AI-Powered Retinopathy Detection
-                </p>
+          {/* Decorative top wave */}
+          <div className="absolute top-0 left-0 right-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full h-12 rotate-180">
+              <path fill="rgba(255, 255, 255, 0.9)" fillOpacity="1" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,53.3C672,43,768,21,864,16C960,11,1056,21,1152,32C1248,43,1344,53,1392,58.7L1440,64L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"></path>
+            </svg>
           </div>
         </motion.div>
-          </div>
       </motion.div>
     </div>
-    </motion.div>
   );
 }
 
