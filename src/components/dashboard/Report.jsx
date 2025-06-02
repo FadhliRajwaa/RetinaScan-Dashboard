@@ -1513,9 +1513,9 @@ function Report({ result }) {
             </motion.div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
-  </motion.div>
-);
+  );
+}
 
 export default Report;
