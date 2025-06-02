@@ -286,9 +286,9 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
               </p>
             </div>
           </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            {/* Search Bar */}
+        
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          {/* Search Bar */}
             <motion.div 
               className="relative w-full sm:w-64"
               variants={itemVariants}
@@ -297,37 +297,37 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500">
                 <FaSearch />
               </div>
-              <input
-                type="text"
-                placeholder="Cari pasien..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+            <input
+              type="text"
+              placeholder="Cari pasien..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2.5 w-full rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-              />
+            />
             </motion.div>
-            
-            {/* Filter Button */}
-            <motion.button
+          
+          {/* Filter Button */}
+          <motion.button
               variants={itemVariants}
               whileHover={{ scale: 1.05, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)' }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowFilters(!showFilters)}
+            onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl transition-all ${
                 showFilters 
                 ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md' 
                 : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              <FaFilter size={14} />
+            }`}
+          >
+            <FaFilter size={14} />
               <span className="font-medium">Filter</span>
-            </motion.button>
-          </div>
+          </motion.button>
+        </div>
         </motion.div>
-        
-        {/* Filter Panel */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
+      
+      {/* Filter Panel */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
               variants={filterVariants}
               initial="hidden"
               animate="visible"
@@ -379,7 +379,7 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                       >
                         Perempuan
                       </motion.button>
-                    </div>
+                </div>
                   </motion.div>
                   
                   <motion.div
@@ -401,7 +401,7 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                       >
                         Semua
                       </motion.button>
-                      {bloodTypes.map(type => (
+                    {bloodTypes.map(type => (
                         <motion.button
                           key={type}
                           whileHover={{ scale: 1.03 }}
@@ -418,8 +418,8 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                       ))}
                     </div>
                   </motion.div>
-                </div>
-                
+              </div>
+              
                 <motion.div 
                   className="flex justify-end mt-5"
                   initial={{ opacity: 0 }}
@@ -429,32 +429,32 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      setFilterConfig({ gender: 'all', bloodType: 'all' });
-                      setSearchTerm('');
-                    }}
+                  onClick={() => {
+                    setFilterConfig({ gender: 'all', bloodType: 'all' });
+                    setSearchTerm('');
+                  }}
                     className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-                  >
-                    Reset Filter
+                >
+                  Reset Filter
                   </motion.button>
                 </motion.div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 bg-red-50 text-red-500 p-4 rounded-xl border border-red-200 flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {error}
+            </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+            className="mb-6 bg-red-50 text-red-500 p-4 rounded-xl border border-red-200 flex items-center"
+        >
+          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {error}
+        </motion.div>
+      )}
       </motion.div>
 
       {/* Table content */}
@@ -582,11 +582,11 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                     <td className="px-6 py-4">
                       <motion.span 
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          patient.gender === 'male' || patient.gender === 'Laki-laki'
-                            ? 'bg-blue-100 text-blue-800' 
-                            : patient.gender === 'female' || patient.gender === 'Perempuan'
-                            ? 'bg-pink-100 text-pink-800'
-                            : 'bg-gray-100 text-gray-800'
+                        patient.gender === 'male' || patient.gender === 'Laki-laki'
+                          ? 'bg-blue-100 text-blue-800' 
+                          : patient.gender === 'female' || patient.gender === 'Perempuan'
+                          ? 'bg-pink-100 text-pink-800'
+                          : 'bg-gray-100 text-gray-800'
                         }`}
                         whileHover={{ scale: 1.05 }}
                       >
@@ -672,21 +672,21 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
             </motion.button>
             
             <div className="flex space-x-1">
-              {pageNumbers.map(number => (
-                <motion.button
-                  key={number}
-                  onClick={() => paginate(number)}
+            {pageNumbers.map(number => (
+              <motion.button
+                key={number}
+                onClick={() => paginate(number)}
                   className={`px-3 py-2 rounded-lg transition-all ${
-                    currentPage === number 
+                  currentPage === number 
                       ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md' 
                       : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-blue-300'
-                  }`}
+                }`}
                   whileHover={currentPage !== number ? { scale: 1.05 } : {}}
                   whileTap={currentPage !== number ? { scale: 0.95 } : {}}
-                >
-                  {number}
-                </motion.button>
-              ))}
+              >
+                {number}
+              </motion.button>
+            ))}
             </div>
             
             <motion.button
