@@ -913,25 +913,25 @@ function Report({ result }) {
                   transition={{ delay: 0.5, duration: 0.5 }}
                 >
                   Gambar Retina untuk Analisis
-                </motion.div>
               </motion.div>
+            </motion.div>
             
-              {/* Right Column - Analysis Results */}
-              <motion.div 
-                className="flex flex-col h-full"
-                variants={itemVariants}
-              >
-                <h3 className="font-semibold mb-4 text-gray-700 text-lg flex items-center">
+            {/* Right Column - Analysis Results */}
+            <motion.div 
+              className="flex flex-col h-full"
+              variants={itemVariants}
+            >
+              <h3 className="font-semibold mb-4 text-gray-700 text-lg flex items-center">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mr-3 shadow-lg">
                     <FiActivity className="text-white" size={20} />
-                  </div>
+                </div>
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 text-xl">
-                    Hasil Analisis
-                  </span>
-                </h3>
-                
+                  Hasil Analisis
+                </span>
+              </h3>
+              
                 {/* Severity with improved design */}
-                <motion.div 
+              <motion.div 
                   className={`p-6 rounded-xl mb-6 shadow-lg overflow-hidden relative`}
                   style={{ ...glassEffect, background: 'rgba(255, 255, 255, 0.7)' }}
                   whileHover={{ 
@@ -940,10 +940,10 @@ function Report({ result }) {
                     background: 'rgba(255, 255, 255, 0.8)'
                   }}
                   transition={{ duration: 0.3 }}
-                >
+              >
                   {/* Animated background gradient based on severity */}
-                  <motion.div 
-                    className="absolute inset-0 opacity-10"
+                <motion.div 
+                  className="absolute inset-0 opacity-10"
                     animate={{
                       background: [
                         getSeverityGradient(resultSeverity),
@@ -957,13 +957,13 @@ function Report({ result }) {
                       repeat: Infinity,
                       repeatType: "reverse"
                     }}
-                    style={{
-                      zIndex: -1
-                    }}
-                  />
+                  style={{
+                    zIndex: -1
+                  }}
+                />
                   
                   {/* Animated pulse ring around severity icon */}
-                  <div className="flex items-center">
+                <div className="flex items-center">
                     <div className="relative">
                       <motion.div 
                         className="absolute inset-0 rounded-full"
@@ -979,21 +979,21 @@ function Report({ result }) {
                         style={{ background: getSeverityBgColor(resultSeverity) }}
                       />
                       <div className="p-4 rounded-full relative z-10" style={{ background: getSeverityBgColor(resultSeverity) }}>
-                        {getSeverityIcon(resultSeverity)}
-                      </div>
+                    {getSeverityIcon(resultSeverity)}
+                  </div>
                     </div>
                     <div className="ml-5">
-                      <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
+                    <p className="text-sm text-gray-700 mb-1">Tingkat Keparahan</p>
                       <motion.p 
                         className={`text-2xl font-bold ${getSeverityColor(resultSeverity)}`}
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 300, damping: 10, delay: 0.2 }}
                       >
-                        {resultSeverity}
+                      {resultSeverity}
                       </motion.p>
-                    </div>
                   </div>
+                </div>
                   
                   {/* Severity description */}
                   <motion.div 
@@ -1014,10 +1014,10 @@ function Report({ result }) {
                         : 'Terdeteksi tanda-tanda sangat berat retinopati diabetik, memerlukan intervensi medis segera.'}
                     </p>
                   </motion.div>
-                </motion.div>
-                
+              </motion.div>
+              
                 {/* Confidence with animated progress */}
-                <motion.div 
+              <motion.div 
                   className="mb-6 p-6 rounded-xl shadow-lg"
                   style={{ ...glassEffect, background: 'rgba(255, 255, 255, 0.7)' }}
                   whileHover={{ 
@@ -1026,7 +1026,7 @@ function Report({ result }) {
                     background: 'rgba(255, 255, 255, 0.8)'
                   }}
                   transition={{ duration: 0.3 }}
-                >
+              >
                   <div className="flex justify-between mb-3">
                     <p className="text-sm text-gray-700 font-medium flex items-center">
                       <span className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center mr-2">
@@ -1044,7 +1044,7 @@ function Report({ result }) {
                     >
                       {formatPercentage(resultConfidence)}
                     </motion.p>
-                  </div>
+                </div>
                   <div className="w-full h-4 bg-gray-200 rounded-full overflow-hidden relative">
                     {/* Background pattern */}
                     <div className="absolute inset-0 opacity-20" style={{
@@ -1052,30 +1052,30 @@ function Report({ result }) {
                       backgroundSize: '10px 10px'
                     }}></div>
                     
-                    <motion.div 
+                  <motion.div 
                       className="h-full relative overflow-hidden rounded-full"
                       style={{ width: '0%' }}
-                      animate={{ width: formatPercentage(resultConfidence) }}
+                    animate={{ width: formatPercentage(resultConfidence) }}
                       transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></div>
-                      <motion.div
-                        className="absolute inset-0"
-                        style={{
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></div>
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
                           background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)',
-                        }}
-                        animate={{
-                          x: ['-100%', '100%'],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          ease: "easeInOut",
-                          repeat: Infinity,
-                          repeatType: "loop",
-                        }}
-                      />
-                    </motion.div>
-                  </div>
+                      }}
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatType: "loop",
+                      }}
+                    />
+                  </motion.div>
+                </div>
                   
                   {/* Confidence description */}
                   <motion.p 
@@ -1086,13 +1086,13 @@ function Report({ result }) {
                   >
                     Tingkat kepercayaan menunjukkan seberapa yakin sistem AI dalam menentukan diagnosis
                   </motion.p>
-                </motion.div>
+              </motion.div>
               </motion.div>
             </motion.div>
           </div>
-          
-          {/* Recommendation */}
-          <motion.div 
+              
+              {/* Recommendation */}
+              <motion.div 
             className="p-6 rounded-xl mt-auto shadow-lg relative overflow-hidden"
             style={{ ...glassEffect, background: 'rgba(255, 255, 255, 0.7)' }}
             whileHover={{ 
@@ -1101,10 +1101,10 @@ function Report({ result }) {
               background: 'rgba(255, 255, 255, 0.8)'
             }}
             transition={{ duration: 0.3 }}
-          >
+              >
             {/* Animated background gradient */}
-            <motion.div 
-              className="absolute inset-0 opacity-10"
+                <motion.div 
+                  className="absolute inset-0 opacity-10"
               animate={{
                 background: [
                   'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
@@ -1125,16 +1125,16 @@ function Report({ result }) {
               <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                 <path fill="#3B82F6" d="M46.5,-78.3C59.2,-71.6,68.1,-57.9,75.1,-43.5C82.1,-29,87.2,-14.5,87.7,0.3C88.2,15.1,84.1,30.2,76.1,42.9C68.1,55.6,56.1,65.8,42.5,73.2C28.9,80.5,14.4,85,0.2,84.7C-14.1,84.4,-28.2,79.4,-40.5,71.5C-52.8,63.6,-63.2,52.8,-70.6,40.1C-78,27.4,-82.3,13.7,-82.6,-0.2C-82.9,-14.1,-79.3,-28.2,-72.1,-41C-64.9,-53.8,-54.2,-65.3,-41.4,-71.9C-28.6,-78.5,-14.3,-80.2,0.7,-81.4C15.7,-82.6,33.8,-85,46.5,-78.3Z" transform="translate(100 100)" />
               </svg>
-            </div>
+                  </div>
             
             <h4 className="font-semibold text-blue-800 mb-4 flex items-center relative z-10">
               <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center mr-3 shadow-lg">
                 <FiInfo className="text-white" size={18} />
               </div>
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 text-lg">
-                Rekomendasi
-              </span>
-            </h4>
+                    Rekomendasi
+                  </span>
+                </h4>
             
             <motion.div 
               className="ml-12 p-4 rounded-lg bg-white/60 border border-blue-100 shadow-sm"
@@ -1154,8 +1154,8 @@ function Report({ result }) {
                     ? 'Rujukan segera ke dokter spesialis mata untuk tindakan lebih lanjut. Pemeriksaan ulang dalam 2-3 bulan disarankan.'
                     : 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
                 )}
-              </p>
-            </motion.div>
+                </p>
+              </motion.div>
             
             {/* Follow-up reminder */}
             <motion.div 
@@ -1168,12 +1168,12 @@ function Report({ result }) {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 11-1.415-1.415L11 9.586V6z" clipRule="evenodd" />
               </svg>
               <span>Jadwalkan pemeriksaan lanjutan sesuai rekomendasi</span>
+              </motion.div>
             </motion.div>
           </motion.div>
-        </div>
-        
+          
         {/* Disclaimer with improved design */}
-        <motion.div 
+          <motion.div 
           className="mt-8 p-6 rounded-xl text-sm"
           style={{ 
             ...glassEffect, 
@@ -1181,14 +1181,14 @@ function Report({ result }) {
             borderTop: '1px solid rgba(229, 231, 235, 0.5)',
             borderLeft: '1px solid rgba(229, 231, 235, 0.5)',
           }}
-          variants={itemVariants}
-          whileHover={{ boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
-        >
-          <div className="flex items-start">
+            variants={itemVariants}
+            whileHover={{ boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+          >
+            <div className="flex items-start">
             <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-3 rounded-full mr-4 shadow-md">
-              <FiAlertTriangle className="w-5 h-5 text-gray-500" />
-            </div>
-            <div>
+                <FiAlertTriangle className="w-5 h-5 text-gray-500" />
+              </div>
+              <div>
               <motion.p 
                 className="mb-2"
                 initial={{ opacity: 0, y: 5 }}
@@ -1221,16 +1221,16 @@ function Report({ result }) {
                   <span>Untuk informasi lebih lanjut tentang retinopati diabetik, kunjungi <a href="#" className="text-blue-500 hover:underline">www.retinascan.example.com/info</a></span>
                 </div>
               </motion.div>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </div>
-      
+          </motion.div>
+        </div>
+        
       {/* Footer with improved design */}
-      <motion.div 
+        <motion.div 
         className="p-8 text-center text-white relative overflow-hidden"
-        variants={itemVariants}
-      >
+          variants={itemVariants}
+        >
         {/* Animated background gradient */}
         <motion.div 
           className="absolute inset-0"
@@ -1244,17 +1244,17 @@ function Report({ result }) {
           }}
           transition={{ duration: 10, repeat: Infinity, repeatType: "loop" }}
         />
-        
-        {/* Background pattern */}
-        <motion.div 
-          className="absolute inset-0 opacity-10"
-          initial={{ backgroundPositionX: '0%' }}
-          animate={{ backgroundPositionX: '100%' }}
-          transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
-          style={{
-            backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
-            backgroundSize: '30px 30px'
-          }}
+          
+          {/* Background pattern */}
+          <motion.div 
+            className="absolute inset-0 opacity-10"
+            initial={{ backgroundPositionX: '0%' }}
+            animate={{ backgroundPositionX: '100%' }}
+            transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+              backgroundSize: '30px 30px'
+            }}
         />
         
         {/* Floating particles */}
@@ -1282,40 +1282,40 @@ function Report({ result }) {
             />
           ))}
         </div>
-        
-        {/* Content */}
-        <div className="relative z-10">
-          <motion.p 
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <motion.p 
             className="font-bold text-xl mb-1"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            RetinaScan
-          </motion.p>
-          <motion.p 
-            className="text-sm text-blue-100 mb-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            AI-Powered Retinopathy Detection &copy; {new Date().getFullYear()}
-          </motion.p>
-          <motion.div 
-            className="flex justify-center gap-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <motion.a 
-              href="#" 
-              className="text-white flex items-center justify-center gap-1 hover:underline bg-white/10 px-4 py-2 rounded-full"
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
+            RetinaScan
+            </motion.p>
+            <motion.p 
+            className="text-sm text-blue-100 mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+            AI-Powered Retinopathy Detection &copy; {new Date().getFullYear()}
+            </motion.p>
+            <motion.div 
+            className="flex justify-center gap-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <motion.a 
+              href="#" 
+                className="text-white flex items-center justify-center gap-1 hover:underline bg-white/10 px-4 py-2 rounded-full"
+                whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                whileTap={{ scale: 0.95 }}
+              >
               <span>Website</span>
-              <FiExternalLink size={14} />
-            </motion.a>
+                <FiExternalLink size={14} />
+              </motion.a>
             <motion.a 
               href="#" 
               className="text-white flex items-center justify-center gap-1 hover:underline bg-white/10 px-4 py-2 rounded-full"
@@ -1327,15 +1327,15 @@ function Report({ result }) {
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
               </svg>
             </motion.a>
+          </motion.div>
           </div>
-        </div>
-        
-        {/* Decorative top wave */}
-        <div className="absolute top-0 left-0 right-0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full h-12 rotate-180">
-            <path fill="rgba(255, 255, 255, 0.9)" fillOpacity="1" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,53.3C672,43,768,21,864,16C960,11,1056,21,1152,32C1248,43,1344,53,1392,58.7L1440,64L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"></path>
-          </svg>
-        </div>
+          
+          {/* Decorative top wave */}
+          <div className="absolute top-0 left-0 right-0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full h-12 rotate-180">
+              <path fill="rgba(255, 255, 255, 0.9)" fillOpacity="1" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,53.3C672,43,768,21,864,16C960,11,1056,21,1152,32C1248,43,1344,53,1392,58.7L1440,64L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"></path>
+            </svg>
+          </div>
       </motion.div>
     </div>
   );
