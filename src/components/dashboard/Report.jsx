@@ -801,7 +801,7 @@ function Report({ result }) {
         transition={{ duration: 0.5, type: "spring" }}
       >
         <motion.h3 
-          className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"
+          className="text-2xl font-bold text-gray-800"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.1, type: "spring" }}
