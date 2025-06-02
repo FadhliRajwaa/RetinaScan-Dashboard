@@ -1489,12 +1489,12 @@ function Report({ result }) {
               transition={{ delay: 0.4 }}
             >
               <motion.a 
-                href="https://retinascan.example.com" 
+                href="https://retinascan.onrender.com" 
                 className="text-white flex items-center justify-center gap-1 hover:underline bg-white/10 px-4 py-2 rounded-full"
                 whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
                 whileTap={{ scale: 0.95 }}
               >
-                <span>www.retinascan.example.com</span>
+                <span>retinascan.onrender.com</span>
                 <FiExternalLink size={14} />
               </motion.a>
             </motion.div>
