@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { FiDownload, FiPrinter, FiExternalLink, FiCalendar, FiUser, FiInfo, FiAlertTriangle, FiCheck, FiShare2, FiFileText, FiEye, FiActivity } from 'react-icons/fi';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence, useAnimation, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { FiDownload, FiPrinter, FiExternalLink, FiCalendar, FiUser, FiInfo, FiAlertTriangle, FiCheck, FiShare2, FiFileText, FiEye, FiActivity, FiArrowRight, FiClock, FiTrendingUp, FiShield } from 'react-icons/fi';
 import jsPDF from 'jspdf';
 import { getSeverityBgColor } from '../../utils/severityUtils';
 
@@ -14,45 +14,206 @@ const glassEffect = {
   borderRadius: '16px',
 };
 
-// Tambahkan variasi animasi untuk tombol
-const buttonVariants = {
-  initial: { 
-    scale: 1,
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-  },
-  hover: { 
-    scale: 1.05, 
-    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-  },
-  tap: { 
-    scale: 0.98,
-    boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06)'
-  },
-  loading: {
-    boxShadow: [
-      '0 0 0 0 rgba(59, 130, 246, 0)',
-      '0 0 0 10px rgba(59, 130, 246, 0.2)',
-      '0 0 0 20px rgba(59, 130, 246, 0)',
-    ],
+// Enhanced glassmorphism styles
+const glassEffectDark = {
+  background: 'rgba(15, 23, 42, 0.75)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  boxShadow: '0 8px 32px 0 rgba(15, 23, 42, 0.2)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  borderRadius: '16px',
+};
+
+const glassEffectBlue = {
+  background: 'rgba(219, 234, 254, 0.85)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  boxShadow: '0 8px 32px 0 rgba(37, 99, 235, 0.15)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  borderRadius: '16px',
+};
+
+// Animation variants - Optimasi untuk performa yang lebih baik
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
     transition: {
-      repeat: Infinity,
-      duration: 1.5
+      type: "spring",
+      stiffness: 200, // Menurunkan stiffness untuk animasi yang lebih halus
+      damping: 15,    // Menurunkan damping untuk mengurangi osilasi
+      mass: 0.8       // Menambahkan mass untuk animasi yang lebih natural
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    y: -20, 
+    transition: { 
+      duration: 0.15  // Mempercepat exit animation untuk responsivitas yang lebih baik
+    } 
+  }
+};
+
+const staggerContainer = {
+  initial: { opacity: 0 },
+  animate: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.07, // Mempercepat stagger untuk tampilan yang lebih responsif
+      delayChildren: 0.2     // Mengurangi delay untuk pengalaman yang lebih cepat
     }
   }
 };
 
-// Variasi animasi untuk tooltip
-const tooltipVariants = {
-  hidden: { opacity: 0, y: 10, scale: 0.8 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
+const pulseAnimation = {
+  initial: { scale: 1 },
+  animate: { 
+    scale: [1, 1.02, 1],
     transition: {
-      type: "spring",
-      stiffness: 300,
-      damping: 20
+      duration: 2.5,       // Memperlambat sedikit untuk efek yang lebih halus
+      repeat: Infinity,
+      repeatType: "reverse",
+      ease: "easeInOut",
+      repeatDelay: 0.2     // Menambahkan delay kecil antara repetisi
     }
+  }
+};
+
+const shimmerEffect = {
+  initial: { x: '-100%' },
+  animate: {
+    x: '100%',
+    transition: {
+      repeat: Infinity,
+      repeatType: "loop",
+      duration: 2,        // Memperlambat sedikit untuk efek yang lebih halus
+      ease: "easeInOut"
+    }
+  }
+};
+
+// Menambahkan animasi baru untuk optimasi
+const scaleAnimation = {
+  initial: { scale: 0.95, opacity: 0 },
+  animate: { 
+    scale: 1, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 150, 
+      damping: 13,
+      mass: 0.8
+    }
+  },
+  exit: { 
+    scale: 0.95, 
+    opacity: 0,
+    transition: { duration: 0.2 } 
+  }
+};
+
+// Animasi untuk elemen interaktif
+const hoverScale = {
+  scale: 1.03,
+  transition: { 
+    type: "spring", 
+    stiffness: 400, 
+    damping: 10 
+  }
+};
+
+// Optimasi untuk animasi background
+const backgroundAnimation = {
+  initial: { backgroundPositionX: '0%' },
+  animate: { 
+    backgroundPositionX: '100%',
+    transition: { 
+      duration: 25,       // Memperlambat untuk mengurangi penggunaan CPU
+      repeat: Infinity, 
+      repeatType: "reverse", 
+      ease: "linear" 
+    }
+  }
+};
+
+// Menambahkan utility hook untuk mengoptimalkan animasi
+const useInView = (options = {}) => {
+  const [ref, setRef] = useState(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    if (!ref) return;
+    
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsInView(entry.isIntersecting);
+    }, {
+      threshold: 0.1,
+      ...options
+    });
+    
+    observer.observe(ref);
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [ref, options]);
+
+  return [setRef, isInView];
+};
+
+// Optimasi untuk container variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.06, // Optimasi: Mempercepat stagger
+      delayChildren: 0.1,    // Optimasi: Mengurangi delay
+      when: "beforeChildren"
+    }
+  }
+};
+
+// Optimasi untuk item variants
+const itemVariants = {
+  hidden: { y: 15, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 150, 
+      damping: 13,
+      mass: 0.8
+    }
+  }
+};
+
+// Optimasi untuk image variants
+const imageVariants = {
+  hidden: { scale: 0.9, opacity: 0 },
+  visible: { 
+    scale: 1, 
+    opacity: 1,
+    transition: { 
+      type: "spring", 
+      stiffness: 120, 
+      damping: 14,
+      mass: 0.8
+    }
+  }
+};
+
+// Optimasi untuk card hover
+const cardHover = {
+  scale: 1.02,
+  y: -5,
+  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+  transition: { 
+    type: "spring", 
+    stiffness: 400, 
+    damping: 15 
   }
 };
 
@@ -62,6 +223,26 @@ function Report({ result }) {
   const [shareSuccess, setShareSuccess] = useState(false);
   const [imageError, setImageError] = useState(false);
   const reportRef = useRef(null);
+  
+  // Menggunakan useAnimation untuk kontrol animasi yang lebih baik
+  const controls = useAnimation();
+  
+  // Menggunakan useSpring untuk animasi yang lebih smooth
+  const springProgress = useSpring(0, { 
+    stiffness: 100, 
+    damping: 20 
+  });
+  
+  // Menggunakan intersection observer untuk lazy animation
+  const [headerRef, headerInView] = useInView();
+  const [contentRef, contentInView] = useInView();
+  
+  // Trigger animasi ketika elemen dalam viewport
+  useEffect(() => {
+    if (headerInView) {
+      controls.start("visible");
+    }
+  }, [headerInView, controls]);
 
   if (!result) {
     return (
@@ -239,11 +420,43 @@ function Report({ result }) {
         return y + (lines.length * lineHeight);
       };
       
-      // Header
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, 0, pageWidth, 40, 'F');
+      // Fungsi untuk menambahkan gradient rectangle
+      const addGradientRect = (x, y, width, height, color1, color2) => {
+        const numRects = 20;
+        const rectWidth = width / numRects;
+        
+        for (let i = 0; i < numRects; i++) {
+          const ratio = i / numRects;
+          const r = Math.floor(color1.r + (color2.r - color1.r) * ratio);
+          const g = Math.floor(color1.g + (color2.g - color1.g) * ratio);
+          const b = Math.floor(color1.b + (color2.b - color1.b) * ratio);
+          
+          pdf.setFillColor(r, g, b);
+          pdf.rect(x + (i * rectWidth), y, rectWidth, height, 'F');
+        }
+      };
       
-      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
+      // Fungsi untuk menambahkan rounded rectangle
+      const addRoundedRect = (x, y, width, height, radius, fillColor, strokeColor = null) => {
+        const r = radius;
+        const w = width;
+        const h = height;
+        
+        pdf.setFillColor(fillColor.r, fillColor.g, fillColor.b);
+        if (strokeColor) {
+          pdf.setDrawColor(strokeColor.r, strokeColor.g, strokeColor.b);
+          pdf.setLineWidth(0.5);
+        }
+        
+        // Draw rectangle with rounded corners
+        pdf.roundedRect(x, y, w, h, r, r, strokeColor ? 'FD' : 'F');
+      };
+      
+      // Header dengan gradient
+      addGradientRect(0, 0, pageWidth, 40, {r: 37, g: 99, b: 235}, {r: 79, g: 70, b: 229});
+      
+      // Logo dan judul
+      pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(24);
       pdf.setFont(undefined, 'bold');
       pdf.text('Laporan Analisis Retina', pageWidth / 2, 20, { align: 'center' });
@@ -255,83 +468,103 @@ function Report({ result }) {
       
       let yPos = 50;
       
-      // Logo RetinaScan (opsional - ganti dengan path logo yang sesuai)
-      // pdf.addImage('path/to/logo.png', 'PNG', margin, yPos - 15, 40, 15);
+      // Decorative element
+      addGradientRect(margin, yPos - 3, 50, 1, {r: 79, g: 70, b: 229}, {r: 147, g: 51, b: 234});
       
       // Informasi pasien jika tersedia
       if (patient) {
-        pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
-        pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
+        addRoundedRect(margin, yPos, pageWidth - (margin * 2), 40, 5, {r: 240, g: 249, b: 255});
         
         pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(14);
+        pdf.setFontSize(16);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Informasi Pasien', margin + 5, yPos + 10);
+        pdf.text('Informasi Pasien', margin + 10, yPos + 15);
         
         pdf.setFontSize(11);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(60, 60, 60);
-        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
-        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
+        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 10, yPos + 25);
         
-        yPos += 40;
+        const genderText = patient.gender === 'male' ? 'Laki-laki' : 'Perempuan';
+        pdf.text(`Jenis Kelamin: ${genderText}`, margin + 10, yPos + 35);
+        
+        pdf.text(`Umur: ${patient.age} tahun`, pageWidth - margin - 10, yPos + 25, { align: 'right' });
+        
+        if (patient.bloodType) {
+          pdf.text(`Golongan Darah: ${patient.bloodType}`, pageWidth - margin - 10, yPos + 35, { align: 'right' });
+        }
+        
+        yPos += 50;
       } else {
         yPos += 10;
       }
       
-      // Hasil analisis
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
+      // Hasil analisis dengan desain modern
+      addRoundedRect(margin, yPos, pageWidth - (margin * 2), 60, 5, {r: 245, g: 250, b: 255});
       
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', margin + 5, yPos + 10);
+      pdf.text('Hasil Analisis', margin + 10, yPos + 15);
       
-      // Tingkat keparahan
+      // Tingkat keparahan dengan badge
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
+      pdf.text('Tingkat Keparahan:', margin + 10, yPos + 30);
       
       // Set warna berdasarkan tingkat keparahan
       const severityLevel = severity.toLowerCase();
+      let severityColor = {r: 59, g: 130, b: 246}; // Default blue
+      
       if (severityLevel === 'ringan') {
-        pdf.setTextColor(39, 174, 96); // Hijau
+        severityColor = {r: 16, g: 185, b: 129}; // Green
       } else if (severityLevel === 'sedang') {
-        pdf.setTextColor(241, 196, 15); // Kuning
+        severityColor = {r: 245, g: 158, b: 11}; // Yellow
       } else if (severityLevel === 'berat' || severityLevel === 'sangat berat') {
-        pdf.setTextColor(231, 76, 60); // Merah
-      } else {
-        pdf.setTextColor(52, 152, 219); // Biru
+        severityColor = {r: 239, g: 68, b: 68}; // Red
       }
       
-      pdf.setFontSize(16);
+      // Badge untuk severity
+      addRoundedRect(margin + 45, yPos + 25, 60, 10, 5, severityColor);
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'bold');
-      pdf.text(severity, margin + 50, yPos + 25);
+      pdf.text(severity, margin + 75, yPos + 31.5, { align: 'center' });
       
       // Tingkat kepercayaan
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 5, yPos + 40);
+      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 10, yPos + 45);
       
       // Gambar bar untuk confidence
-      const barWidth = 50;
+      const barWidth = 80;
+      const barHeight = 6;
       const confidenceWidth = barWidth * confidence;
-      pdf.setFillColor(220, 220, 220); // Background bar
-      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
-      pdf.setFillColor(37, 99, 235); // Filled bar
-      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
       
-      yPos += 60;
+      // Background bar
+      addRoundedRect(margin + 60, yPos + 42, barWidth, barHeight, 3, {r: 229, g: 231, b: 235});
+      
+      // Filled bar with gradient
+      if (confidenceWidth > 0) {
+        addGradientRect(margin + 60, yPos + 42, confidenceWidth, barHeight, 
+          {r: 37, g: 99, b: 235}, {r: 79, g: 70, b: 229});
+      }
+      
+      yPos += 70;
       
       // Gambar
       if (result.image && typeof result.image === 'string') {
         try {
           // Tambahkan gambar jika tersedia
-          const imgWidth = 100;
-          const imgHeight = 100;
+          const imgWidth = 120;
+          const imgHeight = 120;
+          
+          // Background untuk gambar
+          addRoundedRect(pageWidth / 2 - imgWidth / 2 - 5, yPos - 5, imgWidth + 10, imgHeight + 10, 5, {r: 249, g: 250, b: 251});
+          
           pdf.addImage(result.image, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
           yPos += imgHeight + 10;
           
@@ -348,13 +581,12 @@ function Report({ result }) {
       }
       
       // Rekomendasi
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
+      addRoundedRect(margin, yPos, pageWidth - (margin * 2), 50, 5, {r: 239, g: 246, b: 255});
       
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 5, yPos + 10);
+      pdf.text('Rekomendasi', margin + 10, yPos + 15);
       
       pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
@@ -375,21 +607,19 @@ function Report({ result }) {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
+      yPos = addWrappedText(recommendation, margin + 10, yPos + 25, pageWidth - (margin * 2) - 20, 6);
       yPos += 15;
       
       // Disclaimer
-      pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
+      addRoundedRect(margin, yPos, pageWidth - (margin * 2), 30, 5, {r: 249, g: 250, b: 251});
       
       pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
       const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
+      yPos = addWrappedText(disclaimer, margin + 10, yPos + 10, pageWidth - (margin * 2) - 20, 5);
       
-      // Footer
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+      // Footer dengan gradient
+      addGradientRect(0, pageHeight - 20, pageWidth, 20, {r: 37, g: 99, b: 235}, {r: 79, g: 70, b: 229});
       
       pdf.setFontSize(10);
       pdf.setTextColor(255, 255, 255);
@@ -419,7 +649,129 @@ function Report({ result }) {
       if (navigator.share) {
         // Buat PDF untuk dishare
         const pdf = new jsPDF('p', 'mm', 'a4');
-        // Gunakan fungsi yang sama dengan handleDownload untuk membuat PDF
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 20;
+        
+        // Fungsi untuk menambahkan teks dengan wrapping
+        const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
+          const lines = pdf.splitTextToSize(text, maxWidth);
+          pdf.text(lines, x, y);
+          return y + (lines.length * lineHeight);
+        };
+        
+        // Fungsi untuk menambahkan gradient rectangle
+        const addGradientRect = (x, y, width, height, color1, color2) => {
+          const numRects = 20;
+          const rectWidth = width / numRects;
+          
+          for (let i = 0; i < numRects; i++) {
+            const ratio = i / numRects;
+            const r = Math.floor(color1.r + (color2.r - color1.r) * ratio);
+            const g = Math.floor(color1.g + (color2.g - color1.g) * ratio);
+            const b = Math.floor(color1.b + (color2.b - color1.b) * ratio);
+            
+            pdf.setFillColor(r, g, b);
+            pdf.rect(x + (i * rectWidth), y, rectWidth, height, 'F');
+          }
+        };
+        
+        // Fungsi untuk menambahkan rounded rectangle
+        const addRoundedRect = (x, y, width, height, radius, fillColor, strokeColor = null) => {
+          const r = radius;
+          const w = width;
+          const h = height;
+          
+          pdf.setFillColor(fillColor.r, fillColor.g, fillColor.b);
+          if (strokeColor) {
+            pdf.setDrawColor(strokeColor.r, strokeColor.g, strokeColor.b);
+            pdf.setLineWidth(0.5);
+          }
+          
+          // Draw rectangle with rounded corners
+          pdf.roundedRect(x, y, w, h, r, r, strokeColor ? 'FD' : 'F');
+        };
+        
+        // Header dengan gradient
+        addGradientRect(0, 0, pageWidth, 40, {r: 37, g: 99, b: 235}, {r: 79, g: 70, b: 229});
+        
+        // Logo dan judul
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(24);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Laporan Analisis Retina', pageWidth / 2, 20, { align: 'center' });
+        
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'normal');
+        const currentDate = formatDate(new Date());
+        pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, 30, { align: 'center' });
+        
+        let yPos = 50;
+        
+        // Decorative element
+        addGradientRect(margin, yPos - 3, 50, 1, {r: 79, g: 70, b: 229}, {r: 147, g: 51, b: 234});
+        
+        // Informasi pasien jika tersedia
+        if (patient) {
+          addRoundedRect(margin, yPos, pageWidth - (margin * 2), 40, 5, {r: 240, g: 249, b: 255});
+          
+          pdf.setTextColor(0, 0, 0);
+          pdf.setFontSize(16);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Informasi Pasien', margin + 10, yPos + 15);
+          
+          pdf.setFontSize(11);
+          pdf.setFont(undefined, 'normal');
+          pdf.setTextColor(60, 60, 60);
+          pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 10, yPos + 25);
+          
+          const genderText = patient.gender === 'male' ? 'Laki-laki' : 'Perempuan';
+          pdf.text(`Jenis Kelamin: ${genderText}`, margin + 10, yPos + 35);
+          
+          pdf.text(`Umur: ${patient.age} tahun`, pageWidth - margin - 10, yPos + 25, { align: 'right' });
+          
+          if (patient.bloodType) {
+            pdf.text(`Golongan Darah: ${patient.bloodType}`, pageWidth - margin - 10, yPos + 35, { align: 'right' });
+          }
+          
+          yPos += 50;
+        } else {
+          yPos += 10;
+        }
+        
+        // Hasil analisis dengan desain modern
+        addRoundedRect(margin, yPos, pageWidth - (margin * 2), 60, 5, {r: 245, g: 250, b: 255});
+        
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(16);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Hasil Analisis', margin + 10, yPos + 15);
+        
+        // Tingkat keparahan dengan badge
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(60, 60, 60);
+        pdf.text('Tingkat Keparahan:', margin + 10, yPos + 30);
+        
+        // Set warna berdasarkan tingkat keparahan
+        const severityLevel = severity.toLowerCase();
+        let severityColor = {r: 59, g: 130, b: 246}; // Default blue
+        
+        if (severityLevel === 'ringan') {
+          severityColor = {r: 16, g: 185, b: 129}; // Green
+        } else if (severityLevel === 'sedang') {
+          severityColor = {r: 245, g: 158, b: 11}; // Yellow
+        } else if (severityLevel === 'berat' || severityLevel === 'sangat berat') {
+          severityColor = {r: 239, g: 68, b: 68}; // Red
+        }
+        
+        // Badge untuk severity
+        addRoundedRect(margin + 45, yPos + 25, 60, 10, 5, severityColor);
+        
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(severity, margin + 75, yPos + 31.5, { align: 'center' });
         
         // Simpan PDF ke Blob
         const pdfBlob = pdf.output('blob');
@@ -468,95 +820,44 @@ function Report({ result }) {
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { type: 'spring', damping: 12 }
-    }
-  };
-
-  // Safely extract values with defaults
-  const extractValueWithDefault = (obj, path, defaultValue) => {
-    try {
-      const parts = path.split('.');
-      let current = obj;
-      
-      for (const part of parts) {
-        if (current === undefined || current === null) {
-          return defaultValue;
-        }
-        current = current[part];
-      }
-      
-      return current !== undefined && current !== null ? current : defaultValue;
-    } catch (e) {
-      console.error(`Error extracting ${path}:`, e);
-      return defaultValue;
-    }
-  };
-
-  // Safe extraction of patient data
-  const patientName = extractValueWithDefault(patient, 'fullName', extractValueWithDefault(patient, 'name', 'Tidak ada nama'));
-  const patientGender = extractValueWithDefault(patient, 'gender', '');
-  const patientAge = extractValueWithDefault(patient, 'age', '');
-  const patientPhone = extractValueWithDefault(patient, 'phone', '-');
-
-  // Safe extraction of result data
-  const resultDate = extractValueWithDefault(result, 'createdAt', new Date().toISOString());
-  const resultSeverity = extractValueWithDefault(result, 'severity', 'Tidak diketahui');
-  const resultConfidence = extractValueWithDefault(result, 'confidence', 0);
-  const resultNotes = extractValueWithDefault(result, 'notes', extractValueWithDefault(result, 'recommendation', 'Tidak ada catatan'));
-
   // JSX for Image Viewer with improved error handling
   const ImageViewer = () => (
-    <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg group">
+    <motion.div 
+      className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg"
+      variants={fadeInUp}
+      whileHover={{ scale: 1.01, transition: { duration: 0.3 } }} // Mengurangi scale untuk performa yang lebih baik
+    >
       {/* Loading overlay */}
       {!imageError && (
         <motion.div 
-          className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-10"
+          className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800/70 to-gray-900/80 z-10"
           initial={{ opacity: 1 }}
-          animate={{ opacity: 0 }}
-          transition={{ delay: 1, duration: 0.5 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, transition: { duration: 0.3 } }} // Mempercepat exit transition
         >
-          <motion.div 
-            className="w-12 h-12 border-4 border-white rounded-full border-t-transparent"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          ></motion.div>
+          <div className="relative">
+            <motion.div 
+              className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }} // Mempercepat rotasi
+            />
+            <motion.div 
+              className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-300 rounded-full"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }} // Mempercepat rotasi
+            />
+          </div>
         </motion.div>
       )}
-      
-      {/* Zoom overlay on hover */}
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100">
-        <motion.div 
-          className="bg-white/90 rounded-full p-3"
-          initial={{ scale: 0 }}
-          whileInView={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <FiEye size={24} className="text-blue-600" />
-        </motion.div>
-      </div>
       
       {/* Actual image */}
       <motion.img
         src={getImageSource()}
         alt="Retina scan"
-        className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+        className="w-full h-full object-contain"
+        initial={{ filter: 'blur(8px)', scale: 1.05 }}
+        animate={{ filter: 'blur(0px)', scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }} // Mempercepat transisi
         onLoad={(e) => {
           // Hide loading overlay
           if (e.target.previousSibling) {
@@ -571,144 +872,197 @@ function Report({ result }) {
           e.target.onerror = null;
           e.target.src = '/images/default-retina.jpg';
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        whileHover={{ scale: 1.05 }}
       />
       
-      {/* Error overlay */}
-      {imageError && (
-        <motion.div 
-          className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      {/* Error overlay - optimized */}
+      <AnimatePresence>
+        {imageError && (
+          <motion.div 
+            className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-800/80 to-gray-900/90 z-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }} // Mempercepat transisi
           >
-            <FiAlertTriangle className="text-yellow-400 text-4xl mb-3" />
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 250, damping: 20 }} // Mengoptimalkan spring
+            >
+              <FiAlertTriangle className="text-yellow-400 text-5xl mb-4" />
+            </motion.div>
+            <motion.p 
+              className="text-white text-center text-lg font-medium mb-2"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }} // Mengurangi delay
+            >
+              Gambar tidak dapat ditampilkan
+            </motion.p>
+            <motion.p 
+              className="text-gray-300 text-center text-sm mb-4"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }} // Mengurangi delay
+            >
+              Terjadi kesalahan saat memuat gambar
+            </motion.p>
+            <motion.button 
+              onClick={() => {
+                setImageError(false);
+                // Force reload image with timestamp
+                const img = document.querySelector('img[alt="Retina scan"]');
+                if (img) {
+                  const imgSrc = getImageSource();
+                  img.src = imgSrc.includes('?') 
+                    ? `${imgSrc}&reload=${new Date().getTime()}`
+                    : `${imgSrc}?reload=${new Date().getTime()}`;
+                }
+              }}
+              className="mt-3 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all"
+              whileHover={{ scale: 1.03, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)' }} // Mengurangi scale
+              whileTap={{ scale: 0.97 }} // Mengurangi scale
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }} // Mengurangi delay
+            >
+              <span className="flex items-center gap-2">
+                <FiEye className="text-blue-100" />
+                Coba Lagi
+              </span>
+            </motion.button>
           </motion.div>
-          <p className="text-white text-center">Gambar tidak dapat ditampilkan</p>
-          <motion.button 
-            onClick={() => {
-              setImageError(false);
-              // Force reload image with timestamp
-              const img = document.querySelector('img[alt="Retina scan"]');
-              if (img) {
-                const imgSrc = getImageSource();
-                img.src = imgSrc.includes('?') 
-                  ? `${imgSrc}&reload=${new Date().getTime()}`
-                  : `${imgSrc}?reload=${new Date().getTime()}`;
-              }
-            }}
-            className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-            whileHover={{ scale: 1.05, backgroundColor: "#3b82f6" }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Coba Lagi
-          </motion.button>
-        </motion.div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 
   return (
     <div className="w-full max-w-4xl mx-auto">
       <motion.div
-        className="flex justify-between items-center mb-6"
+        ref={headerRef}
+        className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4"
         initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={controls}
+        variants={{
+          visible: { 
+            opacity: 1, 
+            y: 0,
+            transition: { 
+              type: "spring", 
+              stiffness: 80, 
+              damping: 12 
+            }
+          }
+        }}
       >
-        <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-          Hasil Analisis Retina
-        </h3>
-        <div className="flex gap-3">
+        <div>
+          <motion.h3 
+            className="text-2xl font-bold relative"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+              Hasil Analisis Retina
+            </span>
+            <motion.div 
+              className="absolute -bottom-1 left-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: '60%' }}
+              transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+            />
+          </motion.h3>
+          <motion.p 
+            className="text-gray-500 mt-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            Laporan pemeriksaan tanggal {formatDate(new Date()).split(',')[0]}
+          </motion.p>
+        </div>
+
+        <motion.div 
+          className="flex gap-3"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
           <motion.button
-            initial="initial"
-            whileHover="hover"
-            whileTap="tap"
-            animate={isLoading ? "loading" : "initial"}
-            variants={buttonVariants}
+            variants={fadeInUp}
+            whileHover={{ 
+              scale: 1.05, 
+              boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2)'
+            }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleDownload}
             disabled={isLoading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-md relative overflow-hidden group"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all text-sm font-medium shadow-md"
           >
-            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-            <span className="absolute inset-0 w-0 bg-white/20 group-hover:w-full transition-all duration-500"></span>
-            <FiDownload className="text-blue-100 relative z-10" />
-            <span className="relative z-10">
-              {isLoading ? 'Memproses...' : 'Unduh PDF'}
-            </span>
-            {isLoading && (
-              <motion.span 
-                className="absolute inset-0 bg-blue-600/10 rounded-xl"
-                animate={{ 
-                  boxShadow: [
-                    '0 0 0 0 rgba(59, 130, 246, 0)',
-                    '0 0 0 10px rgba(59, 130, 246, 0.3)',
-                    '0 0 0 20px rgba(59, 130, 246, 0)'
-                  ]
-                }}
-                transition={{ 
-                  repeat: Infinity,
-                  duration: 1.5
-                }}
-              />
+            {isLoading ? (
+              <>
+                <motion.div 
+                  className="w-4 h-4 border-2 border-blue-100 border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+                <span>Memproses...</span>
+              </>
+            ) : (
+              <>
+                <FiDownload className="text-blue-100" />
+                <span>Unduh PDF</span>
+              </>
             )}
           </motion.button>
+          
           <motion.button
-            initial="initial"
-            whileHover="hover"
-            whileTap="tap"
-            variants={buttonVariants}
+            variants={fadeInUp}
+            whileHover={{ 
+              scale: 1.05, 
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' 
+            }}
+            whileTap={{ scale: 0.95 }}
             onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shadow-md relative overflow-hidden group"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium shadow-md"
             style={glassEffect}
           >
-            <span className="absolute inset-0 w-0 bg-gray-100/50 group-hover:w-full transition-all duration-500"></span>
-            <FiPrinter className="text-gray-600 relative z-10" />
-            <span className="relative z-10">Cetak</span>
+            <FiPrinter className="text-gray-600" />
+            <span>Cetak</span>
           </motion.button>
+          
           <motion.button
-            initial="initial"
-            whileHover="hover"
-            whileTap="tap"
-            variants={buttonVariants}
-            className="flex items-center justify-center w-10 h-10 rounded-full relative overflow-hidden group"
+            variants={fadeInUp}
+            whileHover={{ 
+              scale: 1.05, 
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' 
+            }}
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center justify-center w-10 h-10 rounded-full"
             style={glassEffect}
             onClick={handleShare}
             disabled={isShareLoading}
           >
-            <span className="absolute inset-0 w-0 bg-gray-100/50 group-hover:w-full transition-all duration-500 rounded-full"></span>
             {isShareLoading ? (
-              <div className="w-5 h-5 border-t-2 border-b-2 border-gray-600 rounded-full animate-spin relative z-10"></div>
+              <motion.div 
+                className="w-5 h-5 border-2 border-gray-600 border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
             ) : shareSuccess ? (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
               >
-                <FiCheck className="text-green-600 relative z-10" />
+                <FiCheck className="text-green-600" />
               </motion.div>
             ) : (
-              <FiShare2 className="text-gray-600 relative z-10" />
+              <FiShare2 className="text-gray-600" />
             )}
-            
-            {/* Tooltip for share button */}
-            <motion.div
-              className="absolute bottom-full mb-2 bg-gray-800 text-white text-xs py-1 px-2 rounded pointer-events-none"
-              initial="hidden"
-              animate={shareSuccess ? "visible" : "hidden"}
-              variants={tooltipVariants}
-            >
-              Berhasil dibagikan!
-            </motion.div>
           </motion.button>
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Tambahkan indikator mode simulasi */}
@@ -718,53 +1072,123 @@ function Report({ result }) {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          className="mb-6 text-sm flex items-start rounded-xl overflow-hidden"
-          style={{ ...glassEffect, background: 'rgba(254, 240, 199, 0.7)' }}
+          className="mb-6 text-sm relative overflow-hidden rounded-xl"
+          style={{ ...glassEffectBlue, background: 'rgba(254, 240, 199, 0.7)' }}
         >
-          <div className="bg-amber-500 h-full w-2"></div>
-          <div className="p-5">
+          {/* Animated background pattern */}
+          <motion.div 
+            className="absolute inset-0 opacity-10"
+            initial={{ backgroundPositionX: '0%' }}
+            animate={{ backgroundPositionX: '100%' }}
+            transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+            style={{
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23d97706\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+              backgroundSize: '20px 20px'
+            }}
+          />
+          
+          <div className="bg-amber-500 h-full w-2 absolute left-0 top-0"></div>
+          <div className="p-5 relative z-10">
             <div className="flex items-start">
-              <FiAlertTriangle className="w-6 h-6 mr-3 flex-shrink-0 text-amber-600" />
+              <motion.div
+                initial={{ rotate: -10 }}
+                animate={{ rotate: [0, -10, 0] }}
+                transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 1 }}
+              >
+                <FiAlertTriangle className="w-6 h-6 mr-3 flex-shrink-0 text-amber-600" />
+              </motion.div>
               <div>
-                <p className="font-bold mb-2 text-base text-amber-800">PERHATIAN: Laporan dalam Mode Simulasi</p>
-                <p className="mb-2 text-amber-700">Hasil analisis ini menggunakan <span className="font-bold underline">data simulasi</span> karena layanan AI tidak tersedia saat ini.</p>
-                <p className="text-amber-800 font-bold">Hasil ini TIDAK BOLEH digunakan untuk diagnosis klinis. Silakan konsultasikan dengan dokter mata untuk evaluasi yang akurat.</p>
+                <motion.p 
+                  className="font-bold mb-2 text-base text-amber-800"
+                  variants={fadeInUp}
+                >
+                  PERHATIAN: Laporan dalam Mode Simulasi
+                </motion.p>
+                <motion.p 
+                  className="mb-2 text-amber-700"
+                  variants={fadeInUp}
+                >
+                  Hasil analisis ini menggunakan <span className="font-bold underline">data simulasi</span> karena layanan AI tidak tersedia saat ini.
+                </motion.p>
+                <motion.p 
+                  className="text-amber-800 font-bold"
+                  variants={fadeInUp}
+                >
+                  Hasil ini TIDAK BOLEH digunakan untuk diagnosis klinis. Silakan konsultasikan dengan dokter mata untuk evaluasi yang akurat.
+                </motion.p>
               </div>
             </div>
             <motion.div 
               className="mt-3 p-3 rounded-md border border-amber-200"
               style={{ background: 'rgba(254, 243, 199, 0.7)' }}
-              initial={{ opacity: 0.8 }}
-              whileHover={{ opacity: 1, scale: 1.01 }}
+              initial={{ opacity: 0.8, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ opacity: 1, scale: 1.01, boxShadow: '0 4px 12px rgba(217, 119, 6, 0.15)' }}
+              transition={{ delay: 0.2 }}
             >
-              <p className="text-xs font-semibold text-amber-700">Untuk menggunakan model AI sebenarnya, jalankan script pengujian koneksi:</p>
-              <code className="text-xs bg-white/70 p-2 rounded mt-1 block text-amber-800 font-mono">npm run test:flask</code>
+              <motion.p 
+                className="text-xs font-semibold text-amber-700"
+                variants={fadeInUp}
+              >
+                Untuk menggunakan model AI sebenarnya, jalankan script pengujian koneksi:
+              </motion.p>
+              <motion.code 
+                className="text-xs bg-white/70 p-2 rounded mt-1 block text-amber-800 font-mono"
+                whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+              >
+                npm run test:flask
+              </motion.code>
             </motion.div>
           </div>
+          
+          {/* Animated warning indicator */}
+          <motion.div 
+            className="absolute top-3 right-3 w-3 h-3 rounded-full bg-amber-500"
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.7, 1, 0.7]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
         </motion.div>
       )}
 
       <motion.div
-        ref={reportRef}
+        ref={contentRef}
         className="rounded-xl overflow-hidden shadow-xl pdf-container"
         style={{ ...glassEffect, background: 'rgba(255, 255, 255, 0.9)' }}
         variants={containerVariants}
         initial="hidden"
-        animate="visible"
+        animate={contentInView ? "visible" : "hidden"}
+        whileHover={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' }}
+        transition={{ duration: 0.4 }}
+        layout
       >
         {/* Header */}
-        <div className="relative overflow-hidden">
+        <motion.div 
+          className="relative overflow-hidden"
+          variants={itemVariants}
+        >
           {/* Background gradient */}
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"
+            initial={{ opacity: 0.8 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5 }}
+          />
           
           {/* Background pattern */}
           <motion.div 
             className="absolute inset-0 opacity-10"
             initial={{ backgroundPositionX: '0%' }}
             animate={{ backgroundPositionX: '100%' }}
-            transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
+            transition={{ duration: 20, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
             style={{
-              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM57 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+              backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
               backgroundSize: '30px 30px'
             }}
           ></motion.div>
@@ -777,7 +1201,7 @@ function Report({ result }) {
                   className="text-3xl font-bold mb-2"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
                 >
                   Laporan Analisis Retina
                 </motion.h2>
@@ -795,7 +1219,7 @@ function Report({ result }) {
                 className="text-right"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.4, type: "spring", stiffness: 200, damping: 20 }}
               >
                 <div className="text-lg font-semibold text-white">RetinaScan AI</div>
                 <div className="text-sm text-blue-100">Deteksi Retinopati Diabetik</div>
@@ -804,15 +1228,9 @@ function Report({ result }) {
                   (result.raw_prediction && result.raw_prediction.is_simulation)) && (
                   <motion.div 
                     className="mt-2"
-                    animate={{ 
-                      opacity: [0.7, 1, 0.7],
-                      scale: [1, 1.02, 1]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    }}
+                    variants={pulseAnimation}
+                    initial="initial"
+                    animate="animate"
                   >
                     <span className="bg-amber-600 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
                       SIMULASI - BUKAN HASIL SEBENARNYA
@@ -824,23 +1242,33 @@ function Report({ result }) {
           </div>
           
           {/* Decorative bottom wave */}
-          <div className="absolute bottom-0 left-0 right-0">
+          <motion.div 
+            className="absolute bottom-0 left-0 right-0"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" className="w-full h-12">
               <path fill="rgba(255, 255, 255, 0.9)" fillOpacity="1" d="M0,32L48,37.3C96,43,192,53,288,58.7C384,64,480,64,576,53.3C672,43,768,21,864,16C960,11,1056,21,1152,32C1248,43,1344,53,1392,58.7L1440,64L1440,100L1392,100C1344,100,1248,100,1152,100C1056,100,960,100,864,100C768,100,672,100,576,100C480,100,384,100,288,100C192,100,96,100,48,100L0,100Z"></path>
             </svg>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Patient Information */}
         {patient && (
           <motion.div 
             className="p-6 border-b bg-blue-50"
             variants={itemVariants}
+            whileHover={{ backgroundColor: 'rgba(219, 234, 254, 0.7)' }}
           >
             <h3 className="font-semibold mb-4 text-gray-700 flex items-center text-lg">
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 shadow-md">
+              <motion.div 
+                className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 shadow-md"
+                whileHover={{ scale: 1.1, backgroundColor: '#3b82f6' }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
                 <FiUser className="text-white" />
-              </div>
+              </motion.div>
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                 Informasi Pasien
               </span>
@@ -850,27 +1278,31 @@ function Report({ result }) {
               style={glassEffect}
               whileHover={{ boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
               transition={{ duration: 0.3 }}
+              variants={staggerContainer}
             >
               <motion.div 
                 className="p-4 rounded-lg bg-white/50"
                 whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                variants={fadeInUp}
               >
                 <p className="text-sm text-blue-500 font-medium mb-1">Nama Lengkap</p>
-                <p className="font-semibold text-gray-800 text-lg">{patientName}</p>
+                <p className="font-semibold text-gray-800 text-lg">{patient.fullName || patient.name}</p>
               </motion.div>
               <motion.div 
                 className="p-4 rounded-lg bg-white/50"
                 whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                variants={fadeInUp}
               >
                 <p className="text-sm text-blue-500 font-medium mb-1">Jenis Kelamin / Umur</p>
                 <p className="font-semibold text-gray-800 text-lg">
-                  {patientGender}, {patientAge} tahun
+                  {patient.gender}, {patient.age} tahun
                 </p>
               </motion.div>
               {patient.dateOfBirth && (
                 <motion.div 
                   className="p-4 rounded-lg bg-white/50"
                   whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                  variants={fadeInUp}
                 >
                   <p className="text-sm text-blue-500 font-medium mb-1">Tanggal Lahir</p>
                   <p className="font-semibold text-gray-800 text-lg">{new Date(patient.dateOfBirth).toLocaleDateString('id-ID')}</p>
@@ -880,9 +1312,23 @@ function Report({ result }) {
                 <motion.div 
                   className="p-4 rounded-lg bg-white/50"
                   whileHover={{ y: -2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}
+                  variants={fadeInUp}
                 >
                   <p className="text-sm text-blue-500 font-medium mb-1">Golongan Darah</p>
-                  <p className="font-semibold text-gray-800 text-lg">{patient.bloodType}</p>
+                  <motion.div 
+                    className="flex items-center"
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  >
+                    <motion.span 
+                      className="inline-flex items-center justify-center w-8 h-8 mr-2 rounded-full bg-red-100 text-red-800 font-bold text-sm"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      {patient.bloodType}
+                    </motion.span>
+                    <p className="font-semibold text-gray-800 text-lg">{patient.bloodType}</p>
+                  </motion.div>
                 </motion.div>
               )}
             </motion.div>
@@ -909,8 +1355,8 @@ function Report({ result }) {
               <motion.div 
                 className="p-6 mb-6 rounded-xl shadow-md relative overflow-hidden"
                 style={{ ...glassEffect }}
-                variants={itemVariants}
-                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+                variants={imageVariants}
+                whileHover={cardHover}
               >
                 <ImageViewer />
               </motion.div>
@@ -934,7 +1380,8 @@ function Report({ result }) {
               <motion.div 
                 className={`p-6 rounded-xl mb-6 shadow-md overflow-hidden relative`}
                 style={{ ...glassEffect }}
-                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+                whileHover={cardHover}
+                variants={itemVariants}
               >
                 <motion.div 
                   className="absolute inset-0 opacity-10"
@@ -960,7 +1407,8 @@ function Report({ result }) {
               <motion.div 
                 className="mb-6 p-5 rounded-xl shadow-md"
                 style={{ ...glassEffect }}
-                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+                whileHover={cardHover}
+                variants={itemVariants}
               >
                 <div className="flex justify-between mb-2">
                   <p className="text-sm text-gray-700 font-medium">Tingkat Kepercayaan</p>
@@ -998,7 +1446,8 @@ function Report({ result }) {
               <motion.div 
                 className="p-6 rounded-xl mt-auto shadow-md relative overflow-hidden"
                 style={{ ...glassEffect }}
-                whileHover={{ y: -3, boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+                whileHover={cardHover}
+                variants={itemVariants}
               >
                 <motion.div 
                   className="absolute inset-0 opacity-10"

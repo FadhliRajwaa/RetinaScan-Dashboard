@@ -270,7 +270,7 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-      >
+    >
         <motion.div 
           variants={itemVariants}
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
@@ -333,7 +333,7 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
               animate="visible"
               exit="exit"
               className="overflow-hidden"
-            >
+          >
               <div className="p-5 bg-gray-50 rounded-xl border border-gray-100 mt-2 mb-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <motion.div
@@ -415,8 +415,8 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
                         >
                           {type}
                         </motion.button>
-                      ))}
-                    </div>
+                    ))}
+                </div>
                   </motion.div>
               </div>
               
