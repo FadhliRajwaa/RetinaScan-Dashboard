@@ -61,6 +61,45 @@ function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
       
       console.log('Menyimpan hasil analisis ke database dan mengarahkan ke halaman history');
       
+      // Validasi data sebelum dikirim ke server
+      if (!result) {
+        throw new Error('Tidak ada data analisis yang tersedia untuk disimpan');
+      }
+      
+      // Pastikan ada data pasien
+      if (!result.patientId && !result.patient) {
+        throw new Error('Tidak ada data pasien dalam hasil analisis');
+      }
+      
+      // Pastikan ada data gambar
+      if (!result.imageData && !result.image) {
+        console.warn('Tidak ada imageData yang valid dalam hasil analisis');
+        
+        // Jika tidak ada imageData, coba ambil dari uploadedImage
+        if (uploadedImage && uploadedImage.preview) {
+          console.log('Menggunakan preview dari uploadedImage sebagai imageData');
+          result.imageData = uploadedImage.preview;
+        } else {
+          throw new Error('Tidak ada data gambar yang valid untuk disimpan');
+        }
+      }
+      
+      // Jika result.image adalah string base64 tapi result.imageData kosong
+      if (!result.imageData && result.image && typeof result.image === 'string' && result.image.startsWith('data:')) {
+        console.log('Menggunakan result.image sebagai imageData');
+        result.imageData = result.image;
+      }
+      
+      // Log data lengkap yang akan dikirim
+      console.log('Data lengkap untuk disimpan:', {
+        hasPatientId: !!result.patientId,
+        hasPatient: !!result.patient,
+        patientType: result.patient ? typeof result.patient : 'undefined',
+        hasImageData: !!result.imageData,
+        hasImage: !!result.image,
+        imageType: result.image ? typeof result.image : 'undefined'
+      });
+      
       // Simpan hasil analisis ke database
       const savedResult = await saveAnalysisResult(result);
       

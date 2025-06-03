@@ -217,13 +217,22 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
   // Fungsi baru untuk menangani tombol "Lihat Hasil"
   const handleViewResults = () => {
     if (analysis && onAnalysisComplete) {
+      // Log data yang ada sebelum diproses
+      console.log('Data sebelum diproses:', {
+        analysis,
+        image,
+        hasPatientData: !!image?.patient,
+        hasPatientId: !!image?.patientId,
+        hasImageData: !!(image?.preview || analysis.imageData)
+      });
+      
       // Pastikan data gambar dan pasien disertakan saat memanggil callback
       const analysisWithImage = {
         ...analysis,
         image: image?.preview || image || analysis.image, // Tambahkan gambar yang diupload
         preview: image?.preview || analysis.preview, // Tambahkan preview gambar
         patient: image?.patient || analysis.patient, // Tambahkan data pasien dari gambar
-        patientId: image?.patientId || analysis.patientId, // Pastikan patientId terikut
+        patientId: image?.patientId || analysis.patientId || (image?.patient && image.patient._id) || (analysis.patient && analysis.patient._id), // Pastikan patientId terikut
         _id: analysis._id || analysis.id || analysis.analysisId, // Pastikan ID analisis konsisten
         id: analysis._id || analysis.id || analysis.analysisId, // Duplikasi ID untuk kompatibilitas
         originalFilename: image?.name || analysis.originalFilename || analysis.imageDetails?.originalname,
@@ -232,17 +241,35 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
         saveToDatabase: false
       };
       
-      // Log data untuk debugging
-      console.log('Meneruskan hasil analisis ke callback:', analysisWithImage);
-      
       // Pastikan imageData tersedia
       if (!analysisWithImage.imageData && analysisWithImage.image && typeof analysisWithImage.image === 'string' && analysisWithImage.image.startsWith('data:')) {
         analysisWithImage.imageData = analysisWithImage.image;
+      } else if (!analysisWithImage.imageData && image?.preview) {
+        analysisWithImage.imageData = image.preview;
       }
       
       // Pastikan patientId tersedia dalam format yang benar
       if (analysisWithImage.patient && !analysisWithImage.patientId) {
-        analysisWithImage.patientId = analysisWithImage.patient;
+        if (typeof analysisWithImage.patient === 'object' && analysisWithImage.patient._id) {
+          analysisWithImage.patientId = analysisWithImage.patient._id;
+        } else if (typeof analysisWithImage.patient === 'string') {
+          analysisWithImage.patientId = analysisWithImage.patient;
+        }
+      }
+      
+      // Log data final untuk debugging
+      console.log('Meneruskan hasil analisis ke callback:', {
+        ...analysisWithImage,
+        imageData: analysisWithImage.imageData ? '[BASE64_DATA]' : undefined
+      });
+      
+      // Validasi final
+      if (!analysisWithImage.patientId) {
+        console.error('PERINGATAN: Tidak ada patientId yang valid dalam data analisis');
+      }
+      
+      if (!analysisWithImage.imageData) {
+        console.error('PERINGATAN: Tidak ada imageData yang valid dalam data analisis');
       }
       
       onAnalysisComplete(analysisWithImage);

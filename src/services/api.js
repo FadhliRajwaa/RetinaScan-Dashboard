@@ -578,26 +578,62 @@ export const saveAnalysisResult = async (analysisData) => {
     
     console.log('Saving analysis result to database:', analysisData);
     
+    // Validasi patientId - pastikan data memiliki ID pasien yang valid
+    let patientId = null;
+    
+    // Coba dapatkan patientId dari berbagai kemungkinan struktur data
+    if (analysisData.patientId) {
+      // Jika patientId langsung ada sebagai properti
+      patientId = analysisData.patientId;
+    } else if (analysisData.patient && typeof analysisData.patient === 'object' && analysisData.patient._id) {
+      // Jika patientId ada di dalam objek patient sebagai _id
+      patientId = analysisData.patient._id;
+    } else if (analysisData.patient && typeof analysisData.patient === 'string') {
+      // Jika patient adalah string ID langsung
+      patientId = analysisData.patient;
+    }
+    
+    // Log patientId untuk debugging
+    console.log('PatientId extracted:', patientId);
+    
+    // Validasi final untuk patientId
+    if (!patientId) {
+      const errorMsg = 'ID Pasien tidak valid atau tidak ditemukan dalam data analisis';
+      console.error(errorMsg, {
+        availableData: {
+          hasPatientId: !!analysisData.patientId,
+          hasPatient: !!analysisData.patient,
+          patientType: analysisData.patient ? typeof analysisData.patient : 'undefined'
+        }
+      });
+      throw new Error(errorMsg);
+    }
+    
     // Pastikan data memiliki format yang benar
     const formattedData = {
       ...analysisData,
       // Pastikan ID tersedia dalam format yang benar
       _id: analysisData._id || analysisData.id || analysisData.analysisId,
-      // Pastikan patientId tersedia
-      patientId: analysisData.patientId || analysisData.patient?._id || analysisData.patient
+      // Gunakan patientId yang sudah divalidasi
+      patientId: patientId
     };
     
     // Siapkan FormData untuk endpoint upload
     const formData = new FormData();
     
     // Tambahkan data penting ke FormData
-    formData.append('patientId', formattedData.patientId);
+    formData.append('patientId', patientId);
+    
+    // Log patientId yang dikirim ke server
+    console.log('Sending patientId to server:', patientId);
     
     // Jika ada imageData (base64), tambahkan
     if (formattedData.imageData) {
       formData.append('imageData', formattedData.imageData);
     } else if (formattedData.image && typeof formattedData.image === 'string' && formattedData.image.startsWith('data:')) {
       formData.append('imageData', formattedData.image);
+    } else {
+      console.warn('Tidak ada imageData yang valid untuk dikirim ke server');
     }
     
     // Tambahkan data lain yang mungkin dibutuhkan
@@ -609,6 +645,12 @@ export const saveAnalysisResult = async (analysisData) => {
     
     // Tandai bahwa ini adalah penyimpanan manual, bukan upload baru
     formData.append('isManualSave', 'true');
+    
+    // Dump semua data FormData untuk debugging
+    console.log('FormData entries:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + (pair[0] === 'imageData' ? '[image data]' : pair[1]));
+    }
     
     // Gunakan endpoint /api/analysis/upload yang sudah ada
     const response = await axios.post(`${API_URL}/api/analysis/upload`, formData, {
