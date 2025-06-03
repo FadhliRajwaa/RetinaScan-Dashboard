@@ -87,6 +87,13 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   // Fungsi untuk menandai notifikasi sebagai dibaca
   const markAsRead = async (notificationId) => {
     try {
+      // Validasi notificationId
+      if (!notificationId) {
+        console.error('Notification ID is undefined');
+        toast.error('Gagal menandai notifikasi: ID tidak valid');
+        return;
+      }
+      
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -147,6 +154,13 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   // Fungsi untuk menghapus notifikasi
   const deleteNotification = async (notificationId) => {
     try {
+      // Validasi notificationId
+      if (!notificationId) {
+        console.error('Notification ID is undefined');
+        toast.error('Gagal menghapus notifikasi: ID tidak valid');
+        return;
+      }
+      
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -477,7 +491,12 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                markAsRead(notification._id);
+                                if (notification && notification._id) {
+                                  markAsRead(notification._id);
+                                } else {
+                                  console.error('Invalid notification ID');
+                                  toast.error('Gagal menandai: ID notifikasi tidak valid');
+                                }
                               }}
                               className="p-1 rounded-full hover:bg-blue-200 text-blue-700"
                               title="Tandai sebagai dibaca"
@@ -488,7 +507,12 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              deleteNotification(notification._id);
+                              if (notification && notification._id) {
+                                deleteNotification(notification._id);
+                              } else {
+                                console.error('Invalid notification ID');
+                                toast.error('Gagal menghapus: ID notifikasi tidak valid');
+                              }
                             }}
                             className="p-1 rounded-full hover:bg-red-200 text-red-700"
                             title="Hapus notifikasi"
