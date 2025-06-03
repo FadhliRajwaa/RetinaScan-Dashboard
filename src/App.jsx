@@ -17,6 +17,7 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
+import NotFound from './pages/NotFound';
 import NotificationTest from './components/test/NotificationTest';
 
 function App() {
@@ -297,7 +298,7 @@ function App() {
                     <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
                     <Route path="/report" element={<ReportPage userId={userId} />} />
                     <Route path="/test-notification" element={<NotificationTest />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </AnimatePresence>
               </main>

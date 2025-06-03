@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useSocket } from '../../context/SocketContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -8,6 +8,7 @@ const NotificationTest = () => {
   const { notifications, unreadCount, markAllAsRead } = useNotification();
   const [selectedTest, setSelectedTest] = useState('patient_added');
   const [testResult, setTestResult] = useState(null);
+  const [isTestRunning, setIsTestRunning] = useState(false);
   
   // Daftar tes yang tersedia
   const availableTests = [
@@ -59,7 +60,28 @@ const NotificationTest = () => {
     }
   };
   
+  // Mencegah multiple test runs
+  useEffect(() => {
+    if (isTestRunning) {
+      const timer = setTimeout(() => {
+        setIsTestRunning(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isTestRunning]);
+  
   const runTest = () => {
+    // Mencegah multiple test runs
+    if (isTestRunning) {
+      setTestResult({
+        success: false,
+        message: 'Mohon tunggu, tes sedang berjalan...'
+      });
+      return;
+    }
+    
+    setIsTestRunning(true);
     setTestResult(null);
     
     try {
@@ -74,11 +96,21 @@ const NotificationTest = () => {
               success: false,
               message: 'Socket tidak terhubung. Pastikan Anda sudah login dan server berjalan.'
             });
+            setIsTestRunning(false);
             return;
           }
           
           // Emit event ke server (ini akan dikirim kembali ke semua klien)
-          emit(selectedTest, dummyData[selectedTest]);
+          const emitSuccess = emit(selectedTest, dummyData[selectedTest]);
+          
+          if (!emitSuccess) {
+            setTestResult({
+              success: false,
+              message: 'Gagal mengirim event ke server. Socket mungkin tidak terhubung dengan baik.'
+            });
+            setIsTestRunning(false);
+            return;
+          }
           
           setTestResult({
             success: true,
@@ -93,11 +125,21 @@ const NotificationTest = () => {
               success: false,
               message: 'Socket tidak terhubung. Pastikan Anda sudah login dan server berjalan.'
             });
+            setIsTestRunning(false);
             return;
           }
           
           // Emit event ke server
-          emit('notification', dummyData.general);
+          const generalSuccess = emit('notification', dummyData.general);
+          
+          if (!generalSuccess) {
+            setTestResult({
+              success: false,
+              message: 'Gagal mengirim notifikasi umum. Socket mungkin tidak terhubung dengan baik.'
+            });
+            setIsTestRunning(false);
+            return;
+          }
           
           setTestResult({
             success: true,
@@ -112,58 +154,86 @@ const NotificationTest = () => {
               success: false,
               message: 'Socket tidak tersedia. Pastikan Anda sudah login.'
             });
+            setIsTestRunning(false);
             return;
           }
           
-          // Disconnect socket untuk memicu reconnect
-          socket.disconnect();
-          
-          // Tunggu sebentar lalu connect kembali
-          setTimeout(() => {
-            socket.connect();
+          try {
+            // Disconnect socket untuk memicu reconnect
+            socket.disconnect();
             
+            // Tunggu sebentar lalu connect kembali
+            setTimeout(() => {
+              try {
+                socket.connect();
+                
+                setTestResult({
+                  success: true,
+                  message: 'Socket berhasil disconnect dan reconnect. Periksa notifikasi reconnect.'
+                });
+              } catch (reconnectError) {
+                console.error('Error saat reconnect socket:', reconnectError);
+                setTestResult({
+                  success: false,
+                  message: `Error saat reconnect socket: ${reconnectError.message || 'Unknown error'}`
+                });
+              } finally {
+                setIsTestRunning(false);
+              }
+            }, 2000);
+          } catch (disconnectError) {
+            console.error('Error saat disconnect socket:', disconnectError);
             setTestResult({
-              success: true,
-              message: 'Socket berhasil disconnect dan reconnect. Periksa notifikasi reconnect.'
+              success: false,
+              message: `Error saat disconnect socket: ${disconnectError.message || 'Unknown error'}`
             });
-          }, 2000);
-          break;
+            setIsTestRunning(false);
+          }
+          return; // Early return karena kita menangani isTestRunning di callback
           
         case 'local_notification':
           // Tes toast notification lokal
-          toast.info('Ini adalah notifikasi toast test', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            style: {
-              fontSize: '14px',
-              maxWidth: '100%',
-              width: window.innerWidth < 640 ? '90%' : '400px'
-            }
-          });
-          
-          toast.success('Notifikasi sukses test', {
-            position: "top-right",
-            autoClose: 5000
-          });
-          
-          toast.warning('Notifikasi peringatan test', {
-            position: "top-right",
-            autoClose: 5000
-          });
-          
-          toast.error('Notifikasi error test', {
-            position: "top-right",
-            autoClose: 5000
-          });
-          
-          setTestResult({
-            success: true,
-            message: 'Toast notifications berhasil ditampilkan.'
-          });
+          try {
+            toast.info('Ini adalah notifikasi toast test', {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              style: {
+                fontSize: '14px',
+                maxWidth: '100%',
+                width: window.innerWidth < 640 ? '90%' : '400px'
+              }
+            });
+            
+            toast.success('Notifikasi sukses test', {
+              position: "top-right",
+              autoClose: 5000
+            });
+            
+            toast.warning('Notifikasi peringatan test', {
+              position: "top-right",
+              autoClose: 5000
+            });
+            
+            toast.error('Notifikasi error test', {
+              position: "top-right",
+              autoClose: 5000
+            });
+            
+            setTestResult({
+              success: true,
+              message: 'Toast notifications berhasil ditampilkan.'
+            });
+          } catch (toastError) {
+            console.error('Error saat menampilkan toast:', toastError);
+            setTestResult({
+              success: false,
+              message: `Error saat menampilkan toast: ${toastError.message || 'Unknown error'}`
+            });
+          }
           break;
           
         default:
@@ -173,10 +243,15 @@ const NotificationTest = () => {
           });
       }
     } catch (error) {
+      console.error('Error saat menjalankan tes:', error);
       setTestResult({
         success: false,
-        message: `Error saat menjalankan tes: ${error.message}`
+        message: `Error saat menjalankan tes: ${error.message || 'Unknown error'}`
       });
+    } finally {
+      if (selectedTest !== 'socket_reconnect') {
+        setIsTestRunning(false);
+      }
     }
   };
   
@@ -215,21 +290,29 @@ const NotificationTest = () => {
               try {
                 const beep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU");
                 beep.volume = 0.5;
-                beep.play();
-                setTestResult({
-                  success: true,
-                  message: 'File suara utama tidak tersedia. Menggunakan suara beep alternatif.'
-                });
+                beep.play()
+                  .then(() => {
+                    setTestResult({
+                      success: true,
+                      message: 'File suara utama tidak tersedia. Menggunakan suara beep alternatif.'
+                    });
+                  })
+                  .catch(beepPlayError => {
+                    setTestResult({
+                      success: false,
+                      message: `Tidak dapat memutar suara beep: ${beepPlayError.message || 'Unknown error'}`
+                    });
+                  });
               } catch (beepError) {
                 setTestResult({
                   success: false,
-                  message: `Tidak dapat memutar suara: ${error.message}`
+                  message: `Tidak dapat memutar suara: ${error.message || 'Unknown error'}`
                 });
               }
             } else {
               setTestResult({
                 success: false,
-                message: `Tidak dapat memutar suara: ${error.message}`
+                message: `Tidak dapat memutar suara: ${error.message || 'Unknown error'}`
               });
             }
           });
@@ -244,7 +327,7 @@ const NotificationTest = () => {
       console.error('Error in audio playback:', error);
       setTestResult({
         success: false,
-        message: `Error saat memuat file suara: ${error.message}`
+        message: `Error saat memuat file suara: ${error.message || 'Unknown error'}`
       });
     }
   };
@@ -286,6 +369,7 @@ const NotificationTest = () => {
           value={selectedTest}
           onChange={(e) => setSelectedTest(e.target.value)}
           className="w-full p-2 border border-gray-300 rounded-md"
+          disabled={isTestRunning}
         >
           {availableTests.map(test => (
             <option key={test.id} value={test.id}>{test.name}</option>
@@ -296,14 +380,16 @@ const NotificationTest = () => {
       <div className="flex space-x-2">
         <button 
           onClick={runTest}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          disabled={isTestRunning}
+          className={`px-4 py-2 ${isTestRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-md transition-colors`}
         >
-          Jalankan Tes
+          {isTestRunning ? 'Menjalankan Tes...' : 'Jalankan Tes'}
         </button>
         
         <button 
           onClick={playNotificationSound}
-          className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+          disabled={isTestRunning}
+          className={`px-4 py-2 ${isTestRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'} text-white rounded-md transition-colors`}
         >
           Tes Suara Notifikasi
         </button>
