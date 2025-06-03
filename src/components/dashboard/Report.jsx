@@ -1170,7 +1170,7 @@ function Report({ result }) {
                       alt="Retina scan" 
                       className="w-full h-full object-contain"
                       style={{ 
-                        transform: `scale(${zoom}) translate(${position.x}px, ${position.y}px)`,
+                        transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
                         cursor: isDragging ? 'grabbing' : 'grab',
                         transition: isDragging ? 'none' : 'transform 0.3s ease-out'
                       }}
@@ -1187,22 +1187,19 @@ function Report({ result }) {
                   <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1">
                     <button 
                       className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                      onClick={() => setZoom(Math.max(1, zoom - 0.2))}
+                      onClick={() => handleZoomOut()}
                     >
                       <FiMinus size={16} />
                     </button>
                     <button 
                       className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                      onClick={() => {
-                        setZoom(1);
-                        setPosition({ x: 0, y: 0 });
-                      }}
+                      onClick={() => handleReset()}
                     >
                       <FiRefreshCw size={16} />
                     </button>
                     <button 
                       className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
-                      onClick={() => setZoom(Math.min(3, zoom + 0.2))}
+                      onClick={() => handleZoomIn()}
                     >
                       <FiPlus size={16} />
                     </button>
