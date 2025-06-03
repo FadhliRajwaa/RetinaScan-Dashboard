@@ -426,9 +426,12 @@ function Report({ result }) {
     }
   };
 
-  // State untuk loading gambar dan zoom control
+  // State untuk loading gambar, zoom dan drag control
   const [imageLoading, setImageLoading] = useState(true);
   const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   
   // Fungsi untuk zoom control
   const handleZoomIn = () => {
@@ -442,6 +445,28 @@ function Report({ result }) {
   const handleReset = () => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
+  };
+  
+  // Fungsi untuk drag control
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+  
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+  
+  const handleDrag = (e) => {
+    if (isDragging) {
+      setPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
   };
   
   const containerVariants = {
@@ -1459,7 +1484,7 @@ function Report({ result }) {
                   <motion.div 
                       className="h-full relative overflow-hidden rounded-full"
                       style={{ width: '0%' }}
-                      animate={{ width: formatPercentage(resultConfidence) }}
+                    animate={{ width: formatPercentage(resultConfidence) }}
                       transition={{ 
                         duration: 1.8, 
                         ease: [0.34, 1.56, 0.64, 1], // Spring-like easing
