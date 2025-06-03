@@ -1015,13 +1015,6 @@ function Report({ result }) {
         <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-30">
           {Math.round(viewerScale * 100)}%
         </div>
-        
-        {/* Instructions tooltip */}
-        <div className="absolute bottom-3 left-14 bg-white/90 text-xs text-gray-700 px-2 py-1 rounded shadow-md backdrop-blur-sm z-30 hidden sm:block">
-          <p className="whitespace-nowrap">
-            <span className="font-medium">Scroll</span> untuk zoom, <span className="font-medium">Klik & geser</span> untuk pan
-          </p>
-        </div>
       </div>
     );
   };
