@@ -374,7 +374,7 @@ function Report({ result }) {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
+      const margin = 15;
       
       // Fungsi untuk menambahkan teks dengan wrapping
       const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
@@ -382,19 +382,176 @@ function Report({ result }) {
         pdf.text(lines, x, y);
         return y + (lines.length * lineHeight);
       };
+
+      // Fungsi untuk menambahkan latar belakang dengan gradien (simulasi)
+      const addGradientBackground = (x, y, width, height, color1, color2, direction = 'horizontal') => {
+        // Karena jsPDF tidak mendukung gradien sepenuhnya, kita simulasikan dengan multiple rectangles
+        const steps = 20;
+        const stepSize = direction === 'horizontal' ? width / steps : height / steps;
+        
+        for (let i = 0; i < steps; i++) {
+          // Interpolasi warna
+          const ratio = i / steps;
+          const r = Math.floor(color1.r * (1 - ratio) + color2.r * ratio);
+          const g = Math.floor(color1.g * (1 - ratio) + color2.g * ratio);
+          const b = Math.floor(color1.b * (1 - ratio) + color2.b * ratio);
+          
+          pdf.setFillColor(r, g, b);
+          
+          if (direction === 'horizontal') {
+            pdf.rect(x + (i * stepSize), y, stepSize, height, 'F');
+          } else {
+            pdf.rect(x, y + (i * stepSize), width, stepSize, 'F');
+          }
+        }
+      };
       
-      // Header
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, 0, pageWidth, 40, 'F');
+      // Fungsi untuk menambahkan kartu dengan efek modern
+      const addModernCard = (x, y, width, height, options = {}) => {
+        const { 
+          bgColor = [255, 255, 255], 
+          borderColor = [240, 240, 240],
+          shadow = true,
+          roundedCorners = true,
+          borderWidth = 1
+        } = options;
+        
+        // Tambahkan bayangan (simulasi dengan multiple rectangles yang semakin transparan)
+        if (shadow) {
+          for (let i = 3; i > 0; i--) {
+            pdf.setFillColor(200, 200, 200, i / 10);
+            pdf.roundedRect(x + i, y + i, width, height, roundedCorners ? 3 : 0, roundedCorners ? 3 : 0, 'F');
+          }
+        }
+        
+        // Tambahkan latar belakang
+        pdf.setFillColor(...bgColor);
+        if (roundedCorners) {
+          pdf.roundedRect(x, y, width, height, 3, 3, 'F');
+        } else {
+          pdf.rect(x, y, width, height, 'F');
+        }
+        
+        // Tambahkan border
+        if (borderWidth > 0) {
+          pdf.setDrawColor(...borderColor);
+          pdf.setLineWidth(borderWidth);
+          if (roundedCorners) {
+            pdf.roundedRect(x, y, width, height, 3, 3, 'D');
+          } else {
+            pdf.rect(x, y, width, height, 'D');
+          }
+        }
+      };
       
-      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
-      pdf.setFontSize(24);
+      // Fungsi untuk menambahkan ikon (simulasi dengan bentuk sederhana)
+      const addIcon = (x, y, type, color = [0, 0, 0], size = 5) => {
+        pdf.setDrawColor(...color);
+        pdf.setFillColor(...color);
+        
+        switch (type) {
+          case 'info':
+            // Lingkaran dengan i
+            pdf.circle(x + size/2, y + size/2, size/2, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(8);
+            pdf.text('i', x + size/2 - 0.5, y + size/2 + 1, { align: 'center' });
+            break;
+          case 'warning':
+            // Segitiga peringatan
+            pdf.triangle(x, y + size, x + size, y + size, x + size/2, y, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(8);
+            pdf.text('!', x + size/2, y + size - 1, { align: 'center' });
+            break;
+          case 'check':
+            // Lingkaran dengan check
+            pdf.circle(x + size/2, y + size/2, size/2, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(8);
+            pdf.text('✓', x + size/2, y + size/2 + 1, { align: 'center' });
+            break;
+          case 'calendar':
+            // Kotak kalender
+            pdf.rect(x, y, size, size, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(6);
+            pdf.text('📅', x + size/2, y + size/2 + 1, { align: 'center' });
+            break;
+          default:
+            pdf.circle(x + size/2, y + size/2, size/2, 'F');
+        }
+        
+        // Reset warna teks
+        pdf.setTextColor(0, 0, 0);
+      };
+      
+      // Fungsi untuk mendapatkan warna berdasarkan tingkat keparahan
+      const getSeverityColors = (severity) => {
+        const level = severity.toLowerCase();
+        if (level === 'tidak ada' || level === 'normal') 
+          return { main: [59, 130, 246], light: [219, 234, 254], text: [30, 64, 175] }; // blue
+        if (level === 'ringan') 
+          return { main: [16, 185, 129], light: [209, 250, 229], text: [6, 95, 70] }; // green
+        if (level === 'sedang') 
+          return { main: [245, 158, 11], light: [254, 243, 199], text: [180, 83, 9] }; // yellow
+        if (level === 'berat') 
+          return { main: [239, 68, 68], light: [254, 226, 226], text: [185, 28, 28] }; // red
+        return { main: [225, 29, 72], light: [254, 205, 211], text: [159, 18, 57] }; // severe red
+      };
+      
+      // Fungsi untuk menambahkan progress bar
+      const addProgressBar = (x, y, width, value, options = {}) => {
+        const { 
+          height = 4,
+          bgColor = [220, 220, 220],
+          fillColor = [59, 130, 246],
+          showValue = false,
+          valuePrefix = '',
+          valueSuffix = '%'
+        } = options;
+        
+        // Background
+        pdf.setFillColor(...bgColor);
+        pdf.roundedRect(x, y, width, height, height/2, height/2, 'F');
+        
+        // Filled part
+        const fillWidth = Math.max(0, Math.min(1, value)) * width;
+        pdf.setFillColor(...fillColor);
+        if (fillWidth > 0) {
+          pdf.roundedRect(x, y, fillWidth, height, height/2, height/2, 'F');
+        }
+        
+        // Value text
+        if (showValue) {
+          pdf.setTextColor(0, 0, 0);
+          pdf.setFontSize(8);
+          pdf.text(`${valuePrefix}${(value * 100).toFixed(1)}${valueSuffix}`, x + width + 2, y + height/2 + 1);
+        }
+      };
+      
+      // Header dengan gradient background
+      addGradientBackground(0, 0, pageWidth, 40, 
+        { r: 37, g: 99, b: 235 }, // blue-600
+        { r: 79, g: 70, b: 229 }, // indigo-600
+        'horizontal'
+      );
+      
+      // Logo RetinaScan (simulasi dengan teks dan lingkaran)
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(margin + 5, 20, 5, 'F');
+      pdf.setTextColor(37, 99, 235);
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('R', margin + 5, 23, { align: 'center' });
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(22);
       pdf.setFont(undefined, 'bold');
       pdf.text('Laporan Analisis Retina', pageWidth / 2, 20, { align: 'center' });
       
-      pdf.setFontSize(12);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      // Gunakan tanggal dari hasil analisis, bukan tanggal saat ini
       const analysisDate = formatDate(resultDate);
       pdf.text(`Tanggal: ${analysisDate}`, pageWidth / 2, 30, { align: 'center' });
       
@@ -402,23 +559,9 @@ function Report({ result }) {
       
       // Informasi pasien jika tersedia
       if (patient) {
-        pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
-        pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
-        
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(14);
-        pdf.setFont(undefined, 'bold');
-        pdf.text('Informasi Pasien', margin + 5, yPos + 10);
-        
-        pdf.setFontSize(11);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(60, 60, 60);
-        // Gunakan extractValueWithDefault untuk konsistensi dengan tampilan
         const patientName = extractValueWithDefault(patient, 'fullName', extractValueWithDefault(patient, 'name', 'Tidak ada nama'));
         const patientGender = extractValueWithDefault(patient, 'gender', '');
         const patientAge = extractValueWithDefault(patient, 'age', '');
-        
-        pdf.text(`Nama: ${patientName}`, margin + 5, yPos + 20);
         
         // Format gender dengan benar
         let genderText = '';
@@ -428,6 +571,28 @@ function Report({ result }) {
         
         // Tambahkan umur jika tersedia
         let ageText = patientAge ? `${patientAge} tahun` : '';
+        
+        // Kartu informasi pasien dengan efek modern
+        addModernCard(margin, yPos, pageWidth - (margin * 2), 40, {
+          bgColor: [248, 250, 252], // slate-50
+          borderColor: [226, 232, 240], // slate-200
+          roundedCorners: true
+        });
+        
+        // Ikon user
+        addIcon(margin + 5, yPos + 5, 'info', [79, 70, 229], 6); // indigo-600
+        
+        pdf.setTextColor(17, 24, 39); // gray-900
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Informasi Pasien', margin + 15, yPos + 10);
+        
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(55, 65, 81); // gray-700
+        
+        // Informasi pasien dalam dua kolom
+        pdf.text(`Nama: ${patientName}`, margin + 15, yPos + 20);
         
         // Gabungkan gender dan umur jika keduanya tersedia
         let infoText = '';
@@ -440,96 +605,114 @@ function Report({ result }) {
         }
         
         if (infoText) {
-          pdf.text(infoText, pageWidth - margin - 5, yPos + 20, { align: 'right' });
+          pdf.text(infoText, margin + 15, yPos + 30);
         }
         
-        yPos += 40;
+        yPos += 50;
       } else {
         yPos += 10;
       }
       
-      // Hasil analisis
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
+      // Hasil analisis dengan kartu modern
+      const severityColors = getSeverityColors(severity);
       
-      pdf.setTextColor(0, 0, 0);
+      // Kartu hasil analisis
+      addModernCard(margin, yPos, pageWidth - (margin * 2), 60, {
+        bgColor: [255, 255, 255],
+        borderColor: severityColors.light,
+        borderWidth: 1.5
+      });
+      
+      // Ikon keparahan
+      addIcon(margin + 5, yPos + 5, 
+        severity.toLowerCase() === 'tidak ada' || severity.toLowerCase() === 'normal' ? 'check' : 
+        severity.toLowerCase() === 'ringan' ? 'info' : 'warning', 
+        severityColors.main, 
+        6
+      );
+      
+      pdf.setTextColor(17, 24, 39); // gray-900
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', margin + 5, yPos + 10);
+      pdf.text('Hasil Analisis', margin + 15, yPos + 10);
       
       // Tingkat keparahan
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
+      pdf.setTextColor(55, 65, 81); // gray-700
+      pdf.text('Tingkat Keparahan:', margin + 15, yPos + 25);
       
-      // Set warna berdasarkan tingkat keparahan
-      const severityLevel = severity.toLowerCase();
-      if (severityLevel === 'ringan') {
-        pdf.setTextColor(39, 174, 96); // Hijau
-      } else if (severityLevel === 'sedang') {
-        pdf.setTextColor(241, 196, 15); // Kuning
-      } else if (severityLevel === 'berat' || severityLevel === 'sangat berat') {
-        pdf.setTextColor(231, 76, 60); // Merah
-      } else {
-        pdf.setTextColor(52, 152, 219); // Biru
-      }
-      
+      // Nilai keparahan dengan warna sesuai tingkat
       pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
-      pdf.text(severity, margin + 50, yPos + 25);
+      pdf.setTextColor(...severityColors.text);
+      pdf.text(severity, margin + 60, yPos + 25);
       
       // Tingkat kepercayaan
-      pdf.setFontSize(12);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 5, yPos + 40);
+      pdf.setTextColor(55, 65, 81); // gray-700
+      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 15, yPos + 40);
       
-      // Gambar bar untuk confidence
-      const barWidth = 50;
-      const confidenceWidth = parseFloat(confidence) * barWidth;
-      pdf.setFillColor(220, 220, 220); // Background bar
-      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
-      pdf.setFillColor(37, 99, 235); // Filled bar
-      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
+      // Progress bar untuk confidence
+      addProgressBar(margin + 70, yPos + 38, 40, parseFloat(confidence), {
+        height: 5,
+        fillColor: severityColors.main,
+        bgColor: [226, 232, 240], // slate-200
+        showValue: true
+      });
       
-      yPos += 60;
+      yPos += 70;
       
-      // Gambar
+      // Gambar retina dengan border modern
       try {
-        // Gunakan getImageSource() untuk konsistensi dengan tampilan
         const imgSource = getImageSource();
         if (imgSource && imgSource !== '/images/default-retina.jpg') {
-          // Tambahkan gambar jika tersedia
+          // Kartu untuk gambar
+          addModernCard(margin, yPos, pageWidth - (margin * 2), 120, {
+            bgColor: [249, 250, 251], // gray-50
+            borderColor: [229, 231, 235], // gray-200
+          });
+          
+          // Tambahkan gambar dengan ukuran yang lebih besar
           const imgWidth = 100;
           const imgHeight = 100;
-          pdf.addImage(imgSource, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
-          yPos += imgHeight + 10;
+          pdf.addImage(imgSource, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos + 10, imgWidth, imgHeight);
           
-          // Tambahkan label gambar
-          pdf.setFontSize(10);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
-          yPos += 15;
+          // Tambahkan label gambar dengan styling yang lebih baik
+          pdf.setFillColor(...severityColors.light);
+          pdf.roundedRect(pageWidth / 2 - 30, yPos + imgHeight + 15, 60, 10, 5, 5, 'F');
+          
+          pdf.setFontSize(8);
+          pdf.setTextColor(...severityColors.text);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('GAMBAR RETINA', pageWidth / 2, yPos + imgHeight + 22, { align: 'center' });
+          
+          yPos += 130;
         }
       } catch (imgError) {
         console.error('Error adding image to PDF:', imgError);
-        // Lanjutkan tanpa gambar jika gagal
         yPos += 10;
       }
       
-      // Rekomendasi
-      pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
+      // Rekomendasi dengan kartu modern
+      addModernCard(margin, yPos, pageWidth - (margin * 2), 50, {
+        bgColor: [239, 246, 255], // blue-50
+        borderColor: [191, 219, 254], // blue-200
+        roundedCorners: true
+      });
       
-      pdf.setTextColor(0, 0, 0);
+      // Ikon info
+      addIcon(margin + 5, yPos + 5, 'info', [59, 130, 246], 6); // blue-500
+      
+      pdf.setTextColor(17, 24, 39); // gray-900
       pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 5, yPos + 10);
+      pdf.text('Rekomendasi', margin + 15, yPos + 10);
       
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(60, 60, 60);
+      pdf.setTextColor(55, 65, 81); // gray-700
       
       // Gunakan rekomendasi yang sama dengan yang ditampilkan di UI
       let recommendation = '';
@@ -547,25 +730,53 @@ function Report({ result }) {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
+      yPos = addWrappedText(recommendation, margin + 15, yPos + 25, pageWidth - (margin * 2) - 30, 5);
       yPos += 15;
       
-      // Disclaimer
-      pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
+      // Disclaimer dengan desain modern
+      addModernCard(margin, yPos, pageWidth - (margin * 2), 30, {
+        bgColor: [254, 242, 242], // red-50
+        borderColor: [254, 202, 202], // red-200
+        roundedCorners: true
+      });
       
-      pdf.setFontSize(9);
-      pdf.setTextColor(100, 100, 100);
-      const disclaimer = 'Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
+      // Ikon warning
+      addIcon(margin + 5, yPos + 5, 'warning', [239, 68, 68], 5); // red-500
       
-      // Footer
-      pdf.setFillColor(37, 99, 235); // Warna biru
-      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'bold');
+      pdf.setTextColor(185, 28, 28); // red-700
+      pdf.text('DISCLAIMER', margin + 15, yPos + 10);
       
-      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      pdf.setTextColor(127, 29, 29); // red-800
+      const disclaimer = 'Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      addWrappedText(disclaimer, margin + 15, yPos + 15, pageWidth - (margin * 2) - 30, 4);
+      
+      // Footer dengan gradient background
+      addGradientBackground(0, pageHeight - 20, pageWidth, 20, 
+        { r: 79, g: 70, b: 229 }, // indigo-600
+        { r: 37, g: 99, b: 235 }, // blue-600
+        'horizontal'
+      );
+      
+      pdf.setFontSize(8);
       pdf.setTextColor(255, 255, 255);
       pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // QR Code (simulasi dengan kotak)
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(pageWidth - margin - 10, pageHeight - 15, 10, 10, 1, 1, 'F');
+      pdf.setDrawColor(255, 255, 255);
+      pdf.setLineWidth(0.1);
+      // Simulasi pola QR code
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (Math.random() > 0.5) {
+            pdf.rect(pageWidth - margin - 10 + (i * 3), pageHeight - 15 + (j * 3), 3, 3, 'F');
+          }
+        }
+      }
       
       // Simpan PDF dengan nama yang berisi tanggal analisis
       const dateForFilename = new Date(resultDate).toISOString().split('T')[0];
@@ -913,8 +1124,8 @@ function Report({ result }) {
               </div>
             </div>
             <p className="text-white text-sm mt-3 animate-pulse">Memuat gambar...</p>
-          </div>
-        )}
+        </div>
+      )}
       
         {/* Image container */}
         <div 
@@ -926,47 +1137,47 @@ function Report({ result }) {
         >
           {/* Image dengan transform */}
           <img
-            src={getImageSource()}
-            alt="Retina scan"
+        src={getImageSource()}
+        alt="Retina scan"
             className={`w-full h-full object-contain transition-all duration-150 ${isDragging ? 'brightness-90' : ''}`}
-            style={{ 
+              style={{ 
               transform: `scale(${viewerScale}) translate(${position.x / viewerScale}px, ${position.y / viewerScale}px)`,
               transformOrigin: 'center',
             }}
             onLoad={() => {
               setIsLoading(false);
-            }}
-            onError={(e) => {
-              handleImageError();
+        }}
+        onError={(e) => {
+          handleImageError();
               setIsLoading(false);
-              e.target.onerror = null;
-              e.target.src = '/images/default-retina.jpg';
-            }}
+          e.target.onerror = null;
+          e.target.src = '/images/default-retina.jpg';
+        }}
             draggable="false"
-          />
-    
-          {/* Image annotations */}
-          {showAnnotation && !imageError && (
+      />
+      
+            {/* Image annotations */}
+            {showAnnotation && !imageError && (
             <div
               className="absolute top-1/4 left-1/2 w-16 h-16 -ml-8 -mt-8 rounded-full border-2 border-blue-500 pointer-events-none z-20"
               style={{ 
                 transform: `translate(${position.x}px, ${position.y}px) scale(${1/viewerScale})`,
               }}
-            >
-              <motion.div 
-                className="absolute inset-0 border-2 border-blue-500 rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              <div className="absolute -right-24 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                Area of interest
-              </div>
+              >
+                <motion.div 
+                  className="absolute inset-0 border-2 border-blue-500 rounded-full"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+                <div className="absolute -right-24 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                  Area of interest
+                </div>
             </div>
-          )}
+            )}
         </div>
         
         {/* Error overlay */}
-        {imageError && (
+      {imageError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-80 z-20">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -989,19 +1200,19 @@ function Report({ result }) {
                 <p className="text-gray-300 text-sm mt-2 text-center max-w-xs">
                   Terjadi kesalahan saat memuat gambar retina. Silakan coba lagi.
                 </p>
-                <button 
-                  onClick={() => {
-                    setImageError(false);
+          <button 
+            onClick={() => {
+              setImageError(false);
                     setIsLoading(true);
-                    // Force reload image with timestamp
-                    const img = document.querySelector('img[alt="Retina scan"]');
-                    if (img) {
-                      const imgSrc = getImageSource();
-                      img.src = imgSrc.includes('?') 
-                        ? `${imgSrc}&reload=${new Date().getTime()}`
-                        : `${imgSrc}?reload=${new Date().getTime()}`;
-                    }
-                  }}
+              // Force reload image with timestamp
+              const img = document.querySelector('img[alt="Retina scan"]');
+              if (img) {
+                const imgSrc = getImageSource();
+                img.src = imgSrc.includes('?') 
+                  ? `${imgSrc}&reload=${new Date().getTime()}`
+                  : `${imgSrc}?reload=${new Date().getTime()}`;
+              }
+            }}
                   className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:from-blue-600 hover:to-indigo-700 transition-colors flex items-center gap-2 group"
                 >
                   <motion.div
@@ -1023,12 +1234,12 @@ function Report({ result }) {
                       </path>
                     </svg>
                   </motion.div>
-                  Coba Lagi
-                </button>
+            Coba Lagi
+          </button>
               </div>
             </motion.div>
-          </div>
-        )}
+        </div>
+      )}
         
         {/* Zoom controls */}
         <div className="absolute bottom-3 right-3 flex flex-col gap-2 z-30">
@@ -1083,8 +1294,8 @@ function Report({ result }) {
         <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-30">
           {Math.round(viewerScale * 100)}%
         </div>
-      </div>
-    );
+    </div>
+  );
   };
 
   // Main analysis results section
@@ -1418,51 +1629,51 @@ function Report({ result }) {
       <Particles />
       
       {/* Header section with title and actions */}
-      <motion.div
+              <motion.div 
         className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4 relative z-10"
         initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="relative">
           <h3 className="text-3xl md:text-4xl font-bold text-gray-800">
             Hasil Analisis Retina
           </h3>
-          <motion.div 
+                <motion.div 
             className="h-1 w-24 bg-gradient-to-r from-blue-600 to-violet-600 rounded-full mt-2"
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 96, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
           />
-          <motion.div
+                <motion.div 
             className="text-sm text-gray-500 mt-2 flex flex-wrap items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                >
             <div className="flex items-center mr-3 mb-1">
               <FiCalendar className="mr-1" size={14} />
               <span>{formatDisplayDate(resultDate)}</span>
-            </div>
+              </div>
             <div className="flex items-center mb-1">
               <svg className="w-3.5 h-3.5 mr-1 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+                      </svg>
               <span>{formatDisplayTime(resultDate)}</span>
-            </div>
-          </motion.div>
-          <motion.div
+                </div>
+              </motion.div>
+            <motion.div 
             className="text-sm text-gray-500 mt-1 flex flex-wrap items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
             <div className="flex items-center mb-1">
               <FiEye className="mr-1" size={14} />
               <span>ID: {result?.id?.substring(0, 8) || 'New'}</span>
-            </div>
-          </motion.div>
-        </div>
+                    </div>
+              </motion.div>
+                    </div>
         <div className="flex flex-wrap gap-3 justify-end">
           <motion.button
             whileHover={{ 
@@ -1477,7 +1688,7 @@ function Report({ result }) {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-100 group-hover:opacity-0 transition-opacity duration-300"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <motion.div 
+              <motion.div 
               className="absolute inset-0 bg-white opacity-0"
               animate={{ opacity: [0, 0.2, 0] }}
               transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
