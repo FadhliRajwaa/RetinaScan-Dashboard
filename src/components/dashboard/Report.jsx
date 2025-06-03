@@ -755,7 +755,7 @@ function Report({ result }) {
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="relative">
-          <h3 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+          <h3 className="text-3xl md:text-4xl font-bold text-gray-800">
           Hasil Analisis Retina
         </h3>
           <motion.div 
