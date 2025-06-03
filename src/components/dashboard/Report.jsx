@@ -426,6 +426,9 @@ function Report({ result }) {
     }
   };
 
+  // State untuk loading gambar
+  const [imageLoading, setImageLoading] = useState(true);
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -1123,7 +1126,88 @@ function Report({ result }) {
                 <div className="absolute top-0 left-0 w-12 h-12 border-t-2 border-l-2 border-indigo-300 rounded-tl-lg opacity-60"></div>
                 <div className="absolute bottom-0 right-0 w-12 h-12 border-b-2 border-r-2 border-indigo-300 rounded-br-lg opacity-60"></div>
                 
-                <ImageViewer />
+                {/* Image viewer component */}
+                <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden">
+                  {imageLoading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-10">
+                      <div className="relative">
+                        <svg className="w-12 h-12 animate-spin text-blue-500" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
+                        </div>
+                      </div>
+                      <p className="text-white text-sm mt-3 animate-pulse">Memuat gambar...</p>
+                    </div>
+                  )}
+                  
+                  {imageError ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800">
+                      <div className="rounded-full bg-red-100 p-3">
+                        <FiAlertCircle className="text-red-500 w-8 h-8" />
+                      </div>
+                      <h3 className="text-white font-bold mt-4 text-center">Gambar tidak dapat ditampilkan</h3>
+                      <p className="text-gray-300 text-sm mt-2 text-center max-w-xs">
+                        Terjadi kesalahan saat memuat gambar retina. Silakan coba lagi.
+                      </p>
+                      <button 
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        onClick={() => {
+                          setImageError(false);
+                          setImageLoading(true);
+                          // Force reload image with timestamp
+                          setTimeout(() => setImageLoading(false), 1000);
+                        }}
+                      >
+                        Coba Lagi
+                      </button>
+                    </div>
+                  ) : (
+                    <img 
+                      src={getImageSource()} 
+                      alt="Retina scan" 
+                      className="w-full h-full object-contain"
+                      style={{ 
+                        transform: `scale(${zoom}) translate(${position.x}px, ${position.y}px)`,
+                        cursor: isDragging ? 'grabbing' : 'grab',
+                        transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+                      }}
+                      onError={() => setImageError(true)}
+                      onLoad={() => setImageLoading(false)}
+                      onMouseDown={handleDragStart}
+                      onMouseUp={handleDragEnd}
+                      onMouseLeave={handleDragEnd}
+                      onMouseMove={handleDrag}
+                    />
+                  )}
+                  
+                  {/* Image controls */}
+                  <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1">
+                    <button 
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                      onClick={() => setZoom(Math.max(1, zoom - 0.2))}
+                    >
+                      <FiMinus size={16} />
+                    </button>
+                    <button 
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                      onClick={() => {
+                        setZoom(1);
+                        setPosition({ x: 0, y: 0 });
+                      }}
+                    >
+                      <FiRefreshCw size={16} />
+                    </button>
+                    <button 
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors"
+                      onClick={() => setZoom(Math.min(3, zoom + 0.2))}
+                    >
+                      <FiPlus size={16} />
+                    </button>
+                  </div>
+                </div>
                 
                 {/* Image caption */}
                 <motion.div 
@@ -1146,8 +1230,8 @@ function Report({ result }) {
                   <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mr-3 shadow-lg">
                     <FiActivity className="text-white" size={20} />
                 </div>
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 text-xl">
-                  Hasil Analisis
+                  <span className="text-xl font-bold text-purple-700">
+                  Hasil Analisis Retina
                 </span>
               </h3>
               
@@ -1359,47 +1443,72 @@ function Report({ result }) {
                       backgroundSize: '10px 10px'
                     }}></div>
                     
-                  {/* Main progress bar with animated fill */}
+                  {/* Modern progress bar with animated fill */}
                   <motion.div 
                       className="h-full relative overflow-hidden rounded-full"
                       style={{ width: '0%' }}
-                    animate={{ width: formatPercentage(resultConfidence) }}
-                      transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+                      animate={{ width: formatPercentage(resultConfidence) }}
+                      transition={{ 
+                        duration: 1.8, 
+                        ease: [0.34, 1.56, 0.64, 1], // Spring-like easing
+                        delay: 0.3 
+                      }}
                   >
-                    {/* Gradient background */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></div>
+                    {/* Modern gradient background with animated rotation */}
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-700"
+                      animate={{
+                        background: [
+                          'linear-gradient(90deg, rgba(6,182,212,1) 0%, rgba(37,99,235,1) 50%, rgba(126,34,206,1) 100%)',
+                          'linear-gradient(90deg, rgba(37,99,235,1) 0%, rgba(126,34,206,1) 50%, rgba(6,182,212,1) 100%)',
+                          'linear-gradient(90deg, rgba(126,34,206,1) 0%, rgba(6,182,212,1) 50%, rgba(37,99,235,1) 100%)',
+                          'linear-gradient(90deg, rgba(6,182,212,1) 0%, rgba(37,99,235,1) 50%, rgba(126,34,206,1) 100%)',
+                        ]
+                      }}
+                      transition={{
+                        duration: 8,
+                        repeat: Infinity,
+                        repeatType: "loop"
+                      }}
+                    />
                     
-                    {/* Animated shine effect */}
+                    {/* Enhanced shine effect */}
                     <motion.div
                       className="absolute inset-0"
                       style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)',
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%)',
+                          filter: 'blur(4px)',
                       }}
                       animate={{
-                        x: ['-100%', '100%'],
+                        x: ['-120%', '120%'],
                       }}
                       transition={{
-                        duration: 1.5,
+                        duration: 2,
                         ease: "easeInOut",
                         repeat: Infinity,
                         repeatType: "loop",
                       }}
                     />
                     
-                    {/* Pulsing dots */}
-                    {[...Array(5)].map((_, i) => (
+                    {/* Modern pulsing dots */}
+                    {[...Array(6)].map((_, i) => (
                       <motion.div
                         key={i}
-                        className="absolute top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-white"
-                        style={{ left: `${(i + 1) * 18}%` }}
+                        className="absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-white/80"
+                        style={{ left: `${(i + 1) * 14}%` }}
                         animate={{
-                          opacity: [0.4, 0.8, 0.4],
-                          scale: [0.8, 1.2, 0.8],
+                          opacity: [0.6, 1, 0.6],
+                          scale: [0.8, 1.3, 0.8],
+                          boxShadow: [
+                            '0 0 0px rgba(255,255,255,0.5)',
+                            '0 0 10px rgba(255,255,255,0.8)',
+                            '0 0 0px rgba(255,255,255,0.5)'
+                          ]
                         }}
                         transition={{
-                          duration: 1.5,
+                          duration: 2,
                           repeat: Infinity,
-                          delay: i * 0.3,
+                          delay: i * 0.25,
                         }}
                       />
                     ))}
