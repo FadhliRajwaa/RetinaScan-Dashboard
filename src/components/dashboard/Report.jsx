@@ -1433,77 +1433,42 @@ function Report({ result }) {
                   }}
                   transition={{ duration: 0.3 }}
               >
-                  <div className="flex justify-between mb-4">
+                  <div className="flex justify-between mb-3">
                   <div className="flex items-center">
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center mr-4 shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center mr-3 shadow-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                         </svg>
-                      </div>
-                      <motion.div 
-                        className="absolute inset-0 rounded-xl border-2 border-indigo-500"
-                        animate={{ 
-                          scale: [1, 1.1, 1],
-                          opacity: [0.5, 0.8, 0.5]
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          repeatType: "loop"
-                        }}
-                      />
                     </div>
                     <div>
-                      <motion.p 
-                        className="text-base text-gray-800 font-bold"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.4 }}
-                      >
-                        Tingkat Kepercayaan
-                      </motion.p>
-                      <motion.p 
-                        className="text-xs text-gray-500"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.5 }}
-                      >
-                        Akurasi prediksi AI
-                      </motion.p>
+                      <p className="text-sm text-gray-700 font-medium">Tingkat Kepercayaan</p>
+                      <p className="text-xs text-gray-500">Akurasi prediksi AI</p>
                     </div>
                   </div>
                   <motion.div 
-                    className="text-2xl font-bold text-indigo-600 flex items-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
+                    className="text-xl font-bold text-indigo-600 flex items-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
                   >
                     <motion.span
                       initial={{ scale: 0.8 }}
-                      animate={{ 
-                        scale: [0.9, 1.1, 1],
-                        y: [0, -2, 0]
-                      }}
-                      transition={{ 
-                        type: "spring", 
-                        stiffness: 300, 
-                        damping: 10, 
-                        delay: 0.7 
-                      }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 10, delay: 0.7 }}
                     >
                       {formatPercentage(resultConfidence)}
                     </motion.span>
-                    <motion.div
-                      className="ml-2"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.9, type: "spring" }}
+                    <motion.svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="h-5 w-5 ml-1 text-indigo-500" 
+                      viewBox="0 0 20 20" 
+                      fill="currentColor"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      transition={{ delay: 0.8, type: "spring" }}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    </motion.div>
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </motion.svg>
                   </motion.div>
                 </div>
                 
