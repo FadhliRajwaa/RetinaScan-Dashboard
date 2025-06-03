@@ -426,8 +426,23 @@ function Report({ result }) {
     }
   };
 
-  // State untuk loading gambar
+  // State untuk loading gambar dan zoom control
   const [imageLoading, setImageLoading] = useState(true);
+  const [scale, setScale] = useState(1);
+  
+  // Fungsi untuk zoom control
+  const handleZoomIn = () => {
+    setScale(prevScale => Math.min(prevScale + 0.2, 3));
+  };
+  
+  const handleZoomOut = () => {
+    setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
+  };
+  
+  const handleReset = () => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
   
   const containerVariants = {
     hidden: { opacity: 0 },
