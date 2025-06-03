@@ -80,13 +80,18 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       
       // Update state notifikasi - hanya ganti jika ini adalah request halaman pertama dan bukan append
       let updatedNotifications;
-      if (append) {
+      
+      // Jika server mengembalikan array kosong dan kita sudah memiliki notifikasi di localStorage,
+      // pertahankan notifikasi yang sudah ada
+      if (fetchedNotifications.length === 0 && notifications.length > 0) {
+        console.log('Server returned empty array, keeping existing notifications');
+        updatedNotifications = notifications;
+      } else if (append) {
         // Jika append, tambahkan notifikasi baru ke daftar yang sudah ada
         updatedNotifications = [...notifications, ...fetchedNotifications];
         setNotifications(updatedNotifications);
-      } else if (pageNum === 1 && notifications.length === 0) {
-        // Hanya set notifikasi baru jika ini adalah request halaman pertama
-        // dan belum ada notifikasi yang dimuat
+      } else if (pageNum === 1) {
+        // Jika halaman pertama dan server mengembalikan data
         updatedNotifications = fetchedNotifications;
         setNotifications(updatedNotifications);
       } else {
@@ -97,10 +102,16 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       saveNotificationsToStorage(updatedNotifications);
       
       // Update jumlah notifikasi yang belum dibaca
-      setUnreadCount(unreadCount);
+      if (typeof unreadCount === 'number') {
+        setUnreadCount(unreadCount);
+      } else {
+        // Hitung jumlah notifikasi yang belum dibaca dari state
+        const unreadNotifications = updatedNotifications.filter(n => n.read === false).length;
+        setUnreadCount(unreadNotifications);
+      }
       
       // Cek apakah masih ada halaman berikutnya
-      setHasMore(pagination.page < pagination.pages);
+      setHasMore(pagination && pagination.page < pagination.pages);
       
       setLoading(false);
     } catch (error) {
