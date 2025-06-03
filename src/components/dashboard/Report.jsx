@@ -95,6 +95,7 @@ function Report({ result }) {
   const [imageError, setImageError] = useState(false);
   const [cardState, setCardState] = useState("rest");
   const [isHovering, setIsHovering] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const reportRef = useRef(null);
   const cardControls = useAnimation();
   
@@ -109,6 +110,17 @@ function Report({ result }) {
       cardControls.start("visible");
     }
   }, [result, cardControls]);
+  
+  // Effect untuk memperbarui waktu setiap detik
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   // Mouse move handler for 3D effect
   const handleMouseMove = (e) => {
@@ -255,6 +267,35 @@ function Report({ result }) {
     } catch (error) {
       console.error('Format date error:', error);
       return 'Tanggal tidak valid';
+    }
+  };
+  
+  // Format tanggal untuk tampilan yang lebih bagus
+  const formatDisplayDate = (date) => {
+    try {
+      const options = { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric',
+      };
+      
+      return date.toLocaleDateString('id-ID', options);
+    } catch (error) {
+      return 'Tanggal tidak valid';
+    }
+  };
+  
+  // Format waktu untuk tampilan yang lebih bagus
+  const formatDisplayTime = (date) => {
+    try {
+      return date.toLocaleTimeString('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      return 'Waktu tidak valid';
     }
   };
 
@@ -1350,38 +1391,51 @@ function Report({ result }) {
       <Particles />
       
       {/* Header section with title and actions */}
-              <motion.div 
+      <motion.div
         className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4 relative z-10"
         initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="relative">
           <h3 className="text-3xl md:text-4xl font-bold text-gray-800">
             Hasil Analisis Retina
           </h3>
-                <motion.div 
+          <motion.div 
             className="h-1 w-24 bg-gradient-to-r from-blue-600 to-violet-600 rounded-full mt-2"
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 96, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
           />
-                <motion.div 
+          <motion.div
             className="text-sm text-gray-500 mt-2 flex flex-wrap items-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
             <div className="flex items-center mr-3 mb-1">
               <FiCalendar className="mr-1" size={14} />
-              <span>{formatDate(new Date()).split(',')[0]}</span>
-              </div>
+              <span>{formatDisplayDate(currentTime)}</span>
+            </div>
+            <div className="flex items-center mb-1">
+              <svg className="w-3.5 h-3.5 mr-1 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <span>{formatDisplayTime(currentTime)}</span>
+            </div>
+          </motion.div>
+          <motion.div
+            className="text-sm text-gray-500 mt-1 flex flex-wrap items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
             <div className="flex items-center mb-1">
               <FiEye className="mr-1" size={14} />
               <span>ID: {result?.id?.substring(0, 8) || 'New'}</span>
-                </div>
-              </motion.div>
-                    </div>
+            </div>
+          </motion.div>
+        </div>
         <div className="flex flex-wrap gap-3 justify-end">
           <motion.button
             whileHover={{ 
