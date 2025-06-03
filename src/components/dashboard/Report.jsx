@@ -1485,36 +1485,24 @@ function Report({ result }) {
                       className="h-full relative overflow-hidden rounded-xl"
                       style={{ width: '0%' }}
                       animate={{ 
-                        width: resultConfidence > 1 ? `${resultConfidence}%` : `${resultConfidence * 100}%`
+                        width: typeof resultConfidence === 'string' 
+                          ? (parseFloat(resultConfidence) > 1 
+                              ? `${parseFloat(resultConfidence)}%` 
+                              : `${parseFloat(resultConfidence) * 100}%`)
+                          : (resultConfidence > 1 
+                              ? `${resultConfidence}%` 
+                              : `${resultConfidence * 100}%`)
                       }}
                       transition={{ 
                         duration: 2.2, 
-                        ease: [0.22, 1.2, 0.36, 1], // Enhanced spring-like easing
+                        ease: [0.22, 1.2, 0.36, 1],
                         delay: 0.3 
                       }}
                   >
-                    {/* Modern gradient background with animated rotation */}
-                    <motion.div 
-                      className="absolute inset-0"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)'
-                      }}
-                      animate={{
-                        background: [
-                          'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
-                          'linear-gradient(90deg, rgba(124,58,237,1) 0%, rgba(236,72,153,1) 50%, rgba(79,70,229,1) 100%)',
-                          'linear-gradient(90deg, rgba(236,72,153,1) 0%, rgba(79,70,229,1) 50%, rgba(124,58,237,1) 100%)',
-                          'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
-                        ]
-                      }}
-                      transition={{
-                        duration: 10,
-                        repeat: Infinity,
-                        repeatType: "loop"
-                      }}
-                    />
+                    {/* Modern gradient background */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
                     
-                    {/* Enhanced shine effect with double layers */}
+                    {/* Shine effect */}
                     <motion.div
                       className="absolute inset-0"
                       style={{
@@ -1533,176 +1521,28 @@ function Report({ result }) {
                       }}
                     />
                     
-                    {/* Secondary shine effect for depth */}
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
-                          filter: 'blur(2px)',
-                      }}
-                      animate={{
-                        x: ['-80%', '180%'],
-                      }}
-                      transition={{
-                        duration: 3.5,
-                        ease: "easeInOut",
-                        repeat: Infinity,
-                        repeatType: "loop",
-                      }}
-                    />
-                    
-                    {/* Animated percentage display */}
-                    <motion.div 
-                      className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-white text-sm flex items-center"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.5, duration: 0.5 }}
-                    >
+                    {/* Percentage display */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-white text-sm flex items-center">
                       {formatPercentage(resultConfidence)}
-                      <motion.svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-4 w-4 ml-1" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-                        transition={{ delay: 2, type: "spring", stiffness: 300 }}
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </motion.svg>
-                    </motion.div>
+                      </svg>
+                    </div>
                     
-                    {/* Modern animated markers */}
-                    {[25, 50, 75, 100].map((marker, i) => (
-                      <motion.div
-                        key={i}
-                        className="absolute top-0 bottom-0 flex items-center justify-center"
-                        style={{ left: `${marker}%` }}
-                      >
-                        <motion.div
-                          className="h-full w-0.5 bg-white/30"
-                          initial={{ height: 0 }}
-                          animate={{ height: '100%' }}
-                          transition={{ delay: 0.3 + (i * 0.1), duration: 0.7 }}
-                        />
-                        <motion.div
-                          className="absolute top-1 h-1.5 w-1.5 rounded-full bg-white"
-                          initial={{ scale: 0 }}
-                          animate={{ 
-                            scale: [0, 1.5, 1],
-                            boxShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 10px rgba(255,255,255,0.8)', '0 0 5px rgba(255,255,255,0.5)']
-                          }}
-                          transition={{ delay: 0.6 + (i * 0.15), duration: 0.5 }}
-                        />
-                      </motion.div>
-                    ))}
-                    {/* Modern gradient background with animated rotation */}
-                    <motion.div 
-                      className="absolute inset-0"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)'
-                      }}
-                      animate={{
-                        background: [
-                          'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
-                          'linear-gradient(90deg, rgba(124,58,237,1) 0%, rgba(236,72,153,1) 50%, rgba(79,70,229,1) 100%)',
-                          'linear-gradient(90deg, rgba(236,72,153,1) 0%, rgba(79,70,229,1) 50%, rgba(124,58,237,1) 100%)',
-                          'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
-                        ]
-                      }}
-                      transition={{
-                        duration: 10,
-                        repeat: Infinity,
-                        repeatType: "loop"
-                      }}
-                    />
-                    
-                    {/* Enhanced shine effect with double layers */}
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%)',
-                          filter: 'blur(5px)',
-                      }}
-                      animate={{
-                        x: ['-120%', '120%'],
-                      }}
-                      transition={{
-                        duration: 2.5,
-                        ease: "easeInOut",
-                        repeat: Infinity,
-                        repeatType: "loop",
-                        delay: 0.5
-                      }}
-                    />
-                    
-                    {/* Secondary shine effect for depth */}
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
-                          filter: 'blur(2px)',
-                      }}
-                      animate={{
-                        x: ['-80%', '180%'],
-                      }}
-                      transition={{
-                        duration: 3.5,
-                        ease: "easeInOut",
-                        repeat: Infinity,
-                        repeatType: "loop",
-                      }}
-                    />
-                    
-                    {/* Animated percentage display */}
-                    <motion.div 
-                      className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-white text-sm flex items-center"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.5, duration: 0.5 }}
-                    >
-                      {formatPercentage(resultConfidence)}
-                      <motion.svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-4 w-4 ml-1" 
-                        viewBox="0 0 20 20" 
-                        fill="currentColor"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-                        transition={{ delay: 2, type: "spring", stiffness: 300 }}
-                      >
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </motion.svg>
-                    </motion.div>
-                    
-                    {/* Modern animated markers */}
-                    {[...Array(5)].map((_, i) => (
-                      <motion.div
+                    {/* Markers */}
+                    {[1, 2, 3, 4].map((_, i) => (
+                      <div
                         key={i}
                         className="absolute top-0 bottom-0 flex items-center justify-center"
                         style={{ left: `${(i + 1) * 20}%` }}
                       >
-                        <motion.div
-                          className="h-full w-0.5 bg-white/30"
-                          initial={{ height: 0 }}
-                          animate={{ height: '100%' }}
-                          transition={{ delay: 0.3 + (i * 0.1), duration: 0.7 }}
-                        />
-                        <motion.div
-                          className="absolute top-1 h-1.5 w-1.5 rounded-full bg-white"
-                          initial={{ scale: 0 }}
-                          animate={{ 
-                            scale: [0, 1.5, 1],
-                            boxShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 10px rgba(255,255,255,0.8)', '0 0 5px rgba(255,255,255,0.5)']
-                          }}
-                          transition={{ delay: 0.6 + (i * 0.15), duration: 0.5 }}
-                        />
-                      </motion.div>
+                        <div className="h-full w-0.5 bg-white/30"></div>
+                      </div>
                     ))}
                   </motion.div>
                 </div>
                 
-                {/* Modern confidence thresholds */}
+                {/* Progress labels */}
                 <div className="flex justify-between px-1 mt-2 text-xs text-gray-500">
                   <span>0%</span>
                   <span>25%</span>
