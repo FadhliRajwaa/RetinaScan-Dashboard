@@ -374,7 +374,7 @@ function Report({ result }) {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
+      const margin = 15;
       
       // Fungsi untuk menambahkan teks dengan wrapping
       const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
@@ -382,72 +382,194 @@ function Report({ result }) {
         pdf.text(lines, x, y);
         return y + (lines.length * lineHeight);
       };
+
+      // Fungsi untuk simulasi gradien dengan serangkaian persegi panjang
+      const addGradient = (x, y, width, height, color1, color2, steps = 20) => {
+        const stepHeight = height / steps;
+        for (let i = 0; i < steps; i++) {
+          const ratio = i / (steps - 1);
+          const r = Math.floor(color1[0] * (1 - ratio) + color2[0] * ratio);
+          const g = Math.floor(color1[1] * (1 - ratio) + color2[1] * ratio);
+          const b = Math.floor(color1[2] * (1 - ratio) + color2[2] * ratio);
+          
+          pdf.setFillColor(r, g, b);
+          pdf.rect(x, y + (i * stepHeight), width, stepHeight + 0.5, 'F');
+        }
+      };
       
-      // Header dengan warna biru seperti di UI
-      pdf.setFillColor(37, 99, 235); // blue-600
-      pdf.rect(0, 0, pageWidth, 25, 'F');
+      // Fungsi untuk menambahkan kartu dengan efek bayangan
+      const addCard = (x, y, width, height, bgColor, borderColor, title, content, icon = null, iconColor = null) => {
+        // Simulasi bayangan dengan beberapa persegi panjang semi-transparan
+        for (let i = 4; i > 0; i--) {
+          pdf.setFillColor(100, 100, 100, i * 0.03);
+          pdf.roundedRect(x + i, y + i, width, height, 3, 3, 'F');
+        }
+        
+        // Background kartu
+        pdf.setFillColor(...bgColor);
+        pdf.setDrawColor(...borderColor);
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(x, y, width, height, 3, 3, 'FD');
+        
+        // Efek glassmorphism dengan overlay putih transparan
+        pdf.setFillColor(255, 255, 255, 0.3);
+        pdf.roundedRect(x, y, width, height / 4, 3, 3, 'F');
+        
+        // Tambahkan judul
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(12);
+        pdf.setTextColor(50, 50, 50);
+        
+        let contentY = y + 10;
+        
+        // Tambahkan ikon jika ada
+        if (icon) {
+          // Simulasi ikon dengan bentuk dasar
+          pdf.setFillColor(...(iconColor || [0, 0, 0]));
+          
+          if (icon === 'circle') {
+            pdf.circle(x + 10, y + 10, 5, 'F');
+          } else if (icon === 'alert') {
+            // Segitiga untuk alert
+            pdf.triangle(x + 7, y + 15, x + 10, y + 7, x + 13, y + 15, 'F');
+          } else if (icon === 'check') {
+            // Simulasi checkmark
+            pdf.setLineWidth(1.5);
+            pdf.setDrawColor(...(iconColor || [0, 0, 0]));
+            pdf.line(x + 6, y + 10, x + 9, y + 13);
+            pdf.line(x + 9, y + 13, x + 14, y + 7);
+          }
+          
+          pdf.text(title, x + 20, contentY);
+        } else {
+          pdf.text(title, x + 10, contentY);
+        }
+        
+        // Tambahkan konten
+        pdf.setFont(undefined, 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(60, 60, 60);
+        contentY += 8;
+        
+        return addWrappedText(content, x + 10, contentY, width - 20, 5);
+      };
+      
+      // Fungsi untuk menambahkan progress bar
+      const addProgressBar = (x, y, width, height, progress, color) => {
+        // Background bar
+        pdf.setFillColor(230, 230, 230);
+        pdf.roundedRect(x, y, width, height, height / 2, height / 2, 'F');
+        
+        // Progress fill
+        pdf.setFillColor(...color);
+        if (progress > 0) {
+          const fillWidth = Math.max(width * progress, height); // Minimal width = height (for circle)
+          pdf.roundedRect(x, y, fillWidth, height, height / 2, height / 2, 'F');
+        }
+        
+        // Highlight effect
+        pdf.setFillColor(255, 255, 255, 0.5);
+        pdf.roundedRect(x, y, width, height / 2, height / 2, height / 2, 'F');
+      };
+      
+      // Fungsi untuk menambahkan elemen dekoratif
+      const addDecorativeElement = (x, y, radius, color) => {
+        pdf.setFillColor(...color);
+        pdf.circle(x, y, radius, 'F');
+      };
+      
+      // Fungsi untuk mendapatkan warna berdasarkan tingkat keparahan
+      const getSeverityColors = (severity) => {
+        const level = severity.toLowerCase();
+        if (level === 'tidak ada' || level === 'normal') {
+          return {
+            main: [59, 130, 246], // blue-500
+            light: [219, 234, 254], // blue-100
+            dark: [30, 64, 175],   // blue-800
+            border: [147, 197, 253], // blue-300
+            gradient: [[37, 99, 235], [59, 130, 246]] // blue-600 to blue-500
+          };
+        } else if (level === 'ringan') {
+          return {
+            main: [16, 185, 129], // green-500
+            light: [209, 250, 229], // green-100
+            dark: [6, 95, 70],    // green-800
+            border: [134, 239, 172], // green-300
+            gradient: [[5, 150, 105], [16, 185, 129]] // green-600 to green-500
+          };
+        } else if (level === 'sedang') {
+          return {
+            main: [245, 158, 11], // yellow-500
+            light: [254, 243, 199], // yellow-100
+            dark: [180, 83, 9],   // yellow-800
+            border: [253, 224, 71], // yellow-300
+            gradient: [[217, 119, 6], [245, 158, 11]] // yellow-600 to yellow-500
+          };
+        } else if (level === 'berat') {
+          return {
+            main: [239, 68, 68], // red-500
+            light: [254, 226, 226], // red-100
+            dark: [185, 28, 28],  // red-800
+            border: [252, 165, 165], // red-300
+            gradient: [[220, 38, 38], [239, 68, 68]] // red-600 to red-500
+          };
+        } else {
+          return {
+            main: [225, 29, 72], // rose-500
+            light: [254, 205, 211], // rose-100
+            dark: [159, 18, 57],  // rose-800
+            border: [253, 164, 175], // rose-300
+            gradient: [[225, 29, 72], [244, 63, 94]] // rose-600 to rose-500
+          };
+        }
+      };
+      
+      // Dapatkan warna berdasarkan tingkat keparahan
+      const severityColors = getSeverityColors(severity);
+
+      // ===== HEADER SECTION =====
+      // Tambahkan header dengan gradien
+      addGradient(0, 0, pageWidth, 40, severityColors.gradient[0], severityColors.gradient[1]);
+      
+      // Tambahkan lingkaran dekoratif di header
+      addDecorativeElement(pageWidth - 15, 15, 25, [255, 255, 255, 0.1]);
+      addDecorativeElement(15, 30, 15, [255, 255, 255, 0.1]);
+      
+      // Tambahkan logo (simulasi dengan lingkaran)
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(20, 20, 8, 'F');
+      
+      // Tambahkan ikon di dalam logo
+      pdf.setFillColor(...severityColors.main);
+      pdf.circle(20, 20, 5, 'F');
       
       // Tambahkan judul dengan font yang lebih besar
-      pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
-      pdf.setFontSize(14);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(24);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', pageWidth / 2, 10, { align: 'center' });
+      pdf.text('LAPORAN ANALISIS RETINA', pageWidth / 2, 20, { align: 'center' });
       
-      pdf.setFontSize(10);
+      // Tambahkan tanggal analisis
+      pdf.setFontSize(11);
       pdf.setFont(undefined, 'normal');
-      pdf.text('Laporan hasil dari rekomendasi berdasarkan analisis', pageWidth / 2, 18, { align: 'center' });
+      const analysisDate = formatDate(resultDate);
+      pdf.text(`Tanggal: ${analysisDate}`, pageWidth / 2, 30, { align: 'center' });
       
-      let yPos = 35;
+      let yPos = 50;
       
-      // Kartu hasil analisis retina
-      pdf.setFillColor(255, 255, 255);
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), pageHeight - yPos - 20, 'F');
-      pdf.setDrawColor(230, 230, 230);
-      pdf.setLineWidth(0.5);
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), pageHeight - yPos - 20, 'D');
-      
-      // Judul kartu dan tanggal
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(18);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis Retina', margin + 10, yPos + 10);
-      
-      // Tambahkan ikon dan tanggal
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`Selasa, 3 Juni 2025`, margin + 10, yPos + 20);
-      pdf.text(`13:42:58`, margin + 40, yPos + 20);
-      
-      // Tambahkan ID
-      pdf.text(`ID: 88392042`, margin + 10, yPos + 28);
-      
-      yPos += 35;
-      
-      // Informasi pasien jika tersedia
+      // ===== INFORMASI PASIEN =====
       if (patient) {
-        // Kartu info pasien
-        pdf.setFillColor(250, 250, 250);
-        pdf.rect(margin + 5, yPos, pageWidth - (margin * 2) - 10, 40, 'F');
-        pdf.setDrawColor(230, 230, 230);
-        pdf.rect(margin + 5, yPos, pageWidth - (margin * 2) - 10, 40, 'D');
+        // Kartu info pasien dengan desain modern
+        const patientCardWidth = pageWidth - (margin * 2);
+        const patientCardHeight = 45;
+        
+        // Tambahkan elemen dekoratif di belakang kartu
+        addDecorativeElement(margin + 15, yPos + 15, 30, [219, 234, 254, 0.5]); // blue-100 with opacity
         
         // Judul kartu
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFontSize(12);
-        pdf.setFont(undefined, 'bold');
-        
-        // Tambahkan ikon
-        pdf.setTextColor(80, 70, 200);
-        pdf.text('Info Pasien', margin + 25, yPos + 15);
-        pdf.setTextColor(0, 0, 0);
+        const patientTitle = "Informasi Pasien";
         
         // Data pasien
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(80, 80, 80);
-        
-        // Gunakan extractValueWithDefault untuk konsistensi dengan tampilan
         const patientName = extractValueWithDefault(patient, 'fullName', extractValueWithDefault(patient, 'name', 'Tidak ada nama'));
         const patientGender = extractValueWithDefault(patient, 'gender', '');
         const patientAge = extractValueWithDefault(patient, 'age', '');
@@ -461,132 +583,171 @@ function Report({ result }) {
         // Tambahkan umur jika tersedia
         let ageText = patientAge ? `${patientAge} tahun` : '';
         
-        // Tampilkan data pasien dalam format tabel
-        pdf.text(`Nama:`, margin + 15, yPos + 25);
-        pdf.text(`${patientName}`, margin + 45, yPos + 25);
+        // Gabungkan gender dan umur jika keduanya tersedia
+        let infoText = '';
+        if (genderText && ageText) {
+          infoText = `Jenis Kelamin: ${genderText}\nUmur: ${ageText}`;
+        } else if (genderText) {
+          infoText = `Jenis Kelamin: ${genderText}`;
+        } else if (ageText) {
+          infoText = `Umur: ${ageText}`;
+        }
         
-        pdf.text(`Jenis:`, margin + 15, yPos + 32);
-        pdf.text(`${genderText}`, margin + 45, yPos + 32);
+        const patientContent = `Nama: ${patientName}\n${infoText}`;
         
-        pdf.text(`Kelamin:`, margin + 15, yPos + 39);
-        pdf.text(`${ageText}`, margin + 45, yPos + 39);
+        // Tambahkan kartu pasien
+        addCard(
+          margin, 
+          yPos, 
+          patientCardWidth, 
+          patientCardHeight, 
+          [248, 250, 252], // slate-50
+          [226, 232, 240], // slate-200
+          patientTitle,
+          patientContent,
+          'circle',
+          [59, 130, 246] // blue-500
+        );
         
-        yPos += 50;
+        yPos += patientCardHeight + 15;
       }
       
-      // Hasil analisis keparahan
-      // Kartu hasil analisis dengan warna sesuai keparahan
-      const severityLevel = severity.toLowerCase();
+      // ===== HASIL ANALISIS =====
+      // Kartu hasil analisis dengan desain modern
+      const resultCardWidth = pageWidth - (margin * 2);
+      const resultCardHeight = 70;
       
-      // Judul hasil analisis keparahan
-      pdf.setTextColor(80, 70, 200);
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis Keparahan', margin + 10, yPos + 10);
+      // Tambahkan elemen dekoratif di belakang kartu
+      addDecorativeElement(pageWidth - margin - 15, yPos + 15, 30, [...severityColors.light.slice(0, 3), 0.5]);
       
-      // Kartu keparahan
-      let bgColor, textColor, borderColor;
+      // Tambahkan kartu hasil analisis
+      const resultTitle = "Hasil Analisis";
+      const resultContent = `Tingkat Keparahan: ${severity}\nTingkat Kepercayaan: ${formatPercentage(confidence)}`;
       
-      if (severityLevel === 'ringan') {
-        bgColor = [40, 200, 150]; // green
-        textColor = [255, 255, 255];  // white
-      } else if (severityLevel === 'sedang') {
-        bgColor = [250, 190, 40]; // yellow
-        textColor = [255, 255, 255];  // white
-      } else if (severityLevel === 'berat') {
-        bgColor = [240, 80, 80]; // red
-        textColor = [255, 255, 255];  // white
-      } else {
-        bgColor = [80, 130, 240]; // blue
-        textColor = [255, 255, 255];  // white
-      }
+      addCard(
+        margin, 
+        yPos, 
+        resultCardWidth, 
+        resultCardHeight, 
+        severityColors.light, 
+        severityColors.border,
+        resultTitle,
+        resultContent,
+        severity.toLowerCase() === 'tidak ada' || severity.toLowerCase() === 'normal' ? 'check' : 
+        severity.toLowerCase() === 'ringan' ? 'circle' : 'alert',
+        severityColors.main
+      );
       
-      // Kartu keparahan
-      pdf.setFillColor(...bgColor);
-      pdf.rect(margin + 10, yPos + 20, 80, 40, 'F');
-      pdf.setDrawColor(...bgColor);
-      pdf.rect(margin + 10, yPos + 20, 80, 40, 'D');
-      
-      // Label tingkat keparahan
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(255, 255, 255);
-      pdf.text('Tingkat Keparahan', margin + 20, yPos + 35);
-      
-      // Nilai keparahan
-      pdf.setFontSize(18);
-      pdf.setFont(undefined, 'bold');
-      pdf.setTextColor(...textColor);
-      pdf.text(severity, margin + 50, yPos + 50, { align: 'center' });
-      
-      // Tingkat kepercayaan
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(255, 255, 255);
-      pdf.text(`Tingkat Kepercayaan:`, margin + 20, yPos + 55);
-      
-      // Progress bar untuk confidence
-      pdf.setFillColor(255, 255, 255, 0.3);
-      pdf.rect(margin + 20, yPos + 57, 50, 3, 'F');
-      
-      // Fill progress bar
-      pdf.setFillColor(255, 255, 255);
+      // Tambahkan progress bar untuk confidence
       const confidenceValue = parseFloat(confidence);
-      const fillWidth = confidenceValue * 50;
-      if (fillWidth > 0) {
-        pdf.rect(margin + 20, yPos + 57, fillWidth, 3, 'F');
-      }
+      addProgressBar(
+        margin + 40, 
+        yPos + 50, 
+        resultCardWidth - 80, 
+        6, 
+        confidenceValue, 
+        severityColors.main
+      );
       
-      // Confidence percentage
-      pdf.text(`${formatPercentage(confidence)}`, margin + 75, yPos + 58);
+      // Label untuk progress bar
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text("0%", margin + 30, yPos + 55, { align: 'right' });
+      pdf.text("100%", margin + resultCardWidth - 30, yPos + 55, { align: 'left' });
       
-      // Gambar retina
+      yPos += resultCardHeight + 15;
+      
+      // ===== GAMBAR RETINA =====
+      // Kartu gambar retina dengan desain modern
+      const imageCardWidth = resultCardWidth;
+      const imageCardHeight = 120;
+      
+      // Tambahkan elemen dekoratif di belakang kartu
+      addDecorativeElement(margin + 30, yPos + imageCardHeight - 20, 40, [243, 244, 246, 0.7]); // gray-100 with opacity
+      
+      // Background untuk kartu gambar
+      pdf.setFillColor(249, 250, 251); // gray-50
+      pdf.setDrawColor(243, 244, 246); // gray-100
+      pdf.setLineWidth(0.5);
+      pdf.roundedRect(margin, yPos, imageCardWidth, imageCardHeight, 3, 3, 'FD');
+      
+      // Efek glassmorphism dengan overlay putih transparan
+      pdf.setFillColor(255, 255, 255, 0.4);
+      pdf.roundedRect(margin, yPos, imageCardWidth, 10, 3, 3, 'F');
+      
+      // Judul kartu gambar
+      pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(12);
+      pdf.setTextColor(50, 50, 50);
+      pdf.text("Gambar Retina", margin + 10, yPos + 8);
+      
       try {
         const imgSource = getImageSource();
         if (imgSource && imgSource !== '/images/default-retina.jpg') {
-          // Tambahkan judul gambar retina
-          pdf.setTextColor(80, 70, 200);
-          pdf.setFontSize(12);
-          pdf.setFont(undefined, 'bold');
-          pdf.text('Gambar Retina', margin + pageWidth / 2 + 10, yPos + 10);
+          // Tambahkan gambar dengan border
+          const imgWidth = 90;
+          const imgHeight = 90;
+          
+          // Tambahkan border untuk gambar dengan warna sesuai keparahan
+          pdf.setDrawColor(...severityColors.main);
+          pdf.setLineWidth(1);
+          pdf.roundedRect(
+            pageWidth / 2 - imgWidth / 2 - 2, 
+            yPos + 15, 
+            imgWidth + 4, 
+            imgHeight + 4, 
+            2, 2, 'D'
+          );
           
           // Tambahkan gambar
-          const imgWidth = 80;
-          const imgHeight = 80;
-          pdf.addImage(imgSource, 'JPEG', pageWidth / 2, yPos + 20, imgWidth, imgHeight);
+          pdf.addImage(
+            imgSource, 
+            'JPEG', 
+            pageWidth / 2 - imgWidth / 2, 
+            yPos + 17, 
+            imgWidth, 
+            imgHeight
+          );
           
-          // Tambahkan label 100% di pojok kanan atas gambar
-          pdf.setFillColor(80, 80, 80);
-          pdf.rect(pageWidth / 2 + imgWidth - 15, yPos + 20, 15, 10, 'F');
-          pdf.setTextColor(255, 255, 255);
+          // Tambahkan label gambar dengan background sesuai keparahan
+          const labelWidth = 80;
+          const labelHeight = 8;
+          pdf.setFillColor(...severityColors.main);
+          pdf.roundedRect(
+            pageWidth / 2 - labelWidth / 2, 
+            yPos + imgHeight + 22, 
+            labelWidth, 
+            labelHeight, 
+            labelHeight / 2, labelHeight / 2, 'F'
+          );
+          
+          // Label teks
           pdf.setFontSize(8);
-          pdf.text('100%', pageWidth / 2 + imgWidth - 7.5, yPos + 26, { align: 'center' });
+          pdf.setTextColor(255, 255, 255);
+          pdf.text(
+            "RETINA SCAN", 
+            pageWidth / 2, 
+            yPos + imgHeight + 27, 
+            { align: 'center' }
+          );
         }
       } catch (imgError) {
         console.error('Error adding image to PDF:', imgError);
       }
       
-      yPos += 110;
+      yPos += imageCardHeight + 15;
       
-      // Rekomendasi
-      pdf.setTextColor(80, 70, 200);
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 10, yPos + 10);
+      // ===== REKOMENDASI =====
+      // Kartu rekomendasi dengan desain modern
+      const recCardWidth = resultCardWidth;
+      const recCardHeight = 60;
       
-      // Kartu rekomendasi
-      pdf.setFillColor(245, 250, 255);
-      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'F');
-      pdf.setDrawColor(230, 240, 250);
-      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'D');
-      
-      // Isi rekomendasi
-      pdf.setFontSize(10);
-      pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(80, 80, 80);
+      // Tambahkan elemen dekoratif di belakang kartu
+      addDecorativeElement(pageWidth - margin - 25, yPos + recCardHeight - 15, 30, [238, 242, 255, 0.7]); // indigo-50 with opacity
       
       // Gunakan rekomendasi yang sama dengan yang ditampilkan di UI
       let recommendation = '';
+      const severityLevel = severity.toLowerCase();
       if (severityLevel === 'tidak ada' || severityLevel === 'normal') {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       } else if (severityLevel === 'ringan') {
@@ -595,47 +756,75 @@ function Report({ result }) {
         recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
       } else if (severityLevel === 'berat') {
         recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
+      } else if (severityLevel === 'sangat berat') {
+        recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
       } else {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      addWrappedText(recommendation, margin + 20, yPos + 35, pageWidth - (margin * 4) - 10, 5);
+      // Tambahkan kartu rekomendasi
+      addCard(
+        margin, 
+        yPos, 
+        recCardWidth, 
+        recCardHeight, 
+        [238, 242, 255], // indigo-50
+        [199, 210, 254], // indigo-200
+        "Rekomendasi",
+        recommendation,
+        'circle',
+        [79, 70, 229] // indigo-600
+      );
       
-      yPos += 70;
+      yPos += recCardHeight + 15;
       
-      // Disclaimer
-      pdf.setTextColor(80, 70, 200);
-      pdf.setFontSize(12);
+      // ===== DISCLAIMER =====
+      // Kartu disclaimer dengan desain modern
+      const disclaimerCardWidth = resultCardWidth;
+      const disclaimerCardHeight = 40;
+      
+      // Background untuk disclaimer
+      pdf.setFillColor(254, 242, 242); // red-50
+      pdf.setDrawColor(254, 202, 202); // red-200
+      pdf.setLineWidth(0.5);
+      pdf.roundedRect(margin, yPos, disclaimerCardWidth, disclaimerCardHeight, 3, 3, 'FD');
+      
+      // Efek glassmorphism dengan overlay putih transparan
+      pdf.setFillColor(255, 255, 255, 0.2);
+      pdf.roundedRect(margin, yPos, disclaimerCardWidth, 10, 3, 3, 'F');
+      
+      // Judul disclaimer
       pdf.setFont(undefined, 'bold');
-      pdf.text('Disclaimer', margin + 10, yPos + 10);
+      pdf.setFontSize(10);
+      pdf.setTextColor(185, 28, 28); // red-700
+      pdf.text("DISCLAIMER", margin + 10, yPos + 8);
       
-      // Kartu disclaimer
-      pdf.setFillColor(255, 245, 245);
-      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'F');
-      pdf.setDrawColor(250, 230, 230);
-      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'D');
-      
-      // Isi disclaimer
-      pdf.setFontSize(9);
+      // Teks disclaimer
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(100, 50, 50);
-      const disclaimer = 'Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      addWrappedText(disclaimer, margin + 20, yPos + 35, pageWidth - (margin * 4) - 10, 4);
-      
-      // Footer
-      pdf.setFillColor(240, 240, 240);
-      pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
-      
       pdf.setFontSize(8);
-      pdf.setTextColor(100, 100, 100);
-      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+      pdf.setTextColor(127, 29, 29); // red-800
+      const disclaimer = 'Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      addWrappedText(disclaimer, margin + 10, yPos + 15, disclaimerCardWidth - 20, 4);
       
-      // Tambahkan tombol di footer
-      pdf.setFillColor(37, 99, 235);
-      pdf.rect(pageWidth - 50, pageHeight - 15, 40, 10, 'F');
+      yPos += disclaimerCardHeight + 15;
+      
+      // ===== FOOTER =====
+      // Tambahkan footer dengan gradien
+      addGradient(0, pageHeight - 20, pageWidth, 20, severityColors.gradient[0], severityColors.gradient[1]);
+      
+      // Tambahkan teks footer
+      pdf.setFontSize(9);
       pdf.setTextColor(255, 255, 255);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Scan Baru', pageWidth - 30, pageHeight - 9, { align: 'center' });
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+      
+      // Tambahkan QR code simulasi di footer
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(pageWidth - 25, pageHeight - 15, 10, 10, 1, 1, 'F');
+      pdf.setFillColor(0, 0, 0);
+      pdf.roundedRect(pageWidth - 23, pageHeight - 13, 2, 2, 0, 0, 'F');
+      pdf.roundedRect(pageWidth - 20, pageHeight - 13, 2, 2, 0, 0, 'F');
+      pdf.roundedRect(pageWidth - 23, pageHeight - 10, 2, 2, 0, 0, 'F');
+      pdf.roundedRect(pageWidth - 20, pageHeight - 10, 2, 2, 0, 0, 'F');
       
       // Simpan PDF dengan nama yang berisi tanggal analisis
       const dateForFilename = new Date(resultDate).toISOString().split('T')[0];
