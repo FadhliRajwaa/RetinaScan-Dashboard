@@ -58,6 +58,9 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   
+  // State untuk melacak apakah notifikasi sudah dimuat
+  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
+  
   // Fungsi untuk mendapatkan notifikasi
   const fetchNotifications = useCallback(async (pageNum = 1, append = false) => {
     try {
@@ -126,7 +129,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     if (!loading && hasMore) {
       const nextPage = page + 1;
       setPage(nextPage);
-      fetchNotifications(nextPage, true);
+      throttledFetchNotifications(nextPage, true);
     }
   };
   
@@ -452,10 +455,59 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   
   // Efek untuk memuat notifikasi saat komponen dibuka
   useEffect(() => {
-    if (isOpen) {
-      fetchNotifications(1, false);
+    // Tidak lakukan apapun jika panel tidak terbuka
+    if (!isOpen) return;
+    
+    // Jika notifikasi sudah pernah dimuat dan kita sudah memiliki data, tidak perlu memuat ulang
+    if (notificationsLoaded && notifications.length > 0) {
+      console.log('Notifications already loaded, skipping fetch');
+      return;
     }
-  }, [isOpen, fetchNotifications]);
+    
+    console.log('Panel opened, fetching notifications...');
+    let isFetching = false;
+    
+    const fetchData = async () => {
+      if (!isFetching) {
+        isFetching = true;
+        try {
+          await throttledFetchNotifications(1, false);
+          setNotificationsLoaded(true);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        } finally {
+          isFetching = false;
+        }
+      }
+    };
+    
+    fetchData();
+    
+    // Cleanup function
+    return () => {
+      isFetching = false;
+      console.log('Cleaning up notification fetch effect');
+    };
+    
+    // Hanya jalankan effect ini saat isOpen berubah, jangan masukkan fungsi throttledFetchNotifications 
+    // di dependency array karena akan menyebabkan loop tak terbatas
+  }, [isOpen, notificationsLoaded, notifications.length]);
+  
+  // Flag untuk membatasi jumlah request API
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const FETCH_THROTTLE_TIME = 5000; // minimal 5 detik antara requests
+  
+  // Fungsi untuk memuat notifikasi dengan throttling
+  const throttledFetchNotifications = useCallback(async (pageNum = 1, append = false) => {
+    const now = Date.now();
+    if (now - lastFetchTime < FETCH_THROTTLE_TIME) {
+      console.log('Throttling API request, skipping fetch');
+      return;
+    }
+    
+    setLastFetchTime(now);
+    return fetchNotifications(pageNum, append);
+  }, [fetchNotifications]);
   
   // Variasi animasi
   const containerVariants = {
