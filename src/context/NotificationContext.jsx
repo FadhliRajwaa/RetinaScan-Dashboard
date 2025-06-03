@@ -183,6 +183,8 @@ export const NotificationProvider = ({ children }) => {
   return (
     <NotificationContext.Provider value={{ 
       unreadCount, 
+      setUnreadCount,
+      socket,
       isNotificationOpen, 
       toggleNotification, 
       closeNotification,

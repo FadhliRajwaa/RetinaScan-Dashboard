@@ -260,6 +260,19 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
               )}
             </motion.button>
             
+            {/* Settings Button for Mobile */}
+            <Link to="/settings">
+              <motion.button
+                variants={itemVariants}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+                aria-label="Pengaturan"
+              >
+                <Cog6ToothIcon className="h-5 w-5 text-gray-600" />
+              </motion.button>
+            </Link>
+            
             <motion.button
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
