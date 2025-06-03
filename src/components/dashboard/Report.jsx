@@ -374,7 +374,7 @@ function Report({ result }) {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 20;
+      const margin = 10;
       
       // Fungsi untuk menambahkan teks dengan wrapping
       const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
@@ -383,43 +383,69 @@ function Report({ result }) {
         return y + (lines.length * lineHeight);
       };
       
-      // Header dengan warna solid seperti di UI
+      // Header dengan warna biru seperti di UI
       pdf.setFillColor(37, 99, 235); // blue-600
-      pdf.rect(0, 0, pageWidth, 40, 'F');
+      pdf.rect(0, 0, pageWidth, 25, 'F');
       
       // Tambahkan judul dengan font yang lebih besar
       pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
-      pdf.setFontSize(24);
+      pdf.setFontSize(14);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Laporan Analisis Retina', pageWidth / 2, 20, { align: 'center' });
+      pdf.text('Hasil Analisis', pageWidth / 2, 10, { align: 'center' });
       
-      // Tambahkan tanggal analisis
-      pdf.setFontSize(12);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      const analysisDate = formatDate(resultDate);
-      pdf.text(`Tanggal: ${analysisDate}`, pageWidth / 2, 30, { align: 'center' });
+      pdf.text('Laporan hasil dari rekomendasi berdasarkan analisis', pageWidth / 2, 18, { align: 'center' });
       
-      let yPos = 50;
+      let yPos = 35;
+      
+      // Kartu hasil analisis retina
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), pageHeight - yPos - 20, 'F');
+      pdf.setDrawColor(230, 230, 230);
+      pdf.setLineWidth(0.5);
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), pageHeight - yPos - 20, 'D');
+      
+      // Judul kartu dan tanggal
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(18);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Hasil Analisis Retina', margin + 10, yPos + 10);
+      
+      // Tambahkan ikon dan tanggal
+      pdf.setFontSize(10);
+      pdf.setFont(undefined, 'normal');
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Selasa, 3 Juni 2025`, margin + 10, yPos + 20);
+      pdf.text(`13:42:58`, margin + 40, yPos + 20);
+      
+      // Tambahkan ID
+      pdf.text(`ID: 88392042`, margin + 10, yPos + 28);
+      
+      yPos += 35;
       
       // Informasi pasien jika tersedia
       if (patient) {
-        // Kartu info pasien dengan warna latar belakang seperti di UI
-        pdf.setFillColor(248, 250, 252); // slate-50
-        pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
-        pdf.setDrawColor(226, 232, 240); // slate-200
-        pdf.setLineWidth(0.5);
-        pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'D');
+        // Kartu info pasien
+        pdf.setFillColor(250, 250, 250);
+        pdf.rect(margin + 5, yPos, pageWidth - (margin * 2) - 10, 40, 'F');
+        pdf.setDrawColor(230, 230, 230);
+        pdf.rect(margin + 5, yPos, pageWidth - (margin * 2) - 10, 40, 'D');
         
         // Judul kartu
-        pdf.setTextColor(17, 24, 39); // gray-900
-        pdf.setFontSize(16);
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(12);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Informasi Pasien', margin + 10, yPos + 15);
+        
+        // Tambahkan ikon
+        pdf.setTextColor(80, 70, 200);
+        pdf.text('Info Pasien', margin + 25, yPos + 15);
+        pdf.setTextColor(0, 0, 0);
         
         // Data pasien
-        pdf.setFontSize(11);
+        pdf.setFontSize(10);
         pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(55, 65, 81); // gray-700
+        pdf.setTextColor(80, 80, 80);
         
         // Gunakan extractValueWithDefault untuk konsistensi dengan tampilan
         const patientName = extractValueWithDefault(patient, 'fullName', extractValueWithDefault(patient, 'name', 'Tidak ada nama'));
@@ -435,145 +461,129 @@ function Report({ result }) {
         // Tambahkan umur jika tersedia
         let ageText = patientAge ? `${patientAge} tahun` : '';
         
-        // Tampilkan nama pasien
-        pdf.text(`Nama: ${patientName}`, margin + 10, yPos + 25);
+        // Tampilkan data pasien dalam format tabel
+        pdf.text(`Nama:`, margin + 15, yPos + 25);
+        pdf.text(`${patientName}`, margin + 45, yPos + 25);
         
-        // Gabungkan gender dan umur jika keduanya tersedia
-        let infoText = '';
-        if (genderText && ageText) {
-          infoText = `Jenis Kelamin: ${genderText}, Umur: ${ageText}`;
-        } else if (genderText) {
-          infoText = `Jenis Kelamin: ${genderText}`;
-        } else if (ageText) {
-          infoText = `Umur: ${ageText}`;
-        }
+        pdf.text(`Jenis:`, margin + 15, yPos + 32);
+        pdf.text(`${genderText}`, margin + 45, yPos + 32);
         
-        if (infoText) {
-          pdf.text(infoText, margin + 10, yPos + 35);
-        }
+        pdf.text(`Kelamin:`, margin + 15, yPos + 39);
+        pdf.text(`${ageText}`, margin + 45, yPos + 39);
         
         yPos += 50;
       }
       
-      // Kartu hasil analisis
-      // Gunakan warna yang sesuai dengan tingkat keparahan
+      // Hasil analisis keparahan
+      // Kartu hasil analisis dengan warna sesuai keparahan
       const severityLevel = severity.toLowerCase();
+      
+      // Judul hasil analisis keparahan
+      pdf.setTextColor(80, 70, 200);
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Hasil Analisis Keparahan', margin + 10, yPos + 10);
+      
+      // Kartu keparahan
       let bgColor, textColor, borderColor;
       
-      if (severityLevel === 'tidak ada' || severityLevel === 'normal') {
-        bgColor = [219, 234, 254]; // blue-100
-        textColor = [30, 64, 175];  // blue-800
-        borderColor = [147, 197, 253]; // blue-300
-      } else if (severityLevel === 'ringan') {
-        bgColor = [209, 250, 229]; // green-100
-        textColor = [6, 95, 70];    // green-800
-        borderColor = [134, 239, 172]; // green-300
+      if (severityLevel === 'ringan') {
+        bgColor = [40, 200, 150]; // green
+        textColor = [255, 255, 255];  // white
       } else if (severityLevel === 'sedang') {
-        bgColor = [254, 243, 199]; // yellow-100
-        textColor = [180, 83, 9];   // yellow-800
-        borderColor = [253, 224, 71]; // yellow-300
+        bgColor = [250, 190, 40]; // yellow
+        textColor = [255, 255, 255];  // white
       } else if (severityLevel === 'berat') {
-        bgColor = [254, 226, 226]; // red-100
-        textColor = [185, 28, 28];  // red-800
-        borderColor = [252, 165, 165]; // red-300
+        bgColor = [240, 80, 80]; // red
+        textColor = [255, 255, 255];  // white
       } else {
-        bgColor = [254, 205, 211]; // rose-100
-        textColor = [159, 18, 57];  // rose-800
-        borderColor = [253, 164, 175]; // rose-300
+        bgColor = [80, 130, 240]; // blue
+        textColor = [255, 255, 255];  // white
       }
       
-      // Kartu hasil analisis dengan warna sesuai keparahan
+      // Kartu keparahan
       pdf.setFillColor(...bgColor);
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
-      pdf.setDrawColor(...borderColor);
-      pdf.setLineWidth(0.5);
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'D');
+      pdf.rect(margin + 10, yPos + 20, 80, 40, 'F');
+      pdf.setDrawColor(...bgColor);
+      pdf.rect(margin + 10, yPos + 20, 80, 40, 'D');
       
-      // Judul kartu
-      pdf.setTextColor(17, 24, 39); // gray-900
-      pdf.setFontSize(16);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('Hasil Analisis', margin + 10, yPos + 15);
-      
-      // Tingkat keparahan
-      pdf.setFontSize(12);
+      // Label tingkat keparahan
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(55, 65, 81); // gray-700
-      pdf.text('Tingkat Keparahan:', margin + 10, yPos + 30);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('Tingkat Keparahan', margin + 20, yPos + 35);
       
-      // Nilai keparahan dengan warna sesuai tingkat
-      pdf.setFontSize(14);
+      // Nilai keparahan
+      pdf.setFontSize(18);
       pdf.setFont(undefined, 'bold');
       pdf.setTextColor(...textColor);
-      pdf.text(severity, margin + 60, yPos + 30);
+      pdf.text(severity, margin + 50, yPos + 50, { align: 'center' });
       
       // Tingkat kepercayaan
-      pdf.setFontSize(12);
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(55, 65, 81); // gray-700
-      pdf.text(`Tingkat Kepercayaan: ${formatPercentage(confidence)}`, margin + 10, yPos + 40);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text(`Tingkat Kepercayaan:`, margin + 20, yPos + 55);
       
       // Progress bar untuk confidence
-      const barWidth = 50;
+      pdf.setFillColor(255, 255, 255, 0.3);
+      pdf.rect(margin + 20, yPos + 57, 50, 3, 'F');
+      
+      // Fill progress bar
+      pdf.setFillColor(255, 255, 255);
       const confidenceValue = parseFloat(confidence);
-      const fillWidth = confidenceValue * barWidth;
-      
-      pdf.setFillColor(226, 232, 240); // slate-200 (background)
-      pdf.rect(margin + 90, yPos + 37, barWidth, 5, 'F');
-      
-      pdf.setFillColor(...textColor);
+      const fillWidth = confidenceValue * 50;
       if (fillWidth > 0) {
-        pdf.rect(margin + 90, yPos + 37, fillWidth, 5, 'F');
+        pdf.rect(margin + 20, yPos + 57, fillWidth, 3, 'F');
       }
       
-      yPos += 60;
+      // Confidence percentage
+      pdf.text(`${formatPercentage(confidence)}`, margin + 75, yPos + 58);
       
-      // Gambar retina dengan border sederhana
+      // Gambar retina
       try {
         const imgSource = getImageSource();
         if (imgSource && imgSource !== '/images/default-retina.jpg') {
-          // Border untuk gambar
-          pdf.setDrawColor(226, 232, 240); // slate-200
-          pdf.setLineWidth(0.5);
-          pdf.rect(margin, yPos, pageWidth - (margin * 2), 120, 'D');
-          pdf.setFillColor(249, 250, 251); // gray-50
-          pdf.rect(margin, yPos, pageWidth - (margin * 2), 120, 'F');
+          // Tambahkan judul gambar retina
+          pdf.setTextColor(80, 70, 200);
+          pdf.setFontSize(12);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Gambar Retina', margin + pageWidth / 2 + 10, yPos + 10);
           
           // Tambahkan gambar
-          const imgWidth = 100;
-          const imgHeight = 100;
-          pdf.addImage(imgSource, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos + 10, imgWidth, imgHeight);
+          const imgWidth = 80;
+          const imgHeight = 80;
+          pdf.addImage(imgSource, 'JPEG', pageWidth / 2, yPos + 20, imgWidth, imgHeight);
           
-          // Label gambar
-          pdf.setFontSize(10);
-          pdf.setTextColor(55, 65, 81); // gray-700
-          pdf.setFont(undefined, 'normal');
-          pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos + imgHeight + 20, { align: 'center' });
-          
-          yPos += 130;
+          // Tambahkan label 100% di pojok kanan atas gambar
+          pdf.setFillColor(80, 80, 80);
+          pdf.rect(pageWidth / 2 + imgWidth - 15, yPos + 20, 15, 10, 'F');
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFontSize(8);
+          pdf.text('100%', pageWidth / 2 + imgWidth - 7.5, yPos + 26, { align: 'center' });
         }
       } catch (imgError) {
         console.error('Error adding image to PDF:', imgError);
-        yPos += 10;
       }
       
-      // Kartu rekomendasi
-      pdf.setFillColor(239, 246, 255); // blue-50
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
-      pdf.setDrawColor(191, 219, 254); // blue-200
-      pdf.setLineWidth(0.5);
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'D');
+      yPos += 110;
       
-      // Judul rekomendasi
-      pdf.setTextColor(17, 24, 39); // gray-900
-      pdf.setFontSize(16);
+      // Rekomendasi
+      pdf.setTextColor(80, 70, 200);
+      pdf.setFontSize(12);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Rekomendasi', margin + 10, yPos + 15);
+      pdf.text('Rekomendasi', margin + 10, yPos + 10);
       
-      // Teks rekomendasi
-      pdf.setFontSize(11);
+      // Kartu rekomendasi
+      pdf.setFillColor(245, 250, 255);
+      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'F');
+      pdf.setDrawColor(230, 240, 250);
+      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'D');
+      
+      // Isi rekomendasi
+      pdf.setFontSize(10);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(55, 65, 81); // gray-700
+      pdf.setTextColor(80, 80, 80);
       
       // Gunakan rekomendasi yang sama dengan yang ditampilkan di UI
       let recommendation = '';
@@ -585,40 +595,47 @@ function Report({ result }) {
         recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
       } else if (severityLevel === 'berat') {
         recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
-      } else if (severityLevel === 'sangat berat') {
-        recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
       } else {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin + 10, yPos + 25, pageWidth - (margin * 2) - 20, 5);
-      yPos += 15;
+      addWrappedText(recommendation, margin + 20, yPos + 35, pageWidth - (margin * 4) - 10, 5);
       
-      // Disclaimer dengan desain sederhana
-      pdf.setFillColor(254, 242, 242); // red-50
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
-      pdf.setDrawColor(254, 202, 202); // red-200
-      pdf.setLineWidth(0.5);
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'D');
+      yPos += 70;
       
-      // Teks disclaimer
-      pdf.setFontSize(9);
+      // Disclaimer
+      pdf.setTextColor(80, 70, 200);
+      pdf.setFontSize(12);
       pdf.setFont(undefined, 'bold');
-      pdf.setTextColor(185, 28, 28); // red-700
-      pdf.text('DISCLAIMER', margin + 10, yPos + 10);
+      pdf.text('Disclaimer', margin + 10, yPos + 10);
       
+      // Kartu disclaimer
+      pdf.setFillColor(255, 245, 245);
+      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'F');
+      pdf.setDrawColor(250, 230, 230);
+      pdf.rect(margin + 10, yPos + 20, pageWidth - (margin * 2) - 20, 40, 'D');
+      
+      // Isi disclaimer
+      pdf.setFontSize(9);
       pdf.setFont(undefined, 'normal');
-      pdf.setTextColor(127, 29, 29); // red-800
+      pdf.setTextColor(100, 50, 50);
       const disclaimer = 'Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
-      addWrappedText(disclaimer, margin + 10, yPos + 15, pageWidth - (margin * 2) - 20, 4);
+      addWrappedText(disclaimer, margin + 20, yPos + 35, pageWidth - (margin * 4) - 10, 4);
       
       // Footer
-      pdf.setFillColor(37, 99, 235); // blue-600
-      pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
+      pdf.setFillColor(240, 240, 240);
+      pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
       
-      pdf.setFontSize(10);
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+      
+      // Tambahkan tombol di footer
+      pdf.setFillColor(37, 99, 235);
+      pdf.rect(pageWidth - 50, pageHeight - 15, 40, 10, 'F');
       pdf.setTextColor(255, 255, 255);
-      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Scan Baru', pageWidth - 30, pageHeight - 9, { align: 'center' });
       
       // Simpan PDF dengan nama yang berisi tanggal analisis
       const dateForFilename = new Date(resultDate).toISOString().split('T')[0];
