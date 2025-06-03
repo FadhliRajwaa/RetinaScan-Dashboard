@@ -21,8 +21,33 @@ import { useTheme } from '../../context/ThemeContext';
 import { useNotification } from '../../context/NotificationContext';
 import NotificationSound from '../../../public/notification-sound.mp3';
 
+// Fungsi untuk menyimpan notifikasi ke localStorage
+const saveNotificationsToStorage = (notifications) => {
+  try {
+    localStorage.setItem('notifications', JSON.stringify(notifications));
+    console.log('Saved notifications to localStorage:', notifications.length);
+  } catch (error) {
+    console.error('Error saving notifications to localStorage:', error);
+  }
+};
+
+// Fungsi untuk mengambil notifikasi dari localStorage
+const getNotificationsFromStorage = () => {
+  try {
+    const storedNotifications = localStorage.getItem('notifications');
+    if (storedNotifications) {
+      const parsed = JSON.parse(storedNotifications);
+      console.log('Loaded notifications from localStorage:', parsed.length);
+      return parsed;
+    }
+  } catch (error) {
+    console.error('Error loading notifications from localStorage:', error);
+  }
+  return [];
+};
+
 const NotificationCenter = ({ isOpen, onClose }) => {
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState(() => getNotificationsFromStorage());
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -51,15 +76,25 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       
       const { notifications: fetchedNotifications, pagination, unreadCount } = response.data;
       
+      console.log('Fetched notifications:', fetchedNotifications);
+      
       // Update state notifikasi - hanya ganti jika ini adalah request halaman pertama dan bukan append
+      let updatedNotifications;
       if (append) {
         // Jika append, tambahkan notifikasi baru ke daftar yang sudah ada
-        setNotifications(prev => [...prev, ...fetchedNotifications]);
+        updatedNotifications = [...notifications, ...fetchedNotifications];
+        setNotifications(updatedNotifications);
       } else if (pageNum === 1 && notifications.length === 0) {
         // Hanya set notifikasi baru jika ini adalah request halaman pertama
         // dan belum ada notifikasi yang dimuat
-        setNotifications(fetchedNotifications);
+        updatedNotifications = fetchedNotifications;
+        setNotifications(updatedNotifications);
+      } else {
+        updatedNotifications = notifications;
       }
+      
+      // Simpan notifikasi ke localStorage
+      saveNotificationsToStorage(updatedNotifications);
       
       // Update jumlah notifikasi yang belum dibaca
       setUnreadCount(unreadCount);
@@ -73,7 +108,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       toast.error('Gagal memuat notifikasi');
       setLoading(false);
     }
-  }, [API_URL, setUnreadCount, notifications.length]);
+  }, [API_URL, setUnreadCount, notifications]);
   
   // Fungsi untuk memuat lebih banyak notifikasi
   const loadMore = () => {
@@ -94,6 +129,28 @@ const NotificationCenter = ({ isOpen, onClose }) => {
         return;
       }
       
+      console.log('Marking notification as read, ID:', notificationId);
+      
+      // Jika ini adalah ID temporer (dimulai dengan 'temp_'), hanya update state lokal
+      if (notificationId.startsWith('temp_')) {
+        console.log('Marking notification with temporary ID as read (local state only)');
+        
+        // Update state notifikasi
+        const updatedNotifications = notifications.map(notif => 
+          notif._id === notificationId ? { ...notif, read: true } : notif
+        );
+        
+        setNotifications(updatedNotifications);
+        
+        // Simpan notifikasi yang diperbarui ke localStorage
+        saveNotificationsToStorage(updatedNotifications);
+        
+        // Update jumlah notifikasi yang belum dibaca
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        return;
+      }
+      
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -107,11 +164,14 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       });
       
       // Update state notifikasi
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif._id === notificationId ? { ...notif, read: true } : notif
-        )
+      const updatedNotifications = notifications.map(notif => 
+        notif._id === notificationId ? { ...notif, read: true } : notif
       );
+      
+      setNotifications(updatedNotifications);
+      
+      // Simpan notifikasi yang diperbarui ke localStorage
+      saveNotificationsToStorage(updatedNotifications);
       
       // Update jumlah notifikasi yang belum dibaca
       setUnreadCount(prev => Math.max(0, prev - 1));
@@ -137,9 +197,11 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       });
       
       // Update state notifikasi
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, read: true }))
-      );
+      const updatedNotifications = notifications.map(notif => ({ ...notif, read: true }));
+      setNotifications(updatedNotifications);
+      
+      // Simpan notifikasi yang diperbarui ke localStorage
+      saveNotificationsToStorage(updatedNotifications);
       
       // Update jumlah notifikasi yang belum dibaca
       setUnreadCount(0);
@@ -161,6 +223,23 @@ const NotificationCenter = ({ isOpen, onClose }) => {
         return;
       }
       
+      console.log('Deleting notification, ID:', notificationId);
+      
+      // Jika ini adalah ID temporer (dimulai dengan 'temp_'), hanya hapus dari state lokal
+      if (notificationId.startsWith('temp_')) {
+        console.log('Deleting notification with temporary ID from local state only');
+        
+        // Update state notifikasi
+        const updatedNotifications = notifications.filter(notif => notif._id !== notificationId);
+        setNotifications(updatedNotifications);
+        
+        // Simpan notifikasi yang diperbarui ke localStorage
+        saveNotificationsToStorage(updatedNotifications);
+        
+        toast.success('Notifikasi berhasil dihapus');
+        return;
+      }
+      
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -174,7 +253,11 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       });
       
       // Update state notifikasi
-      setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
+      const updatedNotifications = notifications.filter(notif => notif._id !== notificationId);
+      setNotifications(updatedNotifications);
+      
+      // Simpan notifikasi yang diperbarui ke localStorage
+      saveNotificationsToStorage(updatedNotifications);
       
       toast.success('Notifikasi berhasil dihapus');
     } catch (error) {
@@ -201,6 +284,9 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       // Update state notifikasi
       setNotifications([]);
       
+      // Hapus notifikasi dari localStorage
+      saveNotificationsToStorage([]);
+      
       // Update jumlah notifikasi yang belum dibaca
       setUnreadCount(0);
       
@@ -213,8 +299,16 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   
   // Fungsi untuk menangani klik pada notifikasi
   const handleNotificationClick = (notification) => {
-    if (!notification || !notification._id) {
+    if (!notification) {
       console.error('Invalid notification object');
+      return;
+    }
+    
+    console.log('Clicked notification:', notification);
+    
+    if (!notification._id) {
+      console.error('Notification has no valid ID:', notification);
+      toast.error('Notifikasi tidak memiliki ID yang valid');
       return;
     }
     
@@ -278,19 +372,14 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     }
   };
   
-  // Efek untuk memuat notifikasi saat komponen dimuat
-  useEffect(() => {
-    // Hanya muat notifikasi jika panel dibuka dan belum ada notifikasi yang dimuat
-    if (isOpen && notifications.length === 0) {
-      fetchNotifications(1, false);
-    }
-  }, [isOpen, fetchNotifications, notifications.length]);
-  
   // Efek untuk menangani notifikasi baru dari Socket.IO
   useEffect(() => {
     if (socket) {
       const handleNewNotification = (data) => {
         try {
+          // Log data notifikasi yang diterima untuk debugging
+          console.log('Received notification data:', data);
+          
           // Putar suara notifikasi
           notificationSound.play().catch(e => console.log('Error playing sound:', e));
           
@@ -309,8 +398,24 @@ const NotificationCenter = ({ isOpen, onClose }) => {
             return;
           }
           
+          // Validasi ID notifikasi
+          if (!notification._id) {
+            console.error('Notification missing _id property:', notification);
+            
+            // Jika tidak ada ID, buat ID temporer
+            notification._id = 'temp_' + new Date().getTime();
+            console.log('Created temporary ID for notification:', notification._id);
+          }
+          
+          // Log notifikasi yang akan ditambahkan
+          console.log('Adding notification to state:', notification);
+          
           // Update state notifikasi
-          setNotifications(prev => [notification, ...prev]);
+          const updatedNotifications = [notification, ...notifications];
+          setNotifications(updatedNotifications);
+          
+          // Simpan notifikasi yang diperbarui ke localStorage
+          saveNotificationsToStorage(updatedNotifications);
           
           // Update jumlah notifikasi yang belum dibaca
           setUnreadCount(newUnreadCount);
@@ -332,7 +437,14 @@ const NotificationCenter = ({ isOpen, onClose }) => {
         socket.off('notification', handleNewNotification);
       };
     }
-  }, [socket, setUnreadCount, notificationSound, unreadCount]);
+  }, [socket, setUnreadCount, notificationSound, unreadCount, notifications]);
+  
+  // Efek untuk memuat notifikasi saat komponen dibuka
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications(1, false);
+    }
+  }, [isOpen, fetchNotifications]);
   
   // Variasi animasi
   const containerVariants = {
