@@ -11,63 +11,21 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowLeftCircleIcon,
   Cog6ToothIcon,
-  BellIcon,
-  UserGroupIcon,
-  ChartBarIcon,
-  DocumentTextIcon
+  BellIcon
 } from '@heroicons/react/24/outline';
 
 // Environment variables
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173';
 
 const menuItems = [
-  {
-    title: 'Dashboard',
-    icon: <HomeIcon className="w-6 h-6" />,
-    path: '/',
-    color: 'from-blue-500 to-blue-600'
-  },
-  {
-    title: 'Data Pasien',
-    icon: <UserGroupIcon className="w-6 h-6" />,
-    path: '/patient-data',
-    color: 'from-green-500 to-green-600'
-  },
-  {
-    title: 'Scan Retina',
-    icon: <EyeIcon className="w-6 h-6" />,
-    path: '/scan-retina',
-    color: 'from-purple-500 to-purple-600'
-  },
-  {
-    title: 'Riwayat',
-    icon: <ClockIcon className="w-6 h-6" />,
-    path: '/history',
-    color: 'from-yellow-500 to-yellow-600'
-  },
-  {
-    title: 'Analisis',
-    icon: <ChartBarIcon className="w-6 h-6" />,
-    path: '/analysis-result',
-    color: 'from-red-500 to-red-600'
-  },
-  {
-    title: 'Laporan',
-    icon: <DocumentTextIcon className="w-6 h-6" />,
-    path: '/report',
-    color: 'from-indigo-500 to-indigo-600'
-  },
-  {
-    title: 'Pengujian Notifikasi',
-    icon: <BellIcon className="w-6 h-6" />,
-    path: '/test-notification',
-    color: 'from-pink-500 to-pink-600'
-  },
+  { name: 'Dashboard', path: '/', icon: HomeIcon },
+  { name: 'Data Pasien', path: '/patient-data', icon: UserIcon },
+  { name: 'Scan Retina', path: '/scan-retina', icon: EyeIcon },
+  { name: 'History', path: '/history', icon: ClockIcon },
   { 
-    title: 'Kembali ke Beranda', 
-    icon: <ArrowLeftCircleIcon className="w-6 h-6" />,
+    name: 'Kembali ke Beranda', 
     path: FRONTEND_URL,
-    color: 'from-gray-500 to-gray-600',
+    icon: ArrowLeftCircleIcon,
     external: true
   },
 ];

@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
-import NotificationCenter from './NotificationCenter';
+import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   const { theme, isMobile } = useTheme();
@@ -139,9 +138,13 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         transition={{ delay: 0.3, duration: 0.3 }}
         className="hidden md:flex items-center space-x-3"
       >
-        {/* Notification Center */}
-        <NotificationCenter />
-        
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-2 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+        >
+          <BellIcon className="h-5 w-5 text-gray-600" />
+        </motion.button>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -160,39 +163,33 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         </motion.div>
       </motion.div>
 
-      {/* Mobile Header Actions */}
+      {/* Hamburger button in the header for mobile */}
       {isMobile && (
-        <div className="flex items-center space-x-2">
-          {/* Notification Center for Mobile */}
-          <NotificationCenter />
-          
-          {/* Hamburger button */}
-          <motion.button
-            variants={itemVariants}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleMenuClick}
-            className="p-3 rounded-lg text-white shadow-lg z-50"
-            style={{ 
-              background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              willChange: 'transform',
-              transform: 'translateZ(0)',
-              position: 'relative' // Ensure it's above other elements
-            }}
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </motion.button>
-        </div>
+        <motion.button
+          variants={itemVariants}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleMenuClick}
+          className="p-3 rounded-lg text-white shadow-lg z-50"
+          style={{ 
+            background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})`,
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            willChange: 'transform',
+            transform: 'translateZ(0)',
+            position: 'relative' // Ensure it's above other elements
+          }}
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </motion.button>
       )}
     </motion.header>
   );

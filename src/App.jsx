@@ -17,8 +17,6 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
-import NotFound from './pages/NotFound';
-import NotificationTest from './components/test/NotificationTest';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -265,54 +263,40 @@ function App() {
   }
 
   return (
-    <div className="App">
-      {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Memuat...</p>
-        </div>
-      ) : (
-        <>
-          <div className={`app-container ${isMobileMenuOpen ? 'menu-open' : ''}`}>
-            <Sidebar isOpen={isMobileMenuOpen} toggleMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-            
-            <div className="content-container">
-              <Header 
-                title={currentTitle} 
-                toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                isMobileMenuOpen={isMobileMenuOpen} 
-              />
-              
-              <main className="main-content">
-                <AnimatePresence mode="wait" initial={false}>
-                  <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<Dashboard userId={userId} />} />
-                    <Route path="/dashboard" element={<Dashboard userId={userId} />} />
-                    <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
-                    <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
-                    <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
-                    <Route path="/patient-profile/:patientId" element={<PatientProfilePage userId={userId} />} />
-                    <Route path="/history" element={<HistoryPage userId={userId} />} />
-                    <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
-                    <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
-                    <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
-                    <Route path="/report" element={<ReportPage userId={userId} />} />
-                    <Route path="/test-notification" element={<NotificationTest />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </AnimatePresence>
-              </main>
-            </div>
-          </div>
-        </>
-      )}
+    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+      <Sidebar toggleMobileMenu={toggleMobileMenu} isMobileMenuOpen={isMobileMenuOpen} />
+      
+      <main className="flex-1 p-0 lg:p-4 overflow-hidden transition-all duration-200" style={{ 
+        marginLeft: isMobileMenuOpen ? '0' : '0',
+        willChange: 'margin, padding',
+      }}>
+        {/* Global Header used in all pages */}
+        <Header 
+          title={currentTitle} 
+          toggleMobileMenu={toggleMobileMenu} 
+          isMobileMenuOpen={isMobileMenuOpen}
+        />
+        
+        <AnimatePresence mode="wait" initial={false}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Dashboard userId={userId} />} />
+            <Route path="/dashboard" element={<Dashboard userId={userId} />} />
+            <Route path="/patient-data" element={<PatientDataPage userId={userId} />} />
+            <Route path="/add-patient" element={<AddPatientPage userId={userId} />} />
+            <Route path="/edit-patient/:patientId" element={<EditPatientPage userId={userId} />} />
+            <Route path="/patient-profile/:patientId" element={<PatientProfilePage userId={userId} />} />
+            <Route path="/scan-retina" element={<ScanRetinaPage userId={userId} />} />
+            <Route path="/history" element={<HistoryPage userId={userId} />} />
+            <Route path="/patient-history/:patientId" element={<PatientHistoryPage userId={userId} />} />
+            <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
+            <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
+            <Route path="/report" element={<ReportPage userId={userId} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
     </div>
   );
 }
-
-// Protected route component
-const ProtectedRoute = ({ children }) => {
-  // ... existing code ...
-};
 
 export default App;
