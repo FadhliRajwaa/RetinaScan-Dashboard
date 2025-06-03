@@ -578,7 +578,7 @@ function Report({ result }) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
   
   // Fungsi untuk zoom control
   const handleZoomIn = () => {
@@ -597,7 +597,7 @@ function Report({ result }) {
   // Fungsi untuk drag control
   const handleDragStart = (e) => {
     setIsDragging(true);
-    setDragStart({
+    setDragStartPos({
       x: e.clientX - position.x,
       y: e.clientY - position.y
     });
@@ -610,8 +610,8 @@ function Report({ result }) {
   const handleDrag = (e) => {
     if (isDragging) {
       setPosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
+        x: e.clientX - dragStartPos.x,
+        y: e.clientY - dragStartPos.y
       });
     }
   };
@@ -707,98 +707,132 @@ function Report({ result }) {
     const [isDragging, setIsDragging] = useState(false);
     const [showAnnotation, setShowAnnotation] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const constraintsRef = useRef(null);
-    const imgRef = useRef(null);
+    const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+    const imgContainerRef = useRef(null);
     
-    // Handle mouse wheel for zooming
-    const handleWheel = (e) => {
-      e.preventDefault();
-      
-      // Zoom speed factor
-      const zoomFactor = 0.1;
-      
-      // Determine zoom direction
-      if (e.deltaY < 0) {
-        // Zoom in
-        setViewerScale(prev => Math.min(prev + zoomFactor, 3));
-      } else {
-        // Zoom out
-        setViewerScale(prev => Math.max(prev - zoomFactor, 0.5));
-      }
-    };
+    // Untuk menyimpan status apakah mouse sedang ditekan
+    const mouseDown = useRef(false);
+    // Menyimpan posisi mouse terakhir
+    const lastMousePos = useRef({ x: 0, y: 0 });
     
-    // Handle mouse down for pan
-    const handleMouseDown = (e) => {
-      if (viewerScale <= 1) return; // Only allow pan if zoomed in
-      
-      e.preventDefault();
-      setIsDragging(true);
-      
-      // Store the starting mouse position and current image position
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startPosX = position.x;
-      const startPosY = position.y;
-      
-      // Handle mouse move during dragging
-      const handleMouseMove = (e) => {
-        if (!isDragging) return;
-        
-        // Calculate new position based on mouse movement
-        const newX = startPosX + (e.clientX - startX);
-        const newY = startPosY + (e.clientY - startY);
-        
-        // Apply limits to prevent dragging too far
-        const maxDrag = 200 * (viewerScale - 1);
-        const boundedX = Math.max(Math.min(newX, maxDrag), -maxDrag);
-        const boundedY = Math.max(Math.min(newY, maxDrag), -maxDrag);
-        
-        setPosition({ x: boundedX, y: boundedY });
-      };
-      
-      // Handle mouse up to end dragging
-      const handleMouseUp = () => {
-        setIsDragging(false);
-        
-        // Remove the event listeners
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-      
-      // Add the event listeners for dragging
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    };
-    
-    // Effect to add wheel event listener
-    useEffect(() => {
-      const imgElement = imgRef.current;
-      if (imgElement) {
-        imgElement.addEventListener('wheel', handleWheel, { passive: false });
-        
-        // Clean up event listener on unmount
-        return () => {
-          imgElement.removeEventListener('wheel', handleWheel);
-        };
-      }
-    }, []);
-    
+    // Handle zoom in
     const handleZoomIn = () => {
-      setViewerScale(prevScale => Math.min(prevScale + 0.25, 3));
+      setViewerScale(prev => {
+        const newScale = Math.min(prev + 0.25, 3);
+        return newScale;
+      });
     };
     
+    // Handle zoom out
     const handleZoomOut = () => {
-      setViewerScale(prevScale => Math.max(prevScale - 0.25, 0.5));
+      setViewerScale(prev => {
+        const newScale = Math.max(prev - 0.25, 0.5);
+        if (newScale === 1) {
+          // Reset position jika kembali ke skala 1
+          setPosition({ x: 0, y: 0 });
+        }
+        return newScale;
+      });
     };
     
+    // Reset zoom dan position
     const handleReset = () => {
       setViewerScale(1);
       setPosition({ x: 0, y: 0 });
     };
     
+    // Handle mouse wheel untuk zoom
+    const handleWheel = (e) => {
+      e.preventDefault();
+      
+      if (e.deltaY < 0) {
+        // Zoom in (scroll up)
+        handleZoomIn();
+      } else {
+        // Zoom out (scroll down)
+        handleZoomOut();
+      }
+    };
+    
+    // Implementasi mouse down untuk memulai drag
+    const handleMouseDown = (e) => {
+      // Hanya aktifkan drag jika gambar diperbesar
+      if (viewerScale <= 1) return;
+      
+      mouseDown.current = true;
+      setIsDragging(true);
+      
+      // Simpan posisi awal mouse
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      
+      // Menghentikan event default untuk mencegah highlighting
+      e.preventDefault();
+    };
+    
+    // Implementasi mouse move untuk drag
+    const handleMouseMove = (e) => {
+      if (!mouseDown.current) return;
+      
+      // Hitung perubahan posisi mouse
+      const deltaX = e.clientX - lastMousePos.current.x;
+      const deltaY = e.clientY - lastMousePos.current.y;
+      
+      // Update posisi terakhir
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+      
+      // Update posisi gambar dengan batasan
+      const containerWidth = imgContainerRef.current?.clientWidth || 0;
+      const containerHeight = imgContainerRef.current?.clientHeight || 0;
+      
+      // Hitung batas pergerakan berdasarkan zoom level
+      const maxOffsetX = (containerWidth * (viewerScale - 1)) / 2;
+      const maxOffsetY = (containerHeight * (viewerScale - 1)) / 2;
+      
+      setPosition(prev => ({
+        x: Math.max(Math.min(prev.x + deltaX, maxOffsetX), -maxOffsetX),
+        y: Math.max(Math.min(prev.y + deltaY, maxOffsetY), -maxOffsetY)
+      }));
+    };
+    
+    // Implementasi mouse up untuk mengakhiri drag
+    const handleMouseUp = () => {
+      mouseDown.current = false;
+      setIsDragging(false);
+    };
+    
+    // Tangani kasus mouse keluar dari container
+    const handleMouseLeave = () => {
+      if (mouseDown.current) {
+        mouseDown.current = false;
+        setIsDragging(false);
+      }
+    };
+    
+    // Effect untuk menangani event mouse
+    useEffect(() => {
+      const container = imgContainerRef.current;
+      if (!container) return;
+      
+      // Tambahkan event listeners
+      container.addEventListener('wheel', handleWheel, { passive: false });
+      container.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      container.addEventListener('mouseleave', handleMouseLeave);
+      
+      // Cleanup event listeners saat unmount
+      return () => {
+        container.removeEventListener('wheel', handleWheel);
+        container.removeEventListener('mousedown', handleMouseDown);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+        container.removeEventListener('mouseleave', handleMouseLeave);
+      };
+    }, [viewerScale]); // Re-apply listeners ketika viewerScale berubah
+    
     return (
       <div className="relative w-full h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg bg-gray-900/5">
-        {/* Loading overlay with improved animation */}
+        {/* Loading overlay */}
         {!imageError && isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-70 z-10">
             <div className="relative">
@@ -814,59 +848,56 @@ function Report({ result }) {
           </div>
         )}
       
-        {/* Image container with drag capability */}
+        {/* Image container */}
         <div 
-          className="w-full h-full overflow-hidden"
-          ref={constraintsRef}
+          ref={imgContainerRef}
+          className="relative w-full h-full overflow-hidden touch-none"
+          style={{ 
+            cursor: viewerScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+          }}
         >
-          <div
-            className="relative w-full h-full"
+          {/* Image dengan transform */}
+          <img
+            src={getImageSource()}
+            alt="Retina scan"
+            className={`w-full h-full object-contain transition-all duration-150 ${isDragging ? 'brightness-90' : ''}`}
             style={{ 
-              cursor: viewerScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+              transform: `scale(${viewerScale}) translate(${position.x / viewerScale}px, ${position.y / viewerScale}px)`,
+              transformOrigin: 'center',
             }}
-            onMouseDown={handleMouseDown}
-            ref={imgRef}
-          >
-            <img
-              src={getImageSource()}
-              alt="Retina scan"
-              className={`w-full h-full object-contain transition-transform duration-200 ${isDragging ? 'brightness-90' : ''}`}
+            onLoad={() => {
+              setIsLoading(false);
+            }}
+            onError={(e) => {
+              handleImageError();
+              setIsLoading(false);
+              e.target.onerror = null;
+              e.target.src = '/images/default-retina.jpg';
+            }}
+            draggable="false"
+          />
+    
+          {/* Image annotations */}
+          {showAnnotation && !imageError && (
+            <div
+              className="absolute top-1/4 left-1/2 w-16 h-16 -ml-8 -mt-8 rounded-full border-2 border-blue-500 pointer-events-none z-20"
               style={{ 
-                transform: `scale(${viewerScale}) translate(${position.x / viewerScale}px, ${position.y / viewerScale}px)`,
+                transform: `translate(${position.x}px, ${position.y}px) scale(${1/viewerScale})`,
               }}
-              onLoad={() => {
-                setIsLoading(false);
-              }}
-              onError={(e) => {
-                handleImageError();
-                setIsLoading(false);
-                e.target.onerror = null;
-                e.target.src = '/images/default-retina.jpg';
-              }}
-            />
-      
-            {/* Image annotations */}
-            {showAnnotation && !imageError && (
-              <div
-                className="absolute top-1/4 left-1/2 w-16 h-16 -ml-8 -mt-8 rounded-full border-2 border-blue-500 pointer-events-none"
-                style={{ 
-                  transform: `scale(${1/viewerScale}) translate(${-position.x}px, ${-position.y}px)`,
-                }}
-              >
-                <motion.div 
-                  className="absolute inset-0 border-2 border-blue-500 rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-                <div className="absolute -right-24 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                  Area of interest
-                </div>
+            >
+              <motion.div 
+                className="absolute inset-0 border-2 border-blue-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+              <div className="absolute -right-24 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                Area of interest
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         
-        {/* Error overlay with improved design */}
+        {/* Error overlay */}
         {imageError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-80 z-20">
             <motion.div
