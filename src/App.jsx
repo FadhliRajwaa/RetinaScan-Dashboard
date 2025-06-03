@@ -17,6 +17,7 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -291,6 +292,7 @@ function App() {
             <Route path="/analysis" element={<AnalysisPage userId={userId} />} />
             <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
             <Route path="/report" element={<ReportPage userId={userId} />} />
+            <Route path="/settings" element={<SettingsPage userId={userId} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>
