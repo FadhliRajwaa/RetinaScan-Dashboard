@@ -7,6 +7,8 @@ import './pdf-compat.css'; // Import CSS kompatibilitas PDF
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { SocketProvider } from './context/SocketContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 // Menggunakan HashRouter untuk mengatasi masalah routing di static hosting
 // HashRouter menambahkan # di URL (contoh: https://example.com/#/dashboard)
@@ -16,8 +18,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HashRouter>
       <ThemeProvider>
-        <App />
-        <ToastContainer position="top-right" autoClose={3000} />
+        <SocketProvider>
+          <NotificationProvider>
+            <App />
+            <ToastContainer 
+              position="top-right" 
+              autoClose={3000} 
+              newestOnTop 
+              closeOnClick
+              pauseOnFocusLoss={false}
+              draggable
+              pauseOnHover
+              theme="light"
+              toastClassName="rounded-lg shadow-md"
+            />
+          </NotificationProvider>
+        </SocketProvider>
       </ThemeProvider>
     </HashRouter>
   </React.StrictMode>
