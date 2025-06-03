@@ -13,7 +13,12 @@ import {
   InformationCircleIcon,
   UserPlusIcon,
   UserMinusIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  DocumentTextIcon,
+  EyeIcon,
+  PhotoIcon,
+  ArrowDownTrayIcon,
+  DocumentPlusIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -357,9 +362,9 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       case 'patient_deleted':
         return <UserMinusIcon className="h-6 w-6 text-red-500" />;
       case 'scan_added':
-        return <CheckCircleIcon className="h-6 w-6 text-green-500" />;
+        return <PhotoIcon className="h-6 w-6 text-emerald-500" />;
       case 'scan_updated':
-        return <PencilSquareIcon className="h-6 w-6 text-blue-500" />;
+        return <DocumentPlusIcon className="h-6 w-6 text-blue-500" />;
       case 'system':
         return <InformationCircleIcon className="h-6 w-6 text-purple-500" />;
       default:
