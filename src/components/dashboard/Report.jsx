@@ -93,17 +93,12 @@ function Report({ result }) {
   const [isShareLoading, setIsShareLoading] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [cardState, setCardState] = useState("rest");
-  const [isHovering, setIsHovering] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const reportRef = useRef(null);
   const cardControls = useAnimation();
   
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const rotateX = useTransform(y, [-100, 100], [10, -10]);
-  const rotateY = useTransform(x, [-100, 100], [-10, 10]);
-
+  
   // Effect for entrance animation
   useEffect(() => {
     if (result) {
@@ -111,17 +106,6 @@ function Report({ result }) {
     }
   }, [result, cardControls]);
   
-  // Effect untuk memperbarui waktu setiap detik
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-
   // Mouse move handler for 3D effect
   const handleMouseMove = (e) => {
     if (!isHovering) return;
@@ -273,6 +257,11 @@ function Report({ result }) {
   // Format tanggal untuk tampilan yang lebih bagus
   const formatDisplayDate = (date) => {
     try {
+      if (!date) return 'Tanggal tidak tersedia';
+      
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'Tanggal tidak valid';
+      
       const options = { 
         weekday: 'long', 
         day: 'numeric', 
@@ -280,8 +269,9 @@ function Report({ result }) {
         year: 'numeric',
       };
       
-      return date.toLocaleDateString('id-ID', options);
+      return dateObj.toLocaleDateString('id-ID', options);
     } catch (error) {
+      console.error('Format display date error:', error);
       return 'Tanggal tidak valid';
     }
   };
@@ -289,12 +279,18 @@ function Report({ result }) {
   // Format waktu untuk tampilan yang lebih bagus
   const formatDisplayTime = (date) => {
     try {
-      return date.toLocaleTimeString('id-ID', { 
+      if (!date) return 'Waktu tidak tersedia';
+      
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) return 'Waktu tidak valid';
+      
+      return dateObj.toLocaleTimeString('id-ID', { 
         hour: '2-digit', 
         minute: '2-digit',
         second: '2-digit'
       });
     } catch (error) {
+      console.error('Format display time error:', error);
       return 'Waktu tidak valid';
     }
   };
@@ -312,7 +308,9 @@ function Report({ result }) {
         return numValue.toFixed(1) + '%';
       }
       return (numValue * 100).toFixed(1) + '%';
-    } catch (_) {
+    } catch (error) {
+      // Ganti _ dengan error untuk menghindari linter error
+      console.error('Format percentage error:', error);
       return '0%';
     }
   };
@@ -1415,13 +1413,13 @@ function Report({ result }) {
           >
             <div className="flex items-center mr-3 mb-1">
               <FiCalendar className="mr-1" size={14} />
-              <span>{formatDisplayDate(currentTime)}</span>
+              <span>{formatDisplayDate(resultDate)}</span>
             </div>
             <div className="flex items-center mb-1">
               <svg className="w-3.5 h-3.5 mr-1 text-gray-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>{formatDisplayTime(currentTime)}</span>
+              <span>{formatDisplayTime(resultDate)}</span>
             </div>
           </motion.div>
           <motion.div
