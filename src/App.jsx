@@ -17,14 +17,7 @@ import PatientProfilePage from './pages/PatientProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
-import ScanRetina from './pages/ScanRetina';
-import PatientList from './pages/PatientList';
-import PatientDetail from './pages/PatientDetail';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import NotFound from './pages/NotFound';
 import NotificationTest from './components/test/NotificationTest';
-import Layout from './components/layout/Layout';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
