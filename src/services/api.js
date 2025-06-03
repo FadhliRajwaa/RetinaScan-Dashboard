@@ -587,10 +587,34 @@ export const saveAnalysisResult = async (analysisData) => {
       patientId: analysisData.patientId || analysisData.patient?._id || analysisData.patient
     };
     
-    const response = await axios.post(`${API_URL}/api/analysis/save`, formattedData, {
+    // Siapkan FormData untuk endpoint upload
+    const formData = new FormData();
+    
+    // Tambahkan data penting ke FormData
+    formData.append('patientId', formattedData.patientId);
+    
+    // Jika ada imageData (base64), tambahkan
+    if (formattedData.imageData) {
+      formData.append('imageData', formattedData.imageData);
+    } else if (formattedData.image && typeof formattedData.image === 'string' && formattedData.image.startsWith('data:')) {
+      formData.append('imageData', formattedData.image);
+    }
+    
+    // Tambahkan data lain yang mungkin dibutuhkan
+    if (formattedData.severity) formData.append('severity', formattedData.severity);
+    if (formattedData.severityLevel !== undefined) formData.append('severityLevel', formattedData.severityLevel);
+    if (formattedData.confidence) formData.append('confidence', formattedData.confidence);
+    if (formattedData.recommendation) formData.append('recommendation', formattedData.recommendation);
+    if (formattedData.notes) formData.append('notes', formattedData.notes);
+    
+    // Tandai bahwa ini adalah penyimpanan manual, bukan upload baru
+    formData.append('isManualSave', 'true');
+    
+    // Gunakan endpoint /api/analysis/upload yang sudah ada
+    const response = await axios.post(`${API_URL}/api/analysis/upload`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'multipart/form-data'
       }
     });
     
