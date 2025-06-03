@@ -708,6 +708,80 @@ function Report({ result }) {
     const [showAnnotation, setShowAnnotation] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const constraintsRef = useRef(null);
+    const imgRef = useRef(null);
+    
+    // Handle mouse wheel for zooming
+    const handleWheel = (e) => {
+      e.preventDefault();
+      
+      // Zoom speed factor
+      const zoomFactor = 0.1;
+      
+      // Determine zoom direction
+      if (e.deltaY < 0) {
+        // Zoom in
+        setViewerScale(prev => Math.min(prev + zoomFactor, 3));
+      } else {
+        // Zoom out
+        setViewerScale(prev => Math.max(prev - zoomFactor, 0.5));
+      }
+    };
+    
+    // Handle mouse down for pan
+    const handleMouseDown = (e) => {
+      if (viewerScale <= 1) return; // Only allow pan if zoomed in
+      
+      e.preventDefault();
+      setIsDragging(true);
+      
+      // Store the starting mouse position and current image position
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startPosX = position.x;
+      const startPosY = position.y;
+      
+      // Handle mouse move during dragging
+      const handleMouseMove = (e) => {
+        if (!isDragging) return;
+        
+        // Calculate new position based on mouse movement
+        const newX = startPosX + (e.clientX - startX);
+        const newY = startPosY + (e.clientY - startY);
+        
+        // Apply limits to prevent dragging too far
+        const maxDrag = 200 * (viewerScale - 1);
+        const boundedX = Math.max(Math.min(newX, maxDrag), -maxDrag);
+        const boundedY = Math.max(Math.min(newY, maxDrag), -maxDrag);
+        
+        setPosition({ x: boundedX, y: boundedY });
+      };
+      
+      // Handle mouse up to end dragging
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        
+        // Remove the event listeners
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      // Add the event listeners for dragging
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    };
+    
+    // Effect to add wheel event listener
+    useEffect(() => {
+      const imgElement = imgRef.current;
+      if (imgElement) {
+        imgElement.addEventListener('wheel', handleWheel, { passive: false });
+        
+        // Clean up event listener on unmount
+        return () => {
+          imgElement.removeEventListener('wheel', handleWheel);
+        };
+      }
+    }, []);
     
     const handleZoomIn = () => {
       setViewerScale(prevScale => Math.min(prevScale + 0.25, 3));
@@ -720,14 +794,6 @@ function Report({ result }) {
     const handleReset = () => {
       setViewerScale(1);
       setPosition({ x: 0, y: 0 });
-    };
-    
-    const handleDragStart = () => {
-      setIsDragging(true);
-    };
-    
-    const handleDragEnd = () => {
-      setIsDragging(false);
     };
     
     return (
@@ -745,48 +811,47 @@ function Report({ result }) {
               </div>
             </div>
             <p className="text-white text-sm mt-3 animate-pulse">Memuat gambar...</p>
-        </div>
-      )}
+          </div>
+        )}
       
         {/* Image container with drag capability */}
-        <div className="w-full h-full overflow-hidden" ref={constraintsRef}>
-          <motion.div
+        <div 
+          className="w-full h-full overflow-hidden"
+          ref={constraintsRef}
+        >
+          <div
             className="relative w-full h-full"
-            style={{ cursor: viewerScale > 1 ? 'grab' : 'default' }}
-            drag={viewerScale > 1}
-            dragConstraints={constraintsRef}
-            dragElastic={0.1}
-            dragMomentum={false}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
+            style={{ 
+              cursor: viewerScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+            }}
+            onMouseDown={handleMouseDown}
+            ref={imgRef}
           >
-            <motion.img
-        src={getImageSource()}
-        alt="Retina scan"
-              className={`w-full h-full object-contain transition-all duration-300 ${isDragging ? 'brightness-90' : ''}`}
+            <img
+              src={getImageSource()}
+              alt="Retina scan"
+              className={`w-full h-full object-contain transition-transform duration-200 ${isDragging ? 'brightness-90' : ''}`}
               style={{ 
-                scale: viewerScale,
-                x: position.x,
-                y: position.y,
+                transform: `scale(${viewerScale}) translate(${position.x / viewerScale}px, ${position.y / viewerScale}px)`,
               }}
               onLoad={() => {
                 setIsLoading(false);
-        }}
-        onError={(e) => {
-          handleImageError();
+              }}
+              onError={(e) => {
+                handleImageError();
                 setIsLoading(false);
-          e.target.onerror = null;
-          e.target.src = '/images/default-retina.jpg';
-        }}
-      />
+                e.target.onerror = null;
+                e.target.src = '/images/default-retina.jpg';
+              }}
+            />
       
             {/* Image annotations */}
             {showAnnotation && !imageError && (
-              <motion.div
+              <div
                 className="absolute top-1/4 left-1/2 w-16 h-16 -ml-8 -mt-8 rounded-full border-2 border-blue-500 pointer-events-none"
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 0.8 }}
-                transition={{ duration: 0.3 }}
+                style={{ 
+                  transform: `scale(${1/viewerScale}) translate(${-position.x}px, ${-position.y}px)`,
+                }}
               >
                 <motion.div 
                   className="absolute inset-0 border-2 border-blue-500 rounded-full"
@@ -796,13 +861,13 @@ function Report({ result }) {
                 <div className="absolute -right-24 top-0 bg-blue-500 text-white text-xs px-2 py-1 rounded">
                   Area of interest
                 </div>
-              </motion.div>
+              </div>
             )}
-          </motion.div>
+          </div>
         </div>
         
         {/* Error overlay with improved design */}
-      {imageError && (
+        {imageError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-80 z-20">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -825,19 +890,19 @@ function Report({ result }) {
                 <p className="text-gray-300 text-sm mt-2 text-center max-w-xs">
                   Terjadi kesalahan saat memuat gambar retina. Silakan coba lagi.
                 </p>
-          <button 
-            onClick={() => {
-              setImageError(false);
+                <button 
+                  onClick={() => {
+                    setImageError(false);
                     setIsLoading(true);
-              // Force reload image with timestamp
-              const img = document.querySelector('img[alt="Retina scan"]');
-              if (img) {
-                const imgSrc = getImageSource();
-                img.src = imgSrc.includes('?') 
-                  ? `${imgSrc}&reload=${new Date().getTime()}`
-                  : `${imgSrc}?reload=${new Date().getTime()}`;
-              }
-            }}
+                    // Force reload image with timestamp
+                    const img = document.querySelector('img[alt="Retina scan"]');
+                    if (img) {
+                      const imgSrc = getImageSource();
+                      img.src = imgSrc.includes('?') 
+                        ? `${imgSrc}&reload=${new Date().getTime()}`
+                        : `${imgSrc}?reload=${new Date().getTime()}`;
+                    }
+                  }}
                   className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:from-blue-600 hover:to-indigo-700 transition-colors flex items-center gap-2 group"
                 >
                   <motion.div
@@ -859,12 +924,12 @@ function Report({ result }) {
                       </path>
                     </svg>
                   </motion.div>
-            Coba Lagi
-          </button>
+                  Coba Lagi
+                </button>
               </div>
             </motion.div>
-        </div>
-      )}
+          </div>
+        )}
         
         {/* Zoom controls */}
         <div className="absolute bottom-3 right-3 flex flex-col gap-2 z-30">
@@ -919,8 +984,15 @@ function Report({ result }) {
         <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-30">
           {Math.round(viewerScale * 100)}%
         </div>
-    </div>
-  );
+        
+        {/* Instructions tooltip */}
+        <div className="absolute bottom-3 left-14 bg-white/90 text-xs text-gray-700 px-2 py-1 rounded shadow-md backdrop-blur-sm z-30 hidden sm:block">
+          <p className="whitespace-nowrap">
+            <span className="font-medium">Scroll</span> untuk zoom, <span className="font-medium">Klik & geser</span> untuk pan
+          </p>
+        </div>
+      </div>
+    );
   };
 
   // Main analysis results section
