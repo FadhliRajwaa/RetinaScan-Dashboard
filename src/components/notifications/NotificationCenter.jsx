@@ -194,8 +194,13 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   
   // Fungsi untuk menangani klik pada notifikasi
   const handleNotificationClick = (notification) => {
+    if (!notification || !notification._id) {
+      console.error('Invalid notification object');
+      return;
+    }
+    
     // Tandai notifikasi sebagai dibaca jika belum dibaca
-    if (!notification.read) {
+    if (notification.read === false) {
       markAsRead(notification._id);
     }
     
@@ -265,19 +270,40 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (socket) {
       const handleNewNotification = (data) => {
-        // Putar suara notifikasi
-        notificationSound.play().catch(e => console.log('Error playing sound:', e));
-        
-        // Update state notifikasi
-        setNotifications(prev => [data.notification, ...prev]);
-        
-        // Update jumlah notifikasi yang belum dibaca
-        setUnreadCount(data.unreadCount);
-        
-        // Tampilkan toast
-        toast.info(data.notification.message, {
-          icon: () => getNotificationIcon(data.notification.type)
-        });
+        try {
+          // Putar suara notifikasi
+          notificationSound.play().catch(e => console.log('Error playing sound:', e));
+          
+          // Periksa struktur data
+          if (!data) {
+            console.error('Received empty notification data');
+            return;
+          }
+          
+          // Handle berbagai format data yang mungkin diterima
+          const notification = data.notification || data;
+          const newUnreadCount = data.unreadCount !== undefined ? data.unreadCount : (unreadCount + 1);
+          
+          if (!notification) {
+            console.error('Invalid notification format received');
+            return;
+          }
+          
+          // Update state notifikasi
+          setNotifications(prev => [notification, ...prev]);
+          
+          // Update jumlah notifikasi yang belum dibaca
+          setUnreadCount(newUnreadCount);
+          
+          // Tampilkan toast jika ada pesan
+          if (notification.message) {
+            toast.info(notification.message, {
+              icon: () => getNotificationIcon(notification.type)
+            });
+          }
+        } catch (error) {
+          console.error('Error handling notification:', error);
+        }
       };
       
       socket.on('notification', handleNewNotification);
@@ -286,7 +312,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
         socket.off('notification', handleNewNotification);
       };
     }
-  }, [socket, setUnreadCount, notificationSound]);
+  }, [socket, setUnreadCount, notificationSound, unreadCount]);
   
   // Variasi animasi
   const containerVariants = {
@@ -405,13 +431,13 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                 <>
                   {notifications.map((notification, index) => (
                     <motion.div
-                      key={notification._id}
+                      key={notification._id || `notification-${index}`}
                       variants={itemVariants}
                       initial="hidden"
                       animate="visible"
                       transition={{ delay: index * 0.05 }}
                       className={`mb-2 p-3 rounded-lg cursor-pointer ${
-                        notification.read 
+                        notification && notification.read === true
                           ? isDarkMode 
                             ? 'bg-gray-800' 
                             : 'bg-gray-50' 
@@ -423,17 +449,17 @@ const NotificationCenter = ({ isOpen, onClose }) => {
                     >
                       <div className="flex">
                         <div className="mr-3">
-                          {getNotificationIcon(notification.type)}
+                          {getNotificationIcon(notification?.type || 'system')}
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold">{notification.title}</h3>
-                          <p className="text-sm">{notification.message}</p>
+                          <h3 className="font-semibold">{notification?.title || 'Notifikasi'}</h3>
+                          <p className="text-sm">{notification?.message || 'Tidak ada pesan'}</p>
                           <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {formatRelativeTime(notification.createdAt)}
+                            {notification?.createdAt ? formatRelativeTime(notification.createdAt) : 'Waktu tidak diketahui'}
                           </p>
                         </div>
                         <div className="flex flex-col space-y-2">
-                          {!notification.read && (
+                          {notification && notification.read === false && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

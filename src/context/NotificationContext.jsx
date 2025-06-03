@@ -30,7 +30,7 @@ export const NotificationProvider = ({ children }) => {
       
       if (!token) return;
       
-      const response = await axios.get(`${API_URL}/api/users/notification-settings`, {
+      const response = await axios.get(`${API_URL}/api/user/notification-settings`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -52,7 +52,7 @@ export const NotificationProvider = ({ children }) => {
       if (!token) return;
       
       const response = await axios.put(
-        `${API_URL}/api/users/notification-settings`,
+        `${API_URL}/api/user/notification-settings`,
         { notificationSettings: settings },
         {
           headers: {
