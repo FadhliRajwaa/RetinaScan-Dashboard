@@ -584,7 +584,13 @@ export const saveAnalysisResult = async (analysisData) => {
     // Coba dapatkan patientId dari berbagai kemungkinan struktur data
     if (analysisData.patientId) {
       // Jika patientId langsung ada sebagai properti
-      patientId = analysisData.patientId;
+      if (typeof analysisData.patientId === 'object' && analysisData.patientId._id) {
+        // Jika patientId adalah object dengan _id
+        patientId = analysisData.patientId._id;
+      } else if (typeof analysisData.patientId === 'string') {
+        // Jika patientId sudah berupa string
+        patientId = analysisData.patientId;
+      }
     } else if (analysisData.patient && typeof analysisData.patient === 'object' && analysisData.patient._id) {
       // Jika patientId ada di dalam objek patient sebagai _id
       patientId = analysisData.patient._id;
@@ -603,7 +609,8 @@ export const saveAnalysisResult = async (analysisData) => {
         availableData: {
           hasPatientId: !!analysisData.patientId,
           hasPatient: !!analysisData.patient,
-          patientType: analysisData.patient ? typeof analysisData.patient : 'undefined'
+          patientType: analysisData.patient ? typeof analysisData.patient : 'undefined',
+          patientIdType: analysisData.patientId ? typeof analysisData.patientId : 'undefined'
         }
       });
       throw new Error(errorMsg);
@@ -621,7 +628,7 @@ export const saveAnalysisResult = async (analysisData) => {
     // Siapkan FormData untuk endpoint upload
     const formData = new FormData();
     
-    // Tambahkan data penting ke FormData
+    // Tambahkan data penting ke FormData (pastikan patientId berupa string)
     formData.append('patientId', patientId);
     
     // Log patientId yang dikirim ke server

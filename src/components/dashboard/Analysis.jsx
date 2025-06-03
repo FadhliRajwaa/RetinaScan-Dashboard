@@ -237,7 +237,8 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
         id: analysis._id || analysis.id || analysis.analysisId, // Duplikasi ID untuk kompatibilitas
         originalFilename: image?.name || analysis.originalFilename || analysis.imageDetails?.originalname,
         createdAt: analysis.createdAt || new Date().toISOString(),
-        // Tandai bahwa ini belum disimpan ke database
+        // Penting: Selalu tandai bahwa ini belum disimpan ke database
+        // untuk memastikan hasil hanya disimpan saat user mengklik tombol Save
         saveToDatabase: false
       };
       
@@ -260,7 +261,8 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
       // Log data final untuk debugging
       console.log('Meneruskan hasil analisis ke callback:', {
         ...analysisWithImage,
-        imageData: analysisWithImage.imageData ? '[BASE64_DATA]' : undefined
+        imageData: analysisWithImage.imageData ? '[BASE64_DATA]' : undefined,
+        saveToDatabase: analysisWithImage.saveToDatabase
       });
       
       // Validasi final

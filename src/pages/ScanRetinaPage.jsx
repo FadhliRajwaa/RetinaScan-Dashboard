@@ -34,14 +34,17 @@ function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
       // Tambahkan informasi pasien dari uploadedImage ke result
       const resultWithPatient = {
         ...result,
-        patient: uploadedImage?.patient // Ambil informasi pasien dari uploadedImage
+        patient: uploadedImage?.patient, // Ambil informasi pasien dari uploadedImage
+        // Jangan simpan ke database saat pertama kali menampilkan hasil
+        saveToDatabase: false 
       };
       
       // Set state hasil analisis
       setAnalysisResult(resultWithPatient);
       
       // Jika flag saveToDatabase=true, simpan hasil dan redirect ke history
-      if (result.saveToDatabase) {
+      if (result.saveToDatabase === true) {
+        console.log('Menyimpan hasil berdasarkan flag saveToDatabase=true');
         await handleSaveAndRedirect(resultWithPatient);
       } else {
         // Jika tidak, hanya tampilkan hasil (tidak simpan ke database)
