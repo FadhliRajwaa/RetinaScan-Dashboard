@@ -51,10 +51,15 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       
       const { notifications: fetchedNotifications, pagination, unreadCount } = response.data;
       
-      // Update state notifikasi
-      setNotifications(prev => 
-        append ? [...prev, ...fetchedNotifications] : fetchedNotifications
-      );
+      // Update state notifikasi - hanya ganti jika ini adalah request halaman pertama dan bukan append
+      if (append) {
+        // Jika append, tambahkan notifikasi baru ke daftar yang sudah ada
+        setNotifications(prev => [...prev, ...fetchedNotifications]);
+      } else if (pageNum === 1 && notifications.length === 0) {
+        // Hanya set notifikasi baru jika ini adalah request halaman pertama
+        // dan belum ada notifikasi yang dimuat
+        setNotifications(fetchedNotifications);
+      }
       
       // Update jumlah notifikasi yang belum dibaca
       setUnreadCount(unreadCount);
@@ -68,7 +73,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
       toast.error('Gagal memuat notifikasi');
       setLoading(false);
     }
-  }, [API_URL, setUnreadCount]);
+  }, [API_URL, setUnreadCount, notifications.length]);
   
   // Fungsi untuk memuat lebih banyak notifikasi
   const loadMore = () => {
@@ -261,10 +266,11 @@ const NotificationCenter = ({ isOpen, onClose }) => {
   
   // Efek untuk memuat notifikasi saat komponen dimuat
   useEffect(() => {
-    if (isOpen) {
-      fetchNotifications();
+    // Hanya muat notifikasi jika panel dibuka dan belum ada notifikasi yang dimuat
+    if (isOpen && notifications.length === 0) {
+      fetchNotifications(1, false);
     }
-  }, [isOpen, fetchNotifications]);
+  }, [isOpen, fetchNotifications, notifications.length]);
   
   // Efek untuk menangani notifikasi baru dari Socket.IO
   useEffect(() => {
@@ -400,7 +406,11 @@ const NotificationCenter = ({ isOpen, onClose }) => {
             <div className={`p-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-between`}>
               <button
                 onClick={markAllAsRead}
-                className="px-3 py-1 text-sm flex items-center rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                className={`px-3 py-1 text-sm flex items-center rounded-md transition-colors ${
+                  unreadCount === 0 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'hover:bg-blue-100 hover:text-blue-700'
+                }`}
                 disabled={unreadCount === 0}
               >
                 <CheckIcon className="h-4 w-4 mr-1" />
@@ -408,7 +418,11 @@ const NotificationCenter = ({ isOpen, onClose }) => {
               </button>
               <button
                 onClick={deleteAllNotifications}
-                className="px-3 py-1 text-sm flex items-center rounded-md hover:bg-red-100 hover:text-red-700 transition-colors"
+                className={`px-3 py-1 text-sm flex items-center rounded-md transition-colors ${
+                  notifications.length === 0 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'hover:bg-red-100 hover:text-red-700'
+                }`}
                 disabled={notifications.length === 0}
               >
                 <TrashIcon className="h-4 w-4 mr-1" />
