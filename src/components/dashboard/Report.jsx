@@ -1472,93 +1472,138 @@ function Report({ result }) {
                   </motion.div>
                 </div>
                 
-                {/* Enhanced progress bar */}
-                <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden relative mt-2">
-                    {/* Background pattern */}
-                    <div className="absolute inset-0 opacity-20" style={{
-                      backgroundImage: 'linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1) 75%, transparent 75%, transparent)',
+                {/* Ultra modern progress bar */}
+                <div className="w-full h-8 bg-gray-100 rounded-xl overflow-hidden relative mt-4 shadow-inner">
+                    {/* Background pattern with subtle grid */}
+                    <div className="absolute inset-0 opacity-10" style={{
+                      backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
                       backgroundSize: '10px 10px'
                     }}></div>
                     
-                  {/* Modern progress bar with animated fill */}
+                  {/* Ultra modern progress bar with animated fill */}
                   <motion.div 
-                      className="h-full relative overflow-hidden rounded-full"
+                      className="h-full relative overflow-hidden rounded-xl"
                       style={{ width: '0%' }}
-                    animate={{ width: formatPercentage(resultConfidence) }}
+                      animate={{ width: formatPercentage(resultConfidence) }}
                       transition={{ 
-                        duration: 1.8, 
-                        ease: [0.34, 1.56, 0.64, 1], // Spring-like easing
+                        duration: 2.2, 
+                        ease: [0.22, 1.2, 0.36, 1], // Enhanced spring-like easing
                         delay: 0.3 
                       }}
                   >
                     {/* Modern gradient background with animated rotation */}
                     <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-700"
+                      className="absolute inset-0"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)'
+                      }}
                       animate={{
                         background: [
-                          'linear-gradient(90deg, rgba(6,182,212,1) 0%, rgba(37,99,235,1) 50%, rgba(126,34,206,1) 100%)',
-                          'linear-gradient(90deg, rgba(37,99,235,1) 0%, rgba(126,34,206,1) 50%, rgba(6,182,212,1) 100%)',
-                          'linear-gradient(90deg, rgba(126,34,206,1) 0%, rgba(6,182,212,1) 50%, rgba(37,99,235,1) 100%)',
-                          'linear-gradient(90deg, rgba(6,182,212,1) 0%, rgba(37,99,235,1) 50%, rgba(126,34,206,1) 100%)',
+                          'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
+                          'linear-gradient(90deg, rgba(124,58,237,1) 0%, rgba(236,72,153,1) 50%, rgba(79,70,229,1) 100%)',
+                          'linear-gradient(90deg, rgba(236,72,153,1) 0%, rgba(79,70,229,1) 50%, rgba(124,58,237,1) 100%)',
+                          'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
                         ]
                       }}
                       transition={{
-                        duration: 8,
+                        duration: 10,
                         repeat: Infinity,
                         repeatType: "loop"
                       }}
                     />
                     
-                    {/* Enhanced shine effect */}
+                    {/* Enhanced shine effect with double layers */}
                     <motion.div
                       className="absolute inset-0"
                       style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%)',
-                          filter: 'blur(4px)',
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%)',
+                          filter: 'blur(5px)',
                       }}
                       animate={{
                         x: ['-120%', '120%'],
                       }}
                       transition={{
-                        duration: 2,
+                        duration: 2.5,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatType: "loop",
+                        delay: 0.5
+                      }}
+                    />
+                    
+                    {/* Secondary shine effect for depth */}
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                          filter: 'blur(2px)',
+                      }}
+                      animate={{
+                        x: ['-80%', '180%'],
+                      }}
+                      transition={{
+                        duration: 3.5,
                         ease: "easeInOut",
                         repeat: Infinity,
                         repeatType: "loop",
                       }}
                     />
                     
-                    {/* Modern pulsing dots */}
-                    {[...Array(6)].map((_, i) => (
+                    {/* Animated percentage display */}
+                    <motion.div 
+                      className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-white text-sm flex items-center"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.5, duration: 0.5 }}
+                    >
+                      {formatPercentage(resultConfidence)}
+                      <motion.svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-4 w-4 ml-1" 
+                        viewBox="0 0 20 20" 
+                        fill="currentColor"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
+                        transition={{ delay: 2, type: "spring", stiffness: 300 }}
+                      >
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </motion.svg>
+                    </motion.div>
+                    
+                    {/* Modern animated markers */}
+                    {[...Array(5)].map((_, i) => (
                       <motion.div
                         key={i}
-                        className="absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-white/80"
-                        style={{ left: `${(i + 1) * 14}%` }}
-                        animate={{
-                          opacity: [0.6, 1, 0.6],
-                          scale: [0.8, 1.3, 0.8],
-                          boxShadow: [
-                            '0 0 0px rgba(255,255,255,0.5)',
-                            '0 0 10px rgba(255,255,255,0.8)',
-                            '0 0 0px rgba(255,255,255,0.5)'
-                          ]
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          delay: i * 0.25,
-                        }}
-                      />
+                        className="absolute top-0 bottom-0 flex items-center justify-center"
+                        style={{ left: `${(i + 1) * 20}%` }}
+                      >
+                        <motion.div
+                          className="h-full w-0.5 bg-white/30"
+                          initial={{ height: 0 }}
+                          animate={{ height: '100%' }}
+                          transition={{ delay: 0.3 + (i * 0.1), duration: 0.7 }}
+                        />
+                        <motion.div
+                          className="absolute top-1 h-1.5 w-1.5 rounded-full bg-white"
+                          initial={{ scale: 0 }}
+                          animate={{ 
+                            scale: [0, 1.5, 1],
+                            boxShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 10px rgba(255,255,255,0.8)', '0 0 5px rgba(255,255,255,0.5)']
+                          }}
+                          transition={{ delay: 0.6 + (i * 0.15), duration: 0.5 }}
+                        />
+                      </motion.div>
                     ))}
                   </motion.div>
                 </div>
                   
-                {/* Confidence thresholds */}
-                <div className="flex justify-between mt-2 text-xs text-gray-500">
-                  <span>0%</span>
-                  <span>25%</span>
-                  <span>50%</span>
-                  <span>75%</span>
-                  <span>100%</span>
+                {/* Modern confidence thresholds */}
+                <div className="flex justify-between mt-2 text-xs font-medium">
+                  <span className="text-gray-500">0%</span>
+                  <span className="text-indigo-400">25%</span>
+                  <span className="text-indigo-500">50%</span>
+                  <span className="text-indigo-600">75%</span>
+                  <span className="text-indigo-700">100%</span>
                 </div>
                 
                 {/* Confidence description with enhanced styling */}
