@@ -394,13 +394,11 @@ function Report({ result }) {
       
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
-      const currentDate = formatDate(new Date());
-      pdf.text(`Tanggal: ${currentDate}`, pageWidth / 2, 30, { align: 'center' });
+      // Gunakan tanggal dari hasil analisis, bukan tanggal saat ini
+      const analysisDate = formatDate(resultDate);
+      pdf.text(`Tanggal: ${analysisDate}`, pageWidth / 2, 30, { align: 'center' });
       
       let yPos = 50;
-      
-      // Logo RetinaScan (opsional - ganti dengan path logo yang sesuai)
-      // pdf.addImage('path/to/logo.png', 'PNG', margin, yPos - 15, 40, 15);
       
       // Informasi pasien jika tersedia
       if (patient) {
@@ -415,8 +413,35 @@ function Report({ result }) {
         pdf.setFontSize(11);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(60, 60, 60);
-        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
-        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
+        // Gunakan extractValueWithDefault untuk konsistensi dengan tampilan
+        const patientName = extractValueWithDefault(patient, 'fullName', extractValueWithDefault(patient, 'name', 'Tidak ada nama'));
+        const patientGender = extractValueWithDefault(patient, 'gender', '');
+        const patientAge = extractValueWithDefault(patient, 'age', '');
+        
+        pdf.text(`Nama: ${patientName}`, margin + 5, yPos + 20);
+        
+        // Format gender dengan benar
+        let genderText = '';
+        if (patientGender === 'male') genderText = 'Laki-laki';
+        else if (patientGender === 'female') genderText = 'Perempuan';
+        else genderText = patientGender;
+        
+        // Tambahkan umur jika tersedia
+        let ageText = patientAge ? `${patientAge} tahun` : '';
+        
+        // Gabungkan gender dan umur jika keduanya tersedia
+        let infoText = '';
+        if (genderText && ageText) {
+          infoText = `Jenis Kelamin: ${genderText}, Umur: ${ageText}`;
+        } else if (genderText) {
+          infoText = `Jenis Kelamin: ${genderText}`;
+        } else if (ageText) {
+          infoText = `Umur: ${ageText}`;
+        }
+        
+        if (infoText) {
+          pdf.text(infoText, pageWidth - margin - 5, yPos + 20, { align: 'right' });
+        }
         
         yPos += 40;
       } else {
@@ -462,7 +487,7 @@ function Report({ result }) {
       
       // Gambar bar untuk confidence
       const barWidth = 50;
-      const confidenceWidth = barWidth * confidence;
+      const confidenceWidth = parseFloat(confidence) * barWidth;
       pdf.setFillColor(220, 220, 220); // Background bar
       pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
       pdf.setFillColor(37, 99, 235); // Filled bar
@@ -471,12 +496,14 @@ function Report({ result }) {
       yPos += 60;
       
       // Gambar
-      if (result.image && typeof result.image === 'string') {
-        try {
+      try {
+        // Gunakan getImageSource() untuk konsistensi dengan tampilan
+        const imgSource = getImageSource();
+        if (imgSource && imgSource !== '/images/default-retina.jpg') {
           // Tambahkan gambar jika tersedia
           const imgWidth = 100;
           const imgHeight = 100;
-          pdf.addImage(result.image, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
+          pdf.addImage(imgSource, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
           yPos += imgHeight + 10;
           
           // Tambahkan label gambar
@@ -484,11 +511,11 @@ function Report({ result }) {
           pdf.setTextColor(100, 100, 100);
           pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
           yPos += 15;
-        } catch (imgError) {
-          console.error('Error adding image to PDF:', imgError);
-          // Lanjutkan tanpa gambar jika gagal
-          yPos += 10;
         }
+      } catch (imgError) {
+        console.error('Error adding image to PDF:', imgError);
+        // Lanjutkan tanpa gambar jika gagal
+        yPos += 10;
       }
       
       // Rekomendasi
@@ -504,16 +531,17 @@ function Report({ result }) {
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
       
+      // Gunakan rekomendasi yang sama dengan yang ditampilkan di UI
       let recommendation = '';
-      if (severity === 'Tidak ada') {
+      if (severity.toLowerCase() === 'tidak ada' || severity.toLowerCase() === 'normal') {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
-      } else if (severity === 'Ringan') {
+      } else if (severity.toLowerCase() === 'ringan') {
         recommendation = 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
-      } else if (severity === 'Sedang') {
+      } else if (severity.toLowerCase() === 'sedang') {
         recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
-      } else if (severity === 'Berat') {
+      } else if (severity.toLowerCase() === 'berat') {
         recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
-      } else if (severity === 'Sangat Berat') {
+      } else if (severity.toLowerCase() === 'sangat berat') {
         recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
       } else {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
@@ -539,8 +567,9 @@ function Report({ result }) {
       pdf.setTextColor(255, 255, 255);
       pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, pageWidth / 2, pageHeight - 10, { align: 'center' });
       
-      // Simpan PDF
-      pdf.save('retina-analysis-report.pdf');
+      // Simpan PDF dengan nama yang berisi tanggal analisis
+      const dateForFilename = new Date(resultDate).toISOString().split('T')[0];
+      pdf.save(`retina-analysis-report-${dateForFilename}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Gagal membuat PDF. Silakan coba lagi.');
