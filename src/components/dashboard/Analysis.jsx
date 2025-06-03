@@ -228,6 +228,8 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
         id: analysis._id || analysis.id || analysis.analysisId, // Duplikasi ID untuk kompatibilitas
         originalFilename: image?.name || analysis.originalFilename || analysis.imageDetails?.originalname,
         createdAt: analysis.createdAt || new Date().toISOString(),
+        // Tandai bahwa ini belum disimpan ke database
+        saveToDatabase: false
       };
       
       // Log data untuk debugging
@@ -518,6 +520,52 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
                   transition={{ delay: 0.5, type: 'spring' }}
                 >
                   Lihat Hasil Lengkap
+                </motion.button>
+
+                {/* Tombol Simpan */}
+                <motion.button
+                  onClick={() => {
+                    if (analysis && onAnalysisComplete) {
+                      // Hampir sama dengan handleViewResults tapi dengan flag saveToDatabase=true
+                      const analysisWithImage = {
+                        ...analysis,
+                        image: image?.preview || image || analysis.image,
+                        preview: image?.preview || analysis.preview,
+                        patient: image?.patient || analysis.patient,
+                        patientId: image?.patientId || analysis.patientId,
+                        _id: analysis._id || analysis.id || analysis.analysisId,
+                        id: analysis._id || analysis.id || analysis.analysisId,
+                        originalFilename: image?.name || analysis.originalFilename || analysis.imageDetails?.originalname,
+                        createdAt: analysis.createdAt || new Date().toISOString(),
+                        // Tandai bahwa ini harus disimpan ke database
+                        saveToDatabase: true
+                      };
+                      
+                      // Pastikan imageData tersedia
+                      if (!analysisWithImage.imageData && analysisWithImage.image && typeof analysisWithImage.image === 'string' && analysisWithImage.image.startsWith('data:')) {
+                        analysisWithImage.imageData = analysisWithImage.image;
+                      }
+                      
+                      // Pastikan patientId tersedia dalam format yang benar
+                      if (analysisWithImage.patient && !analysisWithImage.patientId) {
+                        analysisWithImage.patientId = analysisWithImage.patient;
+                      }
+                      
+                      console.log('Menyimpan hasil analisis ke database:', analysisWithImage);
+                      onAnalysisComplete(analysisWithImage);
+                    }
+                  }}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium rounded-xl mt-3 transition-all"
+                  whileHover={{ 
+                    scale: 1.02,
+                    boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(16, 185, 129, 0.2)'
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6, type: 'spring' }}
+                >
+                  Simpan & Lihat History
                 </motion.button>
               </div>
             </motion.div>

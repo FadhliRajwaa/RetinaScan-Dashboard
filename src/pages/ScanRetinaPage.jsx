@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence, useSpring } from 'framer-motion';
 import { withPageTransition } from '../context/ThemeContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import UploadImage from '../components/dashboard/UploadImage';
 import Analysis from '../components/dashboard/Analysis';
 import Report from '../components/dashboard/Report';
+import { saveAnalysisResult } from '../services/api';
 
 function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
   const [activeStep, setActiveStep] = useState(1);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
 
   const handleStepChange = (step) => {
     if ((step === 2 && !uploadedImage) || (step === 3 && !analysisResult)) {
@@ -24,15 +29,54 @@ function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
     setActiveStep(2);
   };
 
-  const handleAnalysisComplete = (result) => {
-    // Tambahkan informasi pasien dari uploadedImage ke result
-    const resultWithPatient = {
-      ...result,
-      patient: uploadedImage?.patient // Ambil informasi pasien dari uploadedImage
-    };
-    setAnalysisResult(resultWithPatient);
-    // Mengubah activeStep ke 3 untuk langsung mengarahkan ke halaman hasil
-    setActiveStep(3);
+  const handleAnalysisComplete = async (result) => {
+    try {
+      // Tambahkan informasi pasien dari uploadedImage ke result
+      const resultWithPatient = {
+        ...result,
+        patient: uploadedImage?.patient // Ambil informasi pasien dari uploadedImage
+      };
+      
+      // Set state hasil analisis
+      setAnalysisResult(resultWithPatient);
+      
+      // Jika flag saveToDatabase=true, simpan hasil dan redirect ke history
+      if (result.saveToDatabase) {
+        await handleSaveAndRedirect(resultWithPatient);
+      } else {
+        // Jika tidak, hanya tampilkan hasil (tidak simpan ke database)
+        console.log('Menampilkan hasil tanpa menyimpan ke database');
+        setActiveStep(3);
+      }
+    } catch (error) {
+      console.error('Error handling analysis completion:', error);
+      toast.error('Terjadi kesalahan saat memproses hasil analisis');
+    }
+  };
+  
+  // Fungsi baru untuk menyimpan hasil dan mengarahkan ke halaman history
+  const handleSaveAndRedirect = async (result) => {
+    try {
+      setIsSaving(true);
+      
+      console.log('Menyimpan hasil analisis ke database dan mengarahkan ke halaman history');
+      
+      // Simpan hasil analisis ke database
+      const savedResult = await saveAnalysisResult(result);
+      
+      toast.success('Hasil analisis berhasil disimpan');
+      
+      // Redirect ke halaman history
+      navigate('/history');
+    } catch (error) {
+      console.error('Error saving analysis result:', error);
+      toast.error('Gagal menyimpan hasil analisis: ' + (error.message || 'Terjadi kesalahan'));
+      
+      // Tetap tampilkan hasil meskipun gagal menyimpan
+      setActiveStep(3);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const steps = [
@@ -265,6 +309,25 @@ function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
                     whileTap={{ scale: 0.95 }}
                   >
                     Scan Baru
+                  </motion.button>
+                  
+                  {/* Tombol Simpan & Lihat History */}
+                  <motion.button 
+                    variants={itemVariants}
+                    onClick={() => handleSaveAndRedirect(analysisResult)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg shadow-md hover:shadow-lg transition-all"
+                    whileHover={{ scale: 1.05, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                    whileTap={{ scale: 0.95 }}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-4 h-4 mr-2 border-2 border-t-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Menyimpan...
+                      </div>
+                    ) : (
+                      "Simpan & Lihat History"
+                    )}
                   </motion.button>
                 </motion.div>
               </div>

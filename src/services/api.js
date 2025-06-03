@@ -567,3 +567,37 @@ export const getPatientHistory = async (patientId) => {
     throw error;
   }
 };
+
+// Fungsi untuk menyimpan hasil analisis ke database
+export const saveAnalysisResult = async (analysisData) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Token tidak ditemukan');
+    }
+    
+    console.log('Saving analysis result to database:', analysisData);
+    
+    // Pastikan data memiliki format yang benar
+    const formattedData = {
+      ...analysisData,
+      // Pastikan ID tersedia dalam format yang benar
+      _id: analysisData._id || analysisData.id || analysisData.analysisId,
+      // Pastikan patientId tersedia
+      patientId: analysisData.patientId || analysisData.patient?._id || analysisData.patient
+    };
+    
+    const response = await axios.post(`${API_URL}/api/analysis/save`, formattedData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Analysis result saved successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error saving analysis result:', error);
+    throw error;
+  }
+};
