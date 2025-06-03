@@ -1472,30 +1472,33 @@ function Report({ result }) {
                   </motion.div>
                 </div>
                 
-                {/* Ultra modern progress bar */}
-                <div className="w-full h-8 bg-gray-100 rounded-xl overflow-hidden relative mt-4 shadow-inner">
-                    {/* Background pattern with subtle grid */}
-                    <div className="absolute inset-0 opacity-10" style={{
-                      backgroundImage: 'linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)',
-                      backgroundSize: '10px 10px'
+                {/* Ultra modern interactive 3D progress bar */}
+                <div className="w-full h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden relative mt-4 shadow-lg border border-white/50">
+                    {/* Background pattern with improved 3D grid */}
+                    <div className="absolute inset-0 opacity-20" style={{
+                      backgroundImage: 'linear-gradient(to right, rgba(99,102,241,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(99,102,241,0.1) 1px, transparent 1px)',
+                      backgroundSize: '8px 8px',
+                      perspective: '1000px',
+                      transform: 'rotateX(5deg)',
                     }}></div>
                     
-                  {/* Ultra modern progress bar with animated fill */}
+                  {/* Ultra modern 3D progress bar with animated fill and glow effect */}
                   <motion.div 
-                      className="h-full relative overflow-hidden rounded-xl"
+                      className="h-full relative overflow-hidden rounded-xl shadow-[inset_0_0_15px_rgba(255,255,255,0.5)]"
                       style={{ width: '0%' }}
                       animate={{ width: formatPercentage(resultConfidence) }}
                       transition={{ 
-                        duration: 2.2, 
+                        duration: 2.5, 
                         ease: [0.22, 1.2, 0.36, 1], // Enhanced spring-like easing
                         delay: 0.3 
                       }}
                   >
-                    {/* Modern gradient background with animated rotation */}
+                    {/* Premium gradient background with animated rotation and 3D perspective */}
                     <motion.div 
                       className="absolute inset-0"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)'
+                        background: 'linear-gradient(90deg, rgba(79,70,229,1) 0%, rgba(124,58,237,1) 50%, rgba(236,72,153,1) 100%)',
+                        boxShadow: '0 0 25px rgba(139, 92, 246, 0.6)'
                       }}
                       animate={{
                         background: [
@@ -1512,12 +1515,12 @@ function Report({ result }) {
                       }}
                     />
                     
-                    {/* Enhanced shine effect with double layers */}
+                    {/* Vibrant shine effect with triple layers for holographic look */}
                     <motion.div
                       className="absolute inset-0"
                       style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%)',
-                          filter: 'blur(5px)',
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 100%)',
+                          filter: 'blur(4px)',
                       }}
                       animate={{
                         x: ['-120%', '120%'],
@@ -1531,11 +1534,11 @@ function Report({ result }) {
                       }}
                     />
                     
-                    {/* Secondary shine effect for depth */}
+                    {/* Secondary shine effect for holographic depth */}
                     <motion.div
                       className="absolute inset-0"
                       style={{
-                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%)',
+                          background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%)',
                           filter: 'blur(2px)',
                       }}
                       animate={{
@@ -1549,12 +1552,59 @@ function Report({ result }) {
                       }}
                     />
                     
-                    {/* Animated percentage display */}
+                    {/* Third shine layer for ultra premium effect */}
+                    <motion.div
+                      className="absolute inset-0"
+                      style={{
+                          background: 'linear-gradient(90deg, rgba(236,72,153,0) 0%, rgba(139,92,246,0.3) 50%, rgba(236,72,153,0) 100%)',
+                          filter: 'blur(3px)',
+                      }}
+                      animate={{
+                        x: ['-100%', '100%'],
+                      }}
+                      transition={{
+                        duration: 4,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        repeatType: "loop",
+                        delay: 1
+                      }}
+                    />
+                    
+                    {/* Particle effects inside progress bar */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      {[...Array(6)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute rounded-full bg-white/80"
+                          style={{
+                            width: Math.random() * 4 + 2,
+                            height: Math.random() * 4 + 2,
+                            top: `${Math.random() * 100}%`,
+                            filter: 'blur(1px)',
+                          }}
+                          animate={{
+                            x: ['-10vw', '100vw'],
+                            opacity: [0, 1, 0],
+                          }}
+                          transition={{
+                            duration: Math.random() * 3 + 3,
+                            repeat: Infinity,
+                            delay: Math.random() * 5,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Enhanced animated percentage display with 3D effect */}
                     <motion.div 
-                      className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-white text-sm flex items-center"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-white text-sm flex items-center bg-black/20 px-2 py-1 rounded-md backdrop-blur-sm shadow-lg"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1.5, duration: 0.5 }}
+                      style={{
+                        textShadow: '0 0 5px rgba(255,255,255,0.5)'
+                      }}
                     >
                       {formatPercentage(resultConfidence)}
                       <motion.svg 
@@ -1570,7 +1620,7 @@ function Report({ result }) {
                       </motion.svg>
                     </motion.div>
                     
-                    {/* Modern animated markers */}
+                    {/* Advanced animated markers with floating pulse */}
                     {[...Array(5)].map((_, i) => (
                       <motion.div
                         key={i}
@@ -1578,49 +1628,144 @@ function Report({ result }) {
                         style={{ left: `${(i + 1) * 20}%` }}
                       >
                         <motion.div
-                          className="h-full w-0.5 bg-white/30"
+                          className="h-full w-0.5 bg-white/50"
                           initial={{ height: 0 }}
                           animate={{ height: '100%' }}
                           transition={{ delay: 0.3 + (i * 0.1), duration: 0.7 }}
                         />
                         <motion.div
-                          className="absolute top-1 h-1.5 w-1.5 rounded-full bg-white"
+                          className="absolute top-0 h-2 w-2 rounded-full bg-white"
                           initial={{ scale: 0 }}
                           animate={{ 
                             scale: [0, 1.5, 1],
-                            boxShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 10px rgba(255,255,255,0.8)', '0 0 5px rgba(255,255,255,0.5)']
+                            boxShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 15px rgba(255,255,255,0.9)', '0 0 5px rgba(255,255,255,0.6)']
                           }}
                           transition={{ delay: 0.6 + (i * 0.15), duration: 0.5 }}
+                        />
+                        <motion.div
+                          className="absolute top-0 h-2 w-2 rounded-full bg-white/10"
+                          animate={{ 
+                            scale: [1, 2, 1],
+                            opacity: [0.7, 0, 0.7],
+                          }}
+                          transition={{ 
+                            duration: 2,
+                            repeat: Infinity,
+                            delay: 1 + (i * 0.2)
+                          }}
                         />
                       </motion.div>
                     ))}
                   </motion.div>
+                  
+                  {/* Interactive markers outside progress bar */}
+                  <div className="absolute inset-x-0 bottom-0 h-1 flex justify-between px-5">
+                    {[...Array(10)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="h-1 w-0.5 bg-indigo-200"
+                        initial={{ height: 1 }}
+                        animate={{ 
+                          height: i % 5 === 0 ? 5 : 3,
+                          opacity: i % 5 === 0 ? 1 : 0.7
+                        }}
+                        transition={{ 
+                          delay: i * 0.05,
+                          duration: 0.4
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
                   
-                {/* Modern confidence thresholds */}
-                <div className="flex justify-between mt-2 text-xs font-medium">
-                  <span className="text-gray-500">0%</span>
-                  <span className="text-indigo-400">25%</span>
-                  <span className="text-indigo-500">50%</span>
-                  <span className="text-indigo-600">75%</span>
-                  <span className="text-indigo-700">100%</span>
+                {/* Modern confidence thresholds with tooltip-style indicators */}
+                <div className="flex justify-between mt-3 text-xs font-medium">
+                  <div className="relative group">
+                    <span className="text-gray-500 flex items-center">
+                      0%
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1, duration: 0.3 }}
+                        className="w-1 h-1 rounded-full bg-gray-400 ml-1"
+                      />
+                    </span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">Sangat rendah</div>
+                  </div>
+                  <div className="relative group">
+                    <span className="text-indigo-400 flex items-center">
+                      25%
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1.1, duration: 0.3 }}
+                        className="w-1 h-1 rounded-full bg-indigo-400 ml-1"
+                      />
+                    </span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">Rendah</div>
+                  </div>
+                  <div className="relative group">
+                    <span className="text-indigo-500 flex items-center">
+                      50%
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1.2, duration: 0.3 }}
+                        className="w-1 h-1 rounded-full bg-indigo-500 ml-1"
+                      />
+                    </span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">Sedang</div>
+                  </div>
+                  <div className="relative group">
+                    <span className="text-indigo-600 flex items-center">
+                      75%
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1.3, duration: 0.3 }}
+                        className="w-1 h-1 rounded-full bg-indigo-600 ml-1"
+                      />
+                    </span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">Tinggi</div>
+                  </div>
+                  <div className="relative group">
+                    <span className="text-indigo-700 flex items-center">
+                      100%
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1.4, duration: 0.3 }}
+                        className="w-1 h-1 rounded-full bg-indigo-700 ml-1"
+                      />
+                    </span>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded pointer-events-none">Sangat tinggi</div>
+                  </div>
                 </div>
                 
-                {/* Confidence description with enhanced styling */}
+                {/* Confidence description with premium styling */}
                 <motion.div 
-                  className="mt-4 p-3 rounded-lg bg-indigo-50 border border-indigo-100 text-sm text-indigo-700"
-                    initial={{ opacity: 0 }}
+                  className="mt-4 p-4 rounded-lg bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 text-sm text-indigo-700 shadow-sm"
+                  initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                  >
+                  transition={{ delay: 0.8 }}
+                  whileHover={{ 
+                    boxShadow: '0 5px 15px -3px rgba(99, 102, 241, 0.15), 0 4px 6px -2px rgba(99, 102, 241, 0.05)', 
+                    y: -2
+                  }}
+                >
                   <div className="flex">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <span>
-                      Tingkat kepercayaan menunjukkan seberapa yakin sistem AI dalam menentukan diagnosis. 
-                      {resultConfidence < 0.7 && " Tingkat kepercayaan yang rendah mungkin mengindikasikan perlunya pemeriksaan lebih lanjut oleh dokter spesialis."}
-                    </span>
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold mb-1 text-indigo-800">Tentang Tingkat Kepercayaan</h5>
+                      <p>
+                        Tingkat kepercayaan menunjukkan seberapa yakin sistem AI dalam menentukan diagnosis berdasarkan pola gambar retina yang dianalisis.
+                        {resultConfidence < 0.7 && " Tingkat kepercayaan yang rendah mungkin mengindikasikan perlunya pemeriksaan lebih lanjut oleh dokter spesialis."}
+                      </p>
+                    </div>
                   </div>
               </motion.div>
               </motion.div>
@@ -2284,7 +2429,7 @@ function Report({ result }) {
                 transition={{ delay: 1 }}
               >
                 <p>&copy; {new Date().getFullYear()} RetinaScan. All rights reserved.</p>
-                <p className="mt-1">Developed with ❤️ for better eye health.</p>
+                <p className="mt-1">Developed by team RetinaScan for better eye health.</p>
               </motion.div>
             </div>
           </div>
