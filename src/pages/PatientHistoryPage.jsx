@@ -317,428 +317,266 @@ function PatientHistoryPageComponent() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
-      const contentWidth = pageWidth - (margin * 2);
       
-      // Warna brand RetinaScan
-      const colors = {
-        primary: [0, 123, 255],
-        secondary: [23, 162, 184],
-        success: [40, 167, 69],
-        warning: [255, 193, 7],
-        danger: [220, 53, 69],
-        light: [240, 249, 255],
-        dark: [52, 58, 64],
-        text: [73, 80, 87],
-        lightText: [108, 117, 125],
-        border: [222, 226, 230]
-      };
-      
-      // Severity color mapping
-      const severityColors = {
-        'Tidak ada': colors.primary,
-        'No DR': colors.primary,
-        'Normal': colors.primary,
-        'Ringan': colors.success,
-        'Mild': colors.success,
-        'Sedang': colors.warning,
-        'Moderate': colors.warning,
-        'Berat': colors.danger,
-        'Parah': colors.danger,
-        'Sangat Berat': [153, 0, 76],
-        'Proliferative DR': [153, 0, 76]
-      };
-      
-      // Helpers
-      const addWrappedText = (text, x, y, maxWidth, lineHeight, options = {}) => {
-        const { align = 'left', fontSize = 10, fontStyle = 'normal', textColor = colors.text } = options;
-        
-        pdf.setFontSize(fontSize);
-        pdf.setFont(undefined, fontStyle);
-        pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
-        
+      // Fungsi untuk menambahkan teks dengan wrapping
+      const addWrappedText = (text, x, y, maxWidth, lineHeight) => {
         const lines = pdf.splitTextToSize(text, maxWidth);
-        pdf.text(lines, x, y, { align });
+        pdf.text(lines, x, y);
         return y + (lines.length * lineHeight);
       };
+
+      // Tentukan warna berdasarkan tingkat keparahan
+      let headerColor, bgColor, borderColor, textColor;
+      const severityLevel = analysis.severity.toLowerCase();
       
-      // Fungsi untuk menambahkan kotak dengan warna background
-      const addColoredBox = (x, y, width, height, color, radius = 0) => {
-        pdf.setFillColor(color[0], color[1], color[2]);
-        
-        if (radius > 0) {
-          // Menggambar kotak dengan sudut melengkung
-          pdf.roundedRect(x, y, width, height, radius, radius, 'F');
-        } else {
-          pdf.rect(x, y, width, height, 'F');
-        }
-      };
-      
-      // Fungsi untuk menambahkan separator
-      const addSeparator = (y, width = contentWidth, color = colors.border) => {
-        pdf.setDrawColor(color[0], color[1], color[2]);
-        pdf.setLineWidth(0.5);
-        pdf.line(margin, y, margin + width, y);
-        return y + 3;
-      };
-      
-      // Fungsi untuk menambahkan card container
-      const addCard = (y, height, title, callback) => {
-        // Latar belakang card
-        addColoredBox(margin, y, contentWidth, height, [255, 255, 255]);
-        
-        // Border
-        pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-        pdf.setLineWidth(0.5);
-        pdf.rect(margin, y, contentWidth, height);
-        
-        // Shadow effect (subtle)
-        pdf.setDrawColor(240, 240, 240);
-        pdf.setLineWidth(0.2);
-        pdf.line(margin + contentWidth + 0.5, y + 1, margin + contentWidth + 0.5, y + height);
-        pdf.line(margin + 1, y + height + 0.5, margin + contentWidth, y + height + 0.5);
-        
-        // Judul card
-        if (title) {
-          addColoredBox(margin, y, contentWidth, 10, colors.light);
-          pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-          pdf.setLineWidth(0.2);
-          pdf.line(margin, y + 10, margin + contentWidth, y + 10);
-          
-          pdf.setFont(undefined, 'bold');
-          pdf.setFontSize(11);
-          pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-          pdf.text(title, margin + 5, y + 7);
-        }
-        
-        const contentY = title ? y + 15 : y + 5;
-        
-        if (callback) {
-          callback(contentY);
-        }
-        
-        return y + height + 5;
-      };
-      
-      // --- HEADER SECTION ---
-      // Gradient header background
-      const headerHeight = 40;
-      for (let i = 0; i <= headerHeight; i++) {
-        const ratio = i / headerHeight;
-        const r = Math.floor(colors.primary[0] - (colors.primary[0] - 0) * ratio);
-        const g = Math.floor(colors.primary[1] - (colors.primary[1] - 72) * ratio);
-        const b = Math.floor(colors.primary[2] - (colors.primary[2] - 186) * ratio);
-        
-        addColoredBox(0, i, pageWidth, 1, [r, g, b]);
+      if (severityLevel.includes('tidak ada') || severityLevel.includes('normal') || severityLevel.includes('no dr')) {
+        headerColor = [41, 121, 255]; // Biru
+        bgColor = [219, 234, 254]; // blue-100
+        borderColor = [147, 197, 253]; // blue-300
+        textColor = [30, 64, 175]; // blue-800
+      } else if (severityLevel.includes('ringan') || severityLevel.includes('mild')) {
+        headerColor = [16, 185, 129]; // Hijau
+        bgColor = [209, 250, 229]; // green-100
+        borderColor = [134, 239, 172]; // green-300
+        textColor = [6, 95, 70]; // green-800
+      } else if (severityLevel.includes('sedang') || severityLevel.includes('moderate')) {
+        headerColor = [234, 179, 8]; // Kuning
+        bgColor = [254, 243, 199]; // yellow-100
+        borderColor = [253, 224, 71]; // yellow-300
+        textColor = [180, 83, 9]; // yellow-800
+      } else if (severityLevel.includes('berat') || severityLevel.includes('parah') || severityLevel.includes('severe')) {
+        headerColor = [239, 68, 68]; // Merah
+        bgColor = [254, 226, 226]; // red-100
+        borderColor = [252, 165, 165]; // red-300
+        textColor = [185, 28, 28]; // red-800
+      } else if (severityLevel.includes('sangat berat') || severityLevel.includes('proliferative')) {
+        headerColor = [220, 38, 38]; // Merah tua
+        bgColor = [254, 205, 211]; // rose-100
+        borderColor = [253, 164, 175]; // rose-300
+        textColor = [159, 18, 57]; // rose-800
+      } else {
+        headerColor = [41, 121, 255]; // Default: Biru
+        bgColor = [219, 234, 254]; // blue-100
+        borderColor = [147, 197, 253]; // blue-300
+        textColor = [30, 64, 175]; // blue-800
       }
       
-      // Header content
+      // Header dengan warna sesuai tingkat keparahan
+      pdf.setFillColor(headerColor[0], headerColor[1], headerColor[2]);
+      pdf.rect(0, 0, pageWidth, 25, 'F');
+      
+      // Judul dengan font yang lebih besar
       pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(22);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('LAPORAN PEMERIKSAAN RETINA', pageWidth / 2, 20, { align: 'center' });
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('LAPORAN ANALISIS RETINA', pageWidth / 2, 12, { align: 'center' });
       
-      pdf.setFontSize(12);
-      pdf.setFont(undefined, 'normal');
-      pdf.text(`RetinaScan • ${formatDate(analysis.createdAt)}`, pageWidth / 2, 30, { align: 'center' });
+      // Tambahkan tanggal analisis
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Tanggal: ${formatDate(analysis.createdAt)}`, pageWidth / 2, 18, { align: 'center' });
       
-      // Logo posisi (opsional)
-      // pdf.addImage(logoBase64, 'PNG', margin, 10, 20, 20);
+      // Layout utama - 2 kolom
+      let yPos = 35;
+      const colWidth = (pageWidth - (margin * 3)) / 2;
       
-      let yPos = headerHeight + 10;
+      // Kolom kiri - Info pasien dan hasil analisis
+      let leftColYPos = yPos;
       
-      // --- PATIENT INFO SECTION ---
-      yPos = addCard(yPos, 50, 'INFORMASI PASIEN', (contentY) => {
-        // Kolom kiri
-        let colY = contentY;
+      // Info Pasien
+      if (patient) {
+        // Background kartu
+        pdf.setFillColor(249, 250, 251); // gray-50
+        pdf.setDrawColor(229, 231, 235); // gray-200
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(margin, leftColYPos, colWidth, 30, 3, 3, 'FD');
         
-        pdf.setFontSize(10);
-        pdf.setTextColor(colors.lightText[0], colors.lightText[1], colors.lightText[2]);
-        pdf.text('Nama Lengkap', margin + 5, colY);
-        
-        colY += 5;
+        // Judul kartu
+        pdf.setTextColor(17, 24, 39); // gray-900
         pdf.setFontSize(12);
-        pdf.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
-        pdf.setFont(undefined, 'bold');
-        pdf.text(patient.fullName || patient.name, margin + 5, colY);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Informasi Pasien', margin + 5, leftColYPos + 8);
         
-        colY += 10;
+        // Konten kartu
         pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(colors.lightText[0], colors.lightText[1], colors.lightText[2]);
-        pdf.text('Jenis Kelamin', margin + 5, colY);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(55, 65, 81); // gray-700
         
-        colY += 5;
-        pdf.setFontSize(12);
-        pdf.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
-        pdf.text(patient.gender === 'male' ? 'Laki-laki' : 'Perempuan', margin + 5, colY);
+        let patientYPos = leftColYPos + 15;
+        pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, patientYPos);
         
-        // Kolom kanan
-        colY = contentY;
-        const colX = margin + contentWidth / 2;
+        patientYPos += 5;
+        pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}`, margin + 5, patientYPos);
         
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(colors.lightText[0], colors.lightText[1], colors.lightText[2]);
-        pdf.text('Umur', colX, colY);
+        patientYPos += 5;
+        pdf.text(`Umur: ${patient.age || '-'} tahun`, margin + 5, patientYPos);
         
-        colY += 5;
-        pdf.setFontSize(12);
-        pdf.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
-        pdf.text(`${patient.age || '-'} tahun`, colX, colY);
-        
-        colY += 10;
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(colors.lightText[0], colors.lightText[1], colors.lightText[2]);
-        pdf.text('Tanggal Pemeriksaan', colX, colY);
-        
-        colY += 5;
-        pdf.setFontSize(12);
-        pdf.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
-        pdf.text(formatDate(analysis.createdAt), colX, colY);
-      });
-      
-      // --- SEVERITY RESULT SECTION ---
-      yPos = addCard(yPos, 60, 'HASIL ANALISIS', (contentY) => {
-        // Set warna berdasarkan tingkat keparahan
-        const severityLevel = analysis.severity;
-        const severityColor = severityColors[severityLevel] || colors.primary;
-        
-        // Bagian kiri - Grafik tingkat keparahan
-        const gaugeX = margin + 10;
-        const gaugeY = contentY + 15;
-        const gaugeWidth = 80;
-        const gaugeHeight = 15;
-        
-        // Background gauge
-        addColoredBox(gaugeX, gaugeY, gaugeWidth, gaugeHeight, [240, 240, 240], 5);
-        
-        // Severity levels
-        const severityLevels = ['Tidak ada', 'Ringan', 'Sedang', 'Berat', 'Sangat Berat'];
-        const severityIndex = severityLevels.findIndex(s => 
-          severityLevel.toLowerCase().includes(s.toLowerCase())
-        );
-        const severityRatio = (severityIndex !== -1) ? (severityIndex + 1) / 5 : 0.2;
-        
-        // Filled gauge
-        addColoredBox(gaugeX, gaugeY, gaugeWidth * severityRatio, gaugeHeight, severityColor, 5);
-        
-        // Severity marker labels
-        pdf.setFontSize(7);
-        pdf.setTextColor(100, 100, 100);
-        for (let i = 0; i < 5; i++) {
-          const markerX = gaugeX + (gaugeWidth * (i + 1)) / 5;
-          const markerText = (i + 1).toString();
-          pdf.text(markerText, markerX, gaugeY + gaugeHeight + 5, { align: 'center' });
-        }
-        
-        // Severity title
-        pdf.setFontSize(10);
-        pdf.setTextColor(colors.lightText[0], colors.lightText[1], colors.lightText[2]);
-        pdf.text('Tingkat Keparahan', gaugeX, contentY + 8);
-        
-        // Severity value
-        pdf.setFontSize(16);
-        pdf.setFont(undefined, 'bold');
-        pdf.setTextColor(severityColor[0], severityColor[1], severityColor[2]);
-        pdf.text(severityLevel, gaugeX, contentY + 40);
-        
-        // Bagian kanan - Confidence
-        const confidenceX = margin + contentWidth / 2;
-        
-        // Confidence title
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        pdf.setTextColor(colors.lightText[0], colors.lightText[1], colors.lightText[2]);
-        pdf.text('Tingkat Kepercayaan', confidenceX, contentY + 8);
-        
-        // Confidence value
-        const confidenceValue = (analysis.confidence * 100).toFixed(1);
-        pdf.setFontSize(16);
-        pdf.setFont(undefined, 'bold');
-        pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-        pdf.text(`${confidenceValue}%`, confidenceX, contentY + 40);
-        
-        // Confidence bar
-        const confidenceBarY = contentY + 15;
-        const confidenceBarWidth = 80;
-        const confidenceBarHeight = 15;
-        
-        // Background bar
-        addColoredBox(confidenceX, confidenceBarY, confidenceBarWidth, confidenceBarHeight, [240, 240, 240], 5);
-        
-        // Filled bar based on confidence
-        const fillWidth = confidenceBarWidth * analysis.confidence;
-        addColoredBox(confidenceX, confidenceBarY, fillWidth, confidenceBarHeight, colors.primary, 5);
-      });
-      
-      // --- IMAGE SECTION ---
-      if (analysis.imageData) {
-        yPos = addCard(yPos, 120, 'GAMBAR RETINA', (contentY) => {
-          try {
-            // Buat border untuk gambar
-            const imgWidth = 100;
-            const imgHeight = 100;
-            const imgX = margin + (contentWidth - imgWidth) / 2;
-            const imgY = contentY + 5;
-            
-            // Border gambar
-            pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-            pdf.setLineWidth(0.5);
-            pdf.rect(imgX - 2, imgY - 2, imgWidth + 4, imgHeight + 4);
-            
-            // Tambahkan gambar
-            pdf.addImage(analysis.imageData, 'JPEG', imgX, imgY, imgWidth, imgHeight);
-          } catch (imgError) {
-            console.error('Error adding image to PDF:', imgError);
-            // Pesan error jika gambar gagal ditambahkan
-            pdf.setFontSize(10);
-            pdf.setTextColor(colors.danger[0], colors.danger[1], colors.danger[2]);
-            pdf.text('Gambar tidak dapat ditampilkan', margin + contentWidth / 2, contentY + 50, { align: 'center' });
-          }
-        });
+        leftColYPos += 35;
       }
       
-      // --- CLINICAL SIGNS SECTION ---
-      const getClinicalSigns = (severity) => {
-        const severityLower = severity.toLowerCase();
-        if (severityLower.includes('tidak ada') || severityLower.includes('normal') || severityLower.includes('no dr')) {
-          return [
-            'Tidak ditemukan tanda-tanda retinopati diabetik',
-            'Pembuluh darah retina normal',
-            'Tidak ada mikroaneurisma',
-            'Tidak ada perdarahan retina',
-            'Tidak ada eksudat'
-          ];
-        } else if (severityLower.includes('ringan') || severityLower.includes('mild')) {
-          return [
-            'Mikroaneurisma (1-5)',
-            'Perdarahan intraretinal minimal',
-            'Tidak ada eksudat keras',
-            'Tidak ada cotton wool spots'
-          ];
-        } else if (severityLower.includes('sedang') || severityLower.includes('moderate')) {
-          return [
-            'Mikroaneurisma multipel (>5)',
-            'Perdarahan intraretinal di satu hingga tiga kuadran',
-            'Eksudat keras',
-            'Cotton wool spots (1-3)',
-            'Dilatasi vena ringan'
-          ];
-        } else if (severityLower.includes('berat') || severityLower.includes('parah') || severityLower.includes('severe')) {
-          return [
-            'Perdarahan intraretinal pada empat kuadran',
-            'Eksudat keras multipel',
-            'Cotton wool spots multipel (>3)',
-            'Abnormalitas mikrovaskuler intraretinal (IRMA)',
-            'Vena kalikut',
-            'Iskemia retina yang luas'
-          ];
-        } else if (severityLower.includes('sangat berat') || severityLower.includes('proliferative')) {
-          return [
-            'Neovaskularisasi pada diskus optikus (NVD)',
-            'Neovaskularisasi di tempat lain (NVE)',
-            'Perdarahan preretinal atau vitreus',
-            'Fibrosis epiretinal',
-            'Traksi retina',
-            'Risiko ablasio retina',
-            'Glaukoma neovaskular'
-          ];
-        }
-        return ['Tidak ditemukan tanda-tanda retinopati yang signifikan'];
-      };
+      // Kartu Hasil Analisis
+      pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+      pdf.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+      pdf.roundedRect(margin, leftColYPos, colWidth, 45, 3, 3, 'FD');
       
-      const clinicalSigns = getClinicalSigns(analysis.severity);
+      // Judul kartu
+      pdf.setTextColor(17, 24, 39); // gray-900
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Hasil Analisis', margin + 5, leftColYPos + 8);
       
-      yPos = addCard(yPos, 50 + (clinicalSigns.length * 6), 'TANDA KLINIS', (contentY) => {
-        let bulletY = contentY + 5;
-        
-        // Set text style untuk daftar tanda klinis
-        pdf.setFontSize(10);
-        pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-        pdf.setFont(undefined, 'normal');
-        
-        // Tambahkan setiap tanda klinis dengan bullet point
-        clinicalSigns.forEach(sign => {
-          pdf.circle(margin + 5, bulletY, 1, 'F');
-          pdf.text(sign, margin + 10, bulletY + 1);
-          bulletY += 8;
-        });
-      });
+      // Tingkat keparahan
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(55, 65, 81); // gray-700
+      pdf.text('Tingkat Keparahan:', margin + 5, leftColYPos + 18);
       
-      // --- RECOMMENDATION SECTION ---
-      // Dapatkan rekomendasi berdasarkan tingkat keparahan
-      const getRecommendation = (severity) => {
-        const severityLower = severity.toLowerCase();
-        if (severityLower.includes('tidak ada') || severityLower.includes('normal') || severityLower.includes('no dr')) {
-          return 'Lakukan pemeriksaan rutin setiap tahun. Jaga gula darah tetap terkontrol. Lakukan gaya hidup sehat dengan diet seimbang dan olahraga teratur.';
-        } else if (severityLower.includes('ringan') || severityLower.includes('mild')) {
-          return 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan. Konsultasikan dengan dokter mengenai kontrol diabetes yang lebih ketat.';
-        } else if (severityLower.includes('sedang') || severityLower.includes('moderate')) {
-          return 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan. Kontrol ketat gula darah dan tekanan darah. Perhatikan perubahan pada penglihatan.';
-        } else if (severityLower.includes('berat') || severityLower.includes('parah') || severityLower.includes('severe')) {
-          return 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan. Kontrol diabetes secara intensif. Evaluasi untuk kemungkinan terapi laser.';
-        } else if (severityLower.includes('sangat berat') || severityLower.includes('proliferative')) {
-          return 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi. Kontrol diabetes sangat intensif. Pemantauan ketat oleh dokter spesialis mata dan dokter spesialis penyakit dalam.';
-        }
-        return 'Lakukan pemeriksaan rutin dengan dokter mata setiap tahun. Jaga gula darah tetap terkontrol.';
-      };
+      // Nilai keparahan dengan warna sesuai tingkat
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
+      pdf.text(analysis.severity, margin + 45, leftColYPos + 18);
       
+      // Deskripsi tingkat keparahan
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(55, 65, 81); // gray-700
+      let severityDesc = '';
+      if (severityLevel.includes('tidak ada') || severityLevel.includes('normal') || severityLevel.includes('no dr')) {
+        severityDesc = 'Tidak terdeteksi tanda-tanda retinopati diabetik.';
+      } else if (severityLevel.includes('ringan') || severityLevel.includes('mild')) {
+        severityDesc = 'Terdeteksi mikroaneurisma ringan pada retina.';
+      } else if (severityLevel.includes('sedang') || severityLevel.includes('moderate')) {
+        severityDesc = 'Terdeteksi perdarahan retina dan/atau eksudat keras.';
+      } else if (severityLevel.includes('berat') || severityLevel.includes('severe')) {
+        severityDesc = 'Terdeteksi perdarahan retina yang luas dan/atau pembuluh darah abnormal.';
+      } else if (severityLevel.includes('sangat berat') || severityLevel.includes('proliferative')) {
+        severityDesc = 'Terdeteksi tanda-tanda retinopati diabetik proliferatif.';
+      }
+      pdf.text(severityDesc, margin + 5, leftColYPos + 25);
+      
+      // Tingkat kepercayaan
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(55, 65, 81); // gray-700
+      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin + 5, leftColYPos + 35);
+      
+      // Progress bar untuk confidence
+      const barWidth = colWidth - 10;
+      const confidenceValue = parseFloat(analysis.confidence);
+      const fillWidth = confidenceValue * barWidth;
+      
+      // Background bar
+      pdf.setFillColor(226, 232, 240); // slate-200
+      pdf.roundedRect(margin + 5, leftColYPos + 38, barWidth, 3, 1, 1, 'F');
+      
+      // Fill bar
+      pdf.setFillColor(textColor[0], textColor[1], textColor[2]);
+      if (fillWidth > 0) {
+        pdf.roundedRect(margin + 5, leftColYPos + 38, fillWidth, 3, 1, 1, 'F');
+      }
+      
+      leftColYPos += 50;
+      
+      // Kartu Rekomendasi
+      pdf.setFillColor(239, 246, 255); // blue-50
+      pdf.setDrawColor(191, 219, 254); // blue-200
+      pdf.roundedRect(margin, leftColYPos, colWidth, 60, 3, 3, 'FD');
+      
+      // Judul kartu
+      pdf.setTextColor(17, 24, 39); // gray-900
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Rekomendasi', margin + 5, leftColYPos + 8);
+      
+      // Rekomendasi berdasarkan tingkat keparahan
       let recommendation = '';
+      
       if (analysis.notes) {
         recommendation = analysis.notes;
-      } else {
-        recommendation = getRecommendation(analysis.severity);
+      } else if (severityLevel.includes('tidak ada') || severityLevel.includes('normal') || severityLevel.includes('no dr')) {
+        recommendation = 'Lakukan pemeriksaan rutin setiap tahun.\n\nTidak ada tanda retinopati diabetik. Tetap jaga kadar gula darah dan tekanan darah dalam rentang normal.';
+      } else if (severityLevel.includes('ringan') || severityLevel.includes('mild')) {
+        recommendation = 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.\n\nKontrol gula darah dengan ketat (HbA1c < 7%). Jaga tekanan darah < 130/80 mmHg.';
+      } else if (severityLevel.includes('sedang') || severityLevel.includes('moderate')) {
+        recommendation = 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.\n\nSegera konsultasi dengan dokter spesialis mata dalam 1 bulan. Kontrol gula darah dengan sangat ketat.';
+      } else if (severityLevel.includes('berat') || severityLevel.includes('severe')) {
+        recommendation = 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.\n\nRujukan segera ke dokter spesialis mata dalam 2 minggu. Kemungkinan memerlukan tindakan laser.';
+      } else if (severityLevel.includes('sangat berat') || severityLevel.includes('proliferative')) {
+        recommendation = 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.\n\nRujukan segera ke dokter spesialis mata dalam 1 minggu. Risiko tinggi kehilangan penglihatan.';
       }
       
-      // Tambahkan bagian rekomendasi
-      const severityLevel = analysis.severity.toLowerCase();
-      const recommendationColor = severityColors[analysis.severity] || colors.primary;
+      // Teks rekomendasi
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(55, 65, 81); // gray-700
+      addWrappedText(recommendation, margin + 5, leftColYPos + 18, colWidth - 10, 4);
       
-      yPos = addCard(yPos, 60, 'REKOMENDASI', (contentY) => {
-        // Icon atau indikator visual
-        pdf.setFillColor(recommendationColor[0], recommendationColor[1], recommendationColor[2]);
-        pdf.circle(margin + 10, contentY + 15, 5, 'F');
-        
-        // Set text style
-        pdf.setFontSize(11);
-        pdf.setTextColor(colors.dark[0], colors.dark[1], colors.dark[2]);
-        
-        // Tambahkan rekomendasi dengan wrapping
-        addWrappedText(recommendation, margin + 20, contentY + 17, contentWidth - 25, 6, {
-          fontSize: 11,
-          textColor: colors.dark
-        });
-      });
+      // Kolom kanan - Gambar retina
+      const rightColX = margin * 2 + colWidth;
+      let rightColYPos = yPos;
       
-      // --- FOOTER SECTION ---
-      // Gradient footer
-      const footerY = pageHeight - 25;
-      const footerHeight = 25;
+      // Kartu gambar retina
+      pdf.setFillColor(249, 250, 251); // gray-50
+      pdf.setDrawColor(229, 231, 235); // gray-200
+      pdf.roundedRect(rightColX, rightColYPos, colWidth, 110, 3, 3, 'FD');
       
-      for (let i = 0; i < footerHeight; i++) {
-        const ratio = i / footerHeight;
-        const r = Math.floor(colors.primary[0] * (1 - ratio));
-        const g = Math.floor(colors.primary[1] * (1 - ratio));
-        const b = Math.floor(colors.primary[2] * (1 - ratio));
-        
-        addColoredBox(0, footerY + i, pageWidth, 1, [r, g, b]);
+      // Judul kartu
+      pdf.setTextColor(17, 24, 39); // gray-900
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Gambar Retina', rightColX + 5, rightColYPos + 8);
+      
+      // Tambahkan gambar
+      try {
+        if (analysis.imageData) {
+          const imgWidth = colWidth - 20;
+          const imgHeight = 90;
+          pdf.addImage(analysis.imageData, 'JPEG', rightColX + 10, rightColYPos + 15, imgWidth, imgHeight);
+        }
+      } catch (imgError) {
+        console.error('Error adding image to PDF:', imgError);
       }
       
-      // Footer disclaimer
+      // Keterangan gambar
       pdf.setFontSize(8);
-      pdf.setFont(undefined, 'normal');
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(107, 114, 128); // gray-500
+      pdf.text('Gambar Retina yang Dianalisis', rightColX + colWidth / 2, rightColYPos + 110 - 5, { align: 'center' });
+      
+      rightColYPos += 115;
+      
+      // Disclaimer
+      pdf.setFillColor(254, 242, 242); // red-50
+      pdf.setDrawColor(254, 202, 202); // red-200
+      pdf.roundedRect(rightColX, rightColYPos, colWidth, 45, 3, 3, 'FD');
+      
+      // Judul disclaimer
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(185, 28, 28); // red-700
+      pdf.text('DISCLAIMER', rightColX + 5, rightColYPos + 8);
+      
+      // Teks disclaimer
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(127, 29, 29); // red-800
+      const disclaimer = 'Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter. Selalu konsultasikan dengan tenaga medis profesional untuk diagnosis dan penanganan yang tepat.';
+      addWrappedText(disclaimer, rightColX + 5, rightColYPos + 15, colWidth - 10, 3.5);
+      
+      // Footer dengan warna sesuai tingkat keparahan
+      pdf.setFillColor(headerColor[0], headerColor[1], headerColor[2]);
+      pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+      
+      // Footer text
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(255, 255, 255);
-      pdf.text('Disclaimer: Hasil analisis ini merupakan bantuan diagnostik berbasis AI dan tidak menggantikan diagnosis dari dokter.', 
-               pageWidth / 2, footerY + 10, { align: 'center' });
+      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection | ID: ${analysis?.id || 'New'}`, pageWidth / 2, pageHeight - 6, { align: 'center' });
       
-      pdf.text(`RetinaScan © ${new Date().getFullYear()} | AI-Powered Retinopathy Detection`, 
-               pageWidth / 2, footerY + 15, { align: 'center' });
-      
-      // Nama file PDF
-      const fileName = `RetinaScan_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      // Simpan PDF
+      // Simpan PDF dengan nama yang berisi tanggal analisis
+      const dateForFilename = new Date(analysis.createdAt).toISOString().split('T')[0];
+      const fileName = `retina-analysis-report-${patient.name.replace(/\s+/g, '_')}-${dateForFilename}.pdf`;
       pdf.save(fileName);
     } catch (error) {
       console.error('Error generating PDF:', error);
