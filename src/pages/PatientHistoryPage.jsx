@@ -326,13 +326,13 @@ function PatientHistoryPageComponent() {
       };
       
       // Header
-      pdf.setFillColor(37, 99, 235); // Warna biru
+      pdf.setFillColor(0, 123, 255); // Warna biru yang lebih konsisten dengan report
       pdf.rect(0, 0, pageWidth, 40, 'F');
       
       pdf.setTextColor(255, 255, 255); // Warna putih untuk teks header
       pdf.setFontSize(24);
       pdf.setFont(undefined, 'bold');
-      pdf.text('Laporan Riwayat Pemeriksaan', pageWidth / 2, 20, { align: 'center' });
+      pdf.text('Laporan Pemeriksaan Retina', pageWidth / 2, 20, { align: 'center' });
       
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
@@ -340,29 +340,37 @@ function PatientHistoryPageComponent() {
       
       let yPos = 50;
       
+      // Logo RetinaScan (opsional)
+      // Jika ada logo, tambahkan di sini
+      
       // Informasi pasien
       pdf.setFillColor(240, 249, 255); // Warna latar belakang biru muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
       
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
       pdf.text('Informasi Pasien', margin + 5, yPos + 10);
       
-      pdf.setFontSize(11);
+      pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos + 20);
-      pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}, Umur: ${patient.age || '-'} tahun`, pageWidth - margin - 5, yPos + 20, { align: 'right' });
       
-      yPos += 40;
+      // Data pasien dengan format yang lebih rapi
+      yPos += 20;
+      pdf.text(`Nama: ${patient.fullName || patient.name}`, margin + 5, yPos);
+      yPos += 8;
+      pdf.text(`Jenis Kelamin: ${patient.gender === 'male' ? 'Laki-laki' : 'Perempuan'}`, margin + 5, yPos);
+      pdf.text(`Umur: ${patient.age || '-'} tahun`, pageWidth - margin - 50, yPos);
+      
+      yPos += 20;
       
       // Hasil analisis
       pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 60, 'F');
       
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
       pdf.text('Hasil Analisis', margin + 5, yPos + 10);
       
@@ -370,7 +378,9 @@ function PatientHistoryPageComponent() {
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text('Tingkat Keparahan:', margin + 5, yPos + 25);
+      
+      yPos += 25;
+      pdf.text('Tingkat Keparahan:', margin + 5, yPos);
       
       // Set warna berdasarkan tingkat keparahan
       const severityLevel = analysis.severity.toLowerCase();
@@ -386,38 +396,51 @@ function PatientHistoryPageComponent() {
       
       pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
-      pdf.text(analysis.severity, margin + 50, yPos + 25);
+      pdf.text(analysis.severity, margin + 60, yPos);
       
       // Tingkat kepercayaan
+      yPos += 15;
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
       pdf.setTextColor(60, 60, 60);
-      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin + 5, yPos + 40);
+      pdf.text(`Tingkat Kepercayaan: ${(analysis.confidence * 100).toFixed(1)}%`, margin + 5, yPos);
       
       // Gambar bar untuk confidence
-      const barWidth = 50;
+      const barWidth = 100;
       const confidenceWidth = barWidth * analysis.confidence;
       pdf.setFillColor(220, 220, 220); // Background bar
-      pdf.rect(margin + 80, yPos + 37, barWidth, 5, 'F');
-      pdf.setFillColor(37, 99, 235); // Filled bar
-      pdf.rect(margin + 80, yPos + 37, confidenceWidth, 5, 'F');
+      pdf.rect(margin + 80, yPos - 3, barWidth, 5, 'F');
+      pdf.setFillColor(0, 123, 255); // Filled bar - warna yang lebih konsisten
+      pdf.rect(margin + 80, yPos - 3, confidenceWidth, 5, 'F');
       
-      yPos += 60;
+      yPos += 20;
+      
+      // Tambahkan tanggal pemeriksaan
+      pdf.setTextColor(60, 60, 60);
+      pdf.text(`Tanggal Pemeriksaan: ${formatDate(analysis.createdAt)}`, margin + 5, yPos);
+      
+      yPos += 30;
       
       // Gambar
       if (analysis.imageData) {
         try {
           // Tambahkan gambar jika tersedia
-          const imgWidth = 100;
-          const imgHeight = 100;
+          const imgWidth = 120;
+          const imgHeight = 120;
+          
+          // Tambahkan border untuk gambar
+          pdf.setDrawColor(200, 200, 200);
+          pdf.setLineWidth(0.5);
+          pdf.rect(pageWidth / 2 - imgWidth / 2 - 5, yPos - 5, imgWidth + 10, imgHeight + 10);
+          
           pdf.addImage(analysis.imageData, 'JPEG', pageWidth / 2 - imgWidth / 2, yPos, imgWidth, imgHeight);
-          yPos += imgHeight + 10;
+          yPos += imgHeight + 15;
           
           // Tambahkan label gambar
           pdf.setFontSize(10);
           pdf.setTextColor(100, 100, 100);
           pdf.text('Gambar Retina yang Dianalisis', pageWidth / 2, yPos, { align: 'center' });
-          yPos += 15;
+          yPos += 20;
         } catch (imgError) {
           console.error('Error adding image to PDF:', imgError);
           // Lanjutkan tanpa gambar jika gagal
@@ -427,10 +450,10 @@ function PatientHistoryPageComponent() {
       
       // Rekomendasi
       pdf.setFillColor(245, 250, 255); // Warna latar belakang biru sangat muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 40, 'F');
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 50, 'F');
       
       pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
       pdf.text('Rekomendasi', margin + 5, yPos + 10);
       
@@ -455,12 +478,12 @@ function PatientHistoryPageComponent() {
         recommendation = 'Lakukan pemeriksaan rutin setiap tahun.';
       }
       
-      yPos = addWrappedText(recommendation, margin + 5, yPos + 20, pageWidth - (margin * 2) - 10, 6);
+      yPos = addWrappedText(recommendation, margin + 5, yPos + 25, pageWidth - (margin * 2) - 10, 6);
       yPos += 15;
       
       // Disclaimer
       pdf.setFillColor(245, 245, 245); // Warna latar belakang abu-abu muda
-      pdf.rect(margin, yPos, pageWidth - (margin * 2), 25, 'F');
+      pdf.rect(margin, yPos, pageWidth - (margin * 2), 30, 'F');
       
       pdf.setFontSize(9);
       pdf.setTextColor(100, 100, 100);
@@ -468,7 +491,7 @@ function PatientHistoryPageComponent() {
       yPos = addWrappedText(disclaimer, margin + 5, yPos + 10, pageWidth - (margin * 2) - 10, 5);
       
       // Footer
-      pdf.setFillColor(37, 99, 235); // Warna biru
+      pdf.setFillColor(0, 123, 255); // Warna biru yang konsisten
       pdf.rect(0, pageHeight - 20, pageWidth, 20, 'F');
       
       pdf.setFontSize(10);

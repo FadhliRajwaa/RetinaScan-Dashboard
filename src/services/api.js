@@ -223,14 +223,56 @@ export const getReport = async () => {
 
 export const deleteAnalysis = async (analysisId) => {
   try {
-    const response = await axios.delete(`${API_URL}/api/analysis/${analysisId}`, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
-      },
-    });
-    return response.data;
+    // Pastikan analysisId valid
+    if (!analysisId) {
+      throw new Error('ID analisis tidak valid');
+    }
+    
+    // Coba gunakan endpoint utama
+    try {
+      const response = await axios.delete(`${API_URL}/api/analysis/${analysisId}`, {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      });
+      console.log('Analisis berhasil dihapus:', response.data);
+      return response.data;
+    } catch (mainError) {
+      console.error('Error dengan endpoint utama:', mainError);
+      
+      // Jika endpoint utama gagal, coba endpoint alternatif
+      if (mainError.response && mainError.response.status === 404) {
+        console.log('Mencoba endpoint alternatif...');
+        
+        // Coba dengan format ID yang berbeda jika ID mengandung karakter tertentu
+        let formattedId = analysisId;
+        
+        // Coba dengan endpoint alternatif
+        const alternativeResponse = await axios.delete(`https://retinascan-backend-eszo.onrender.com/api/analysis/${formattedId}`, {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        });
+        
+        console.log('Analisis berhasil dihapus dengan endpoint alternatif:', alternativeResponse.data);
+        return alternativeResponse.data;
+      }
+      
+      // Jika bukan error 404 atau endpoint alternatif juga gagal, lempar error
+      throw mainError;
+    }
   } catch (error) {
     console.error('Error deleting analysis:', error);
+    
+    // Log informasi error yang lebih detail
+    if (error.response) {
+      console.error('Server error response:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    
     throw error;
   }
 };
