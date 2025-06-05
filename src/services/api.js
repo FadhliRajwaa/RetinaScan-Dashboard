@@ -17,7 +17,7 @@ export const uploadImage = async (formData) => {
       const base64Image = await fileToBase64(imageFile);
       // Tambahkan base64 image ke formData
       formData.append('imageData', base64Image);
-      console.log('Image berhasil dikonversi ke base64');
+      console.log('Image berhasill dikonversi ke base64');
     } catch (error) {
       console.error('Error converting image to base64:', error);
     }
