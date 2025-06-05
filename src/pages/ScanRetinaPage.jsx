@@ -103,8 +103,14 @@ function ScanRetinaPageComponent({ toggleMobileMenu, isMobileMenuOpen }) {
         imageType: result.image ? typeof result.image : 'undefined'
       });
       
+      // PENTING: Tandai bahwa ini adalah penyimpanan manual untuk mencegah duplikasi
+      result.isManualSave = true;
+      console.log('Flag isManualSave diatur ke true untuk mencegah duplikasi analisis');
+      
       // Simpan hasil analisis ke database
       const savedResult = await saveAnalysisResult(result);
+      
+      console.log('Hasil analisis berhasil disimpan dengan respons:', savedResult);
       
       toast.success('Hasil analisis berhasil disimpan');
       

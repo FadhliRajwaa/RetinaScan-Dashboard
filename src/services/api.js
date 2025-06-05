@@ -277,92 +277,108 @@ export const deleteAnalysis = async (analysisId) => {
   }
 };
 
-// Fungsi helper untuk menghasilkan detail berdasarkan tingkat keparahan
-function getDetailsFromSeverity(severity) {
-  switch (severity) {
-    case 'Ringan':
-      return 'Analisis menunjukkan tanda-tanda awal retinopati diabetik non-proliferatif ringan. Terdapat beberapa mikroaneurisma yang menunjukkan kebocoran kapiler retina di beberapa area. Perubahan ini adalah gejala awal dari kerusakan pembuluh darah yang disebabkan oleh tingkat gula darah yang tinggi. Pada tahap ini, perubahan biasanya belum memengaruhi penglihatan secara signifikan.';
-    case 'Sedang':
-      return 'Analisis menunjukkan tanda-tanda retinopati diabetik non-proliferatif sedang. Terdapat perdarahan intraretinal dan eksudat keras yang menunjukkan penurunan fungsi barrier darah-retina. Cotton wool spots juga terdeteksi, yang menandakan adanya iskemia retina. Perubahan ini dapat mulai memengaruhi ketajaman penglihatan dan memerlukan perhatian medis.';
-    case 'Berat':
-      return 'Analisis menunjukkan tanda-tanda retinopati diabetik non-proliferatif berat. Terdapat banyak perdarahan retina, eksudat keras, dan cotton wool spots yang menandakan iskemia retina yang signifikan. Anomali vaskular seperti kaliber vena yang tidak teratur dan abnormalitas mikrovaskuler intraretinal (IRMA) juga terdeteksi. Kondisi ini berisiko tinggi berkembang menjadi retinopati proliferatif dan membutuhkan penanganan segera.';
-    case 'Sangat Berat':
-    case 'Proliferative DR':
-      return 'Analisis menunjukkan tanda-tanda retinopati diabetik proliferatif. Terdapat pembentukan pembuluh darah baru (neovaskularisasi) yang abnormal pada retina dan/atau diskus optikus. Kondisi ini dapat menyebabkan perdarahan vitreus, ablasio retina traksi, dan glaukoma neovaskular yang dapat mengakibatkan kebutaan permanen jika tidak ditangani segera. Tindakan laser atau pembedahan mungkin diperlukan untuk mencegah kehilangan penglihatan yang lebih lanjut.';
-    case 'Tidak ada':
-    case 'Normal':
-    case 'No DR':
-      return 'Analisis tidak menunjukkan tanda-tanda retinopati diabetik yang signifikan. Retina tampak normal tanpa adanya anomali vaskular.';
-    default:
-      return 'Analisis tidak menunjukkan tanda-tanda retinopati diabetik yang signifikan. Retina tampak normal tanpa adanya anomali vaskular.';
-  }
+// Fungsi helper untuk detail berdasarkan severity
+function _getDetailsFromSeverity(severity) {
+  const details = {
+    'Tidak ada': 'Tidak ada tanda-tanda retinopati diabetik.',
+    'No DR': 'Tidak ada tanda-tanda retinopati diabetik.',
+    'Ringan': 'Terdapat microaneurysm dan perdarahan kecil pada retina.',
+    'Mild': 'Terdapat microaneurysm dan perdarahan kecil pada retina.',
+    'Sedang': 'Perdarahan lebih banyak, cotton wool spots, dan pembengkakan retina.',
+    'Moderate': 'Perdarahan lebih banyak, cotton wool spots, dan pembengkakan retina.',
+    'Berat': 'Perdarahan luas, pembuluh darah abnormal, dan iskemia retina.',
+    'Severe': 'Perdarahan luas, pembuluh darah abnormal, dan iskemia retina.',
+    'Sangat Berat': 'Pembentukan pembuluh darah baru yang abnormal dan jaringan parut.',
+    'Proliferative DR': 'Pembentukan pembuluh darah baru yang abnormal dan jaringan parut.'
+  };
+  
+  return details[severity] || 'Detail tidak tersedia untuk tingkat keparahan ini.';
 }
 
-// Fungsi helper untuk menghasilkan rekomendasi berdasarkan tingkat keparahan
-// Menggunakan rekomendasi yang sama persis dengan yang didefinisikan di flask_service/app.py
-function getRecommendationsFromSeverity(severity) {
-  switch (severity) {
-    case 'Ringan':
-      return 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.';
-    case 'Sedang':
-      return 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.';
-    case 'Berat':
-      return 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.';
-    case 'Sangat Berat':
-      return 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.';
-    case 'Tidak ada':
-    case 'Normal':
-      return 'Lakukan pemeriksaan rutin setiap tahun.';
-    default:
-      return 'Lakukan pemeriksaan rutin dengan dokter mata setiap tahun. Jaga gula darah tetap terkontrol. Lakukan gaya hidup sehat dengan diet seimbang dan olahraga teratur. Hindari merokok dan batasi konsumsi alkohol.';
-  }
+// Fungsi helper untuk rekomendasi berdasarkan severity
+function _getRecommendationsFromSeverity(severity) {
+  const recommendations = {
+    'Tidak ada': 'Lakukan pemeriksaan rutin setiap tahun.',
+    'No DR': 'Lakukan pemeriksaan rutin setiap tahun.',
+    'Ringan': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+    'Mild': 'Kontrol gula darah dan tekanan darah. Pemeriksaan ulang dalam 9-12 bulan.',
+    'Sedang': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+    'Moderate': 'Konsultasi dengan dokter spesialis mata. Pemeriksaan ulang dalam 6 bulan.',
+    'Berat': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+    'Severe': 'Rujukan segera ke dokter spesialis mata. Pemeriksaan ulang dalam 2-3 bulan.',
+    'Sangat Berat': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.',
+    'Proliferative DR': 'Rujukan segera ke dokter spesialis mata untuk evaluasi dan kemungkinan tindakan laser atau operasi.'
+  };
+  
+  return recommendations[severity] || 'Konsultasikan dengan dokter mata untuk rekomendasi lebih lanjut.';
 }
 
-// Fungsi helper untuk menghasilkan tanda klinis berdasarkan tingkat keparahan
-function getClinicalSignsFromSeverity(severity) {
-  switch (severity) {
-    case 'Ringan':
-      return [
-        'Mikroaneurisma (1-5)',
-        'Perdarahan intraretinal minimal',
-        'Tidak ada eksudat keras',
-        'Tidak ada cotton wool spots'
-      ];
-    case 'Sedang':
-      return [
-        'Mikroaneurisma multipel (>5)',
-        'Perdarahan intraretinal di satu hingga tiga kuadran',
-        'Eksudat keras',
-        'Cotton wool spots (1-3)',
-        'Dilatasi vena ringan'
-      ];
-    case 'Berat':
-      return [
-        'Perdarahan intraretinal pada empat kuadran',
-        'Eksudat keras multipel',
-        'Cotton wool spots multipel (>3)',
-        'Abnormalitas mikrovaskuler intraretinal (IRMA)',
-        'Vena kalikut',
-        'Iskemia retina yang luas'
-      ];
-    case 'Sangat Berat':
-    case 'Proliferative DR':
-      return [
-        'Neovaskularisasi pada diskus optikus (NVD)',
-        'Neovaskularisasi di tempat lain (NVE)',
-        'Perdarahan preretinal atau vitreus',
-        'Fibrosis epiretinal',
-        'Traksi retina',
-        'Risiko ablasio retina',
-        'Glaukoma neovaskular'
-      ];
-    case 'Tidak ada':
-    case 'Normal':
-    case 'No DR':
-      return ['Tidak ditemukan tanda-tanda retinopati'];
-    default:
-      return ['Tidak ditemukan tanda-tanda retinopati'];
-  }
+// Fungsi helper untuk tanda klinis berdasarkan severity
+function _getClinicalSignsFromSeverity(severity) {
+  const clinicalSigns = {
+    'Tidak ada': [
+      'Tidak ada tanda-tanda retinopati diabetik yang terdeteksi.',
+      'Pembuluh darah retina normal.',
+      'Tidak ada perdarahan atau eksudat.'
+    ],
+    'No DR': [
+      'Tidak ada tanda-tanda retinopati diabetik yang terdeteksi.',
+      'Pembuluh darah retina normal.',
+      'Tidak ada perdarahan atau eksudat.'
+    ],
+    'Ringan': [
+      'Microaneurysm (pembengkakan kecil pada pembuluh darah retina).',
+      'Perdarahan kecil pada retina.',
+      'Mungkin tidak menimbulkan gejala pada pasien.'
+    ],
+    'Mild': [
+      'Microaneurysm (pembengkakan kecil pada pembuluh darah retina).',
+      'Perdarahan kecil pada retina.',
+      'Mungkin tidak menimbulkan gejala pada pasien.'
+    ],
+    'Sedang': [
+      'Perdarahan retina yang lebih luas.',
+      'Cotton wool spots (area putih pada retina).',
+      'Pembengkakan retina (edema).',
+      'Mungkin mulai mempengaruhi penglihatan.'
+    ],
+    'Moderate': [
+      'Perdarahan retina yang lebih luas.',
+      'Cotton wool spots (area putih pada retina).',
+      'Pembengkakan retina (edema).',
+      'Mungkin mulai mempengaruhi penglihatan.'
+    ],
+    'Berat': [
+      'Perdarahan retina yang luas.',
+      'Banyak cotton wool spots.',
+      'Abnormalitas pada pembuluh darah retina.',
+      'Iskemia retina (kekurangan aliran darah).',
+      'Gangguan penglihatan yang signifikan.'
+    ],
+    'Severe': [
+      'Perdarahan retina yang luas.',
+      'Banyak cotton wool spots.',
+      'Abnormalitas pada pembuluh darah retina.',
+      'Iskemia retina (kekurangan aliran darah).',
+      'Gangguan penglihatan yang signifikan.'
+    ],
+    'Sangat Berat': [
+      'Pembentukan pembuluh darah baru yang abnormal (neovaskularisasi).',
+      'Perdarahan ke dalam vitreous (cairan di dalam mata).',
+      'Jaringan parut pada retina.',
+      'Risiko tinggi ablasio retina.',
+      'Gangguan penglihatan berat hingga kebutaan.'
+    ],
+    'Proliferative DR': [
+      'Pembentukan pembuluh darah baru yang abnormal (neovaskularisasi).',
+      'Perdarahan ke dalam vitreous (cairan di dalam mata).',
+      'Jaringan parut pada retina.',
+      'Risiko tinggi ablasio retina.',
+      'Gangguan penglihatan berat hingga kebutaan.'
+    ]
+  };
+  
+  return clinicalSigns[severity] || ['Tanda klinis tidak tersedia untuk tingkat keparahan ini.'];
 }
 
 // Fungsi untuk mendapatkan data dashboard
@@ -692,8 +708,12 @@ export const saveAnalysisResult = async (analysisData) => {
     if (formattedData.recommendation) formData.append('recommendation', formattedData.recommendation);
     if (formattedData.notes) formData.append('notes', formattedData.notes);
     
-    // Tandai bahwa ini adalah penyimpanan manual, bukan upload baru
+    // PENTING: Selalu tandai bahwa ini adalah penyimpanan manual, bukan upload baru
+    // Ini akan mencegah pembuatan duplikat analisis di server
     formData.append('isManualSave', 'true');
+    
+    // Tambahkan log khusus untuk memastikan flag isManualSave dikirim
+    console.log('isManualSave flag set to true untuk mencegah duplikasi analisis');
     
     // Dump semua data FormData untuk debugging
     console.log('FormData entries:');

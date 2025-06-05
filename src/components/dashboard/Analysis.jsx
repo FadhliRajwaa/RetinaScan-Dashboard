@@ -239,7 +239,9 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
         createdAt: analysis.createdAt || new Date().toISOString(),
         // Penting: Selalu tandai bahwa ini belum disimpan ke database
         // untuk memastikan hasil hanya disimpan saat user mengklik tombol Save
-        saveToDatabase: false
+        saveToDatabase: false,
+        // Penting: Tandai bahwa ini bukan penyimpanan manual untuk mencegah duplikasi
+        isManualSave: false
       };
       
       // Pastikan imageData tersedia
@@ -262,7 +264,8 @@ function Analysis({ image, onAnalysisComplete, analysis: initialAnalysis }) {
       console.log('Meneruskan hasil analisis ke callback:', {
         ...analysisWithImage,
         imageData: analysisWithImage.imageData ? '[BASE64_DATA]' : undefined,
-        saveToDatabase: analysisWithImage.saveToDatabase
+        saveToDatabase: analysisWithImage.saveToDatabase,
+        isManualSave: analysisWithImage.isManualSave
       });
       
       // Validasi final
