@@ -5,6 +5,7 @@ import { FaEdit, FaTrash, FaEye, FaSearch, FaSort, FaSortUp, FaSortDown, FaFilte
 import { format, differenceInYears } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { normalizeGender } from '../../utils/severityUtils';
 
 const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
   const [patients, setPatients] = useState([]);
@@ -60,9 +61,20 @@ const PatientTable = ({ onDelete, onRefresh, refreshTrigger }) => {
       );
     }
     
-    // Apply gender filter
+    // Apply gender filter with normalization
     if (filterConfig.gender !== 'all') {
-      filtered = filtered.filter(patient => patient.gender === filterConfig.gender);
+      filtered = filtered.filter(patient => {
+        if (!patient.gender) return false;
+        
+        const normalizedGender = normalizeGender(patient.gender);
+        
+        if (filterConfig.gender === 'male') {
+          return normalizedGender === 'Laki-laki';
+        } else if (filterConfig.gender === 'female') {
+          return normalizedGender === 'Perempuan';
+        }
+        return false;
+      });
     }
     
     // Apply blood type filter

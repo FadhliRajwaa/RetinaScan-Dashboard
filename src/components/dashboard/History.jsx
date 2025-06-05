@@ -390,9 +390,11 @@ function History() {
                   onChange={(e) => setSeverityFilter(e.target.value)}
                 >
                   <option value="all">Semua Tingkat</option>
+                  <option value="normal">Normal/Tidak Ada</option>
                   <option value="ringan">Ringan</option>
                   <option value="sedang">Sedang</option>
                   <option value="berat">Berat</option>
+                  <option value="sangat berat">Sangat Berat</option>
                 </select>
                 <FiFilter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
