@@ -31,8 +31,14 @@ const menuItems = [
 ];
 
 function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
-  const [isOpen, setIsOpen] = useState(true);
+  // Inisialisasi state isOpen dari localStorage atau default ke true
+  const [isOpen, setIsOpen] = useState(() => {
+    const savedState = localStorage.getItem('sidebarOpen');
+    return savedState !== null ? savedState === 'true' : true;
+  });
+  
   const [activeIndex, setActiveIndex] = useState(null);
+  const [isInitialRender, setIsInitialRender] = useState(true);
   const location = useLocation();
   const { theme, isDarkMode } = useTheme();
   
@@ -41,6 +47,21 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     const index = menuItems.findIndex(item => item.path === location.pathname);
     setActiveIndex(index >= 0 ? index : null);
   }, [location.pathname]);
+
+  // Simpan state isOpen ke localStorage setiap kali berubah
+  useEffect(() => {
+    localStorage.setItem('sidebarOpen', isOpen);
+  }, [isOpen]);
+  
+  // Setelah render pertama, set isInitialRender ke false
+  useEffect(() => {
+    // Gunakan timeout untuk memastikan animasi berjalan setelah render
+    const timer = setTimeout(() => {
+      setIsInitialRender(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogout = async () => {
     console.log('Logging out from dashboard');
@@ -107,7 +128,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         type: 'spring',
         stiffness: 300,
         damping: 30,
-        delay: i * 0.05, 
+        delay: isInitialRender ? 0 : i * 0.05, // Tidak ada delay pada render pertama
         duration: 0.2
       },
     }),
@@ -135,6 +156,11 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     primary: theme.primary,
     secondary: isDarkMode ? '#D1D5DB' : '#4B5563', // light gray in dark mode, dark gray in light mode
     muted: isDarkMode ? '#9CA3AF' : '#6B7280', // medium gray in both modes
+  };
+
+  // Toggle sidebar function
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
   };
 
   return (
@@ -284,7 +310,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           
           {/* Logout Button */}
           <motion.div 
-            className="p-4 border-t border-gray-100"
+            className={`p-4 ${isDarkMode ? 'border-t border-gray-700' : 'border-t border-gray-100'}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.3, type: 'spring' }}
@@ -311,6 +337,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
       {/* Desktop/Tablet Sidebar */}
       <motion.aside
         variants={sidebarVariants}
+        initial={isOpen ? "open" : "closed"}
         animate={isOpen ? 'open' : 'closed'}
         className="hidden lg:flex flex-col h-screen sticky top-0 z-40"
         style={{ 
@@ -367,7 +394,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           </AnimatePresence>
           
           <motion.button 
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={toggleSidebar}
             className={`p-2 rounded-xl ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-150`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -421,7 +448,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   <item.icon className="h-5 w-5 min-w-[1.25rem]" style={{ color: textColor.primary }} />
                   {isOpen && (
                     <motion.span
-                      initial={{ opacity: 0, width: 0 }}
+                      initial={isInitialRender ? { opacity: 1, width: 'auto' } : { opacity: 0, width: 0 }}
                       animate={{ opacity: 1, width: 'auto' }}
                       exit={{ opacity: 0, width: 0 }}
                       transition={{ duration: 0.3, type: 'spring' }}
@@ -458,7 +485,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                     <item.icon className="h-5 w-5 min-w-[1.25rem]" style={{ color: textColor.primary }} />
                     {isOpen && (
                       <motion.span
-                        initial={{ opacity: 0, width: 0 }}
+                        initial={isInitialRender ? { opacity: 1, width: 'auto' } : { opacity: 0, width: 0 }}
                         animate={{ opacity: 1, width: 'auto' }}
                         exit={{ opacity: 0, width: 0 }}
                         transition={{ duration: 0.3, type: 'spring' }}
@@ -491,7 +518,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
             {isOpen && (
               <motion.span 
                 className="ml-3 text-sm font-medium whitespace-nowrap"
-                initial={{ opacity: 0 }}
+                initial={isInitialRender ? { opacity: 1 } : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
               >
