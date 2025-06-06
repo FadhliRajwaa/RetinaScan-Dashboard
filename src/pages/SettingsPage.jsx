@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   BellIcon, 
-  MoonIcon, 
-  SunIcon, 
   UserCircleIcon, 
   ShieldCheckIcon, 
-  PaintBrushIcon, 
   CogIcon,
   DevicePhoneMobileIcon,
   ComputerDesktopIcon,
@@ -28,7 +25,7 @@ import { toast } from 'react-toastify';
 import axios from 'axios';
 
 function SettingsPageComponent() {
-  const { theme, setTheme, isDarkMode, toggleDarkMode } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   const { unreadCount, notificationSettings, updateNotificationSettings } = useNotification();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   
@@ -41,11 +38,6 @@ function SettingsPageComponent() {
       scan_added: true,
       scan_updated: true,
       system: true
-    },
-    appearance: {
-      theme: 'blue',
-      darkMode: isDarkMode,
-      animations: true
     },
     privacy: {
       shareData: false,
@@ -86,17 +78,6 @@ function SettingsPageComponent() {
     analysisHistory: true,
     settings: true
   });
-  
-  // Efek untuk memperbarui pengaturan saat isDarkMode berubah
-  useEffect(() => {
-    setSettings(prev => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        darkMode: isDarkMode
-      }
-    }));
-  }, [isDarkMode]);
   
   // Efek untuk memperbarui pengaturan notifikasi dari API
   useEffect(() => {
@@ -171,38 +152,6 @@ function SettingsPageComponent() {
         notifications: notificationSettings
       }));
     }
-  };
-  
-  // Fungsi untuk mengubah tema
-  const handleThemeChange = (newTheme) => {
-    setSettings(prev => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        theme: newTheme
-      }
-    }));
-    
-    setTheme(newTheme);
-    toast.success(`Tema berhasil diubah`);
-  };
-  
-  // Fungsi untuk mengubah mode gelap
-  const handleDarkModeChange = () => {
-    toggleDarkMode();
-  };
-  
-  // Fungsi untuk mengubah pengaturan animasi
-  const handleAnimationsChange = () => {
-    setSettings(prev => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        animations: !prev.appearance.animations
-      }
-    }));
-    
-    toast.success(`Animasi ${settings.appearance.animations ? 'dinonaktifkan' : 'diaktifkan'}`);
   };
   
   // Fungsi untuk mengubah pengaturan privasi
@@ -389,16 +338,6 @@ function SettingsPageComponent() {
     }
   };
   
-  // Tema yang tersedia
-  const availableThemes = [
-    { name: 'blue', primary: '#3b82f6', accent: '#60a5fa' },
-    { name: 'purple', primary: '#8b5cf6', accent: '#a78bfa' },
-    { name: 'green', primary: '#10b981', accent: '#34d399' },
-    { name: 'red', primary: '#ef4444', accent: '#f87171' },
-    { name: 'orange', primary: '#f97316', accent: '#fb923c' },
-    { name: 'pink', primary: '#ec4899', accent: '#f472b6' },
-  ];
-  
   // Render tab konten
   const renderTabContent = () => {
     switch (activeTab) {
@@ -441,7 +380,7 @@ function SettingsPageComponent() {
               <div className={`p-5 rounded-xl border ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-white/50'} flex justify-between items-center shadow-sm transition-all hover:shadow-md`}>
                 <div className="flex items-center">
                   <div className="mr-3 p-3 rounded-full bg-blue-100 dark:bg-blue-900/60">
-                    <PaintBrushIcon className="h-5 w-5 text-blue-500" />
+                    <CogIcon className="h-5 w-5 text-blue-500" />
                   </div>
                   <div>
                     <h3 className="font-medium">Perubahan Data Pasien</h3>
@@ -551,53 +490,6 @@ function SettingsPageComponent() {
           </motion.div>
         );
         
-      case 'appearance':
-        return (
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-6"
-          >
-            <motion.div variants={itemVariants} className="mb-6">
-              <h2 className="text-xl font-semibold mb-4">Tampilan</h2>
-              <p className="text-gray-500 dark:text-gray-400">Sesuaikan tampilan aplikasi sesuai keinginan Anda.</p>
-            </motion.div>
-            
-            <motion.div variants={itemVariants} className="mb-8">
-              <h3 className="text-lg font-medium mb-4">Tema</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {availableThemes.map((themeOption) => (
-                  <motion.button
-                    key={themeOption.name}
-                    whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleThemeChange(themeOption.name)}
-                    className={`p-5 rounded-xl border relative overflow-hidden ${
-                      settings.appearance.theme === themeOption.name 
-                        ? `border-2 border-${themeOption.name}-500 shadow-lg` 
-                        : isDarkMode 
-                          ? 'border-gray-700 hover:border-gray-600' 
-                          : 'border-gray-200 hover:border-gray-300'
-                    } flex flex-col items-center transition-all`}
-                  >
-                    <div 
-                      className="w-12 h-12 rounded-full mb-3 shadow-inner"
-                      style={{ background: `linear-gradient(135deg, ${themeOption.primary}, ${themeOption.accent})` }}
-                    />
-                    <span className="capitalize font-medium">{themeOption.name}</span>
-                    {settings.appearance.theme === themeOption.name && (
-                      <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 rounded-full p-0.5 shadow-md">
-                        <CheckIcon className="h-5 w-5 text-green-500" />
-                      </div>
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        );
-        
       default:
         return null;
     }
@@ -647,18 +539,6 @@ function SettingsPageComponent() {
                       {unreadCount}
                     </span>
                   )}
-                </button>
-                
-                <button
-                  onClick={() => setActiveTab('appearance')}
-                  className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === 'appearance' 
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' 
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <PaintBrushIcon className="h-5 w-5 mr-3" />
-                  <span>Tampilan</span>
                 </button>
               </nav>
             </motion.div>
