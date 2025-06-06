@@ -34,7 +34,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
   const [isOpen, setIsOpen] = useState(true);
   const [activeIndex, setActiveIndex] = useState(null);
   const location = useLocation();
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
   
   // Set active index based on current location
   useEffect(() => {
@@ -113,24 +113,28 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
     }),
   };
 
-  // Modern white background with subtle glassmorphism effect
+  // Modern glassmorphism effect that adapts to dark mode
   const activeItemBg = `${theme.primary}20`;
   const hoverItemBg = `${theme.primary}10`;
   
-  // White glassmorphism style
+  // Glassmorphism style that adapts to dark mode
   const glassEffect = {
-    background: 'white',
+    background: isDarkMode ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.8)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-    borderRight: '1px solid rgba(0, 0, 0, 0.05)',
+    boxShadow: isDarkMode 
+      ? '0 8px 32px 0 rgba(0, 0, 0, 0.3)' 
+      : '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
+    borderRight: isDarkMode 
+      ? '1px solid rgba(255, 255, 255, 0.05)' 
+      : '1px solid rgba(0, 0, 0, 0.05)',
   };
 
-  // Text color for white background
+  // Text colors that adapt to dark mode
   const textColor = {
     primary: theme.primary,
-    secondary: '#4B5563', // gray-600
-    muted: '#9CA3AF', // gray-400
+    secondary: isDarkMode ? '#D1D5DB' : '#4B5563', // light gray in dark mode, dark gray in light mode
+    muted: isDarkMode ? '#9CA3AF' : '#6B7280', // medium gray in both modes
   };
 
   return (
@@ -166,7 +170,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           {/* Header: Logo and Close Button */}
           <motion.div 
             className="p-5 flex items-center justify-between"
-            style={{ backgroundColor: `${theme.primary}10` }}
+            style={{ backgroundColor: isDarkMode ? `${theme.primary}15` : `${theme.primary}10` }}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.3, type: 'spring' }}
@@ -187,7 +191,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                 initial={{ width: 0 }}
                 animate={{ width: 120 }}
                 transition={{ delay: 0.2, duration: 0.4, type: 'spring' }}
-                className="h-1 bg-gray-200 rounded-full mt-1"
+                className={`h-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mt-1`}
                 style={{ willChange: 'width' }}
               />
             </motion.div>
@@ -197,7 +201,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
               whileTap={{ scale: 0.9, rotate: -5 }}
               className="p-2 rounded-full"
               style={{ 
-                backgroundColor: `${theme.accent}20`,
+                backgroundColor: isDarkMode ? `${theme.accent}30` : `${theme.accent}20`,
                 backdropFilter: 'blur(4px)',
                 color: textColor.primary,
                 willChange: 'transform'
@@ -315,7 +319,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           transform: 'translateZ(0)'
         }}
       >
-        <div className="p-5 flex justify-between items-center border-b border-gray-100">
+        <div className={`p-5 flex justify-between items-center border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
           <AnimatePresence mode="wait">
             {isOpen ? (
               <motion.div 
@@ -340,7 +344,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
                   initial={{ width: 0 }}
                   animate={{ width: 120 }}
                   transition={{ delay: 0.1, duration: 0.4, type: 'spring' }}
-                  className="h-1 bg-gray-200 rounded-full mt-1"
+                  className={`h-1 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded-full mt-1`}
                 />
               </motion.div>
             ) : (
@@ -364,7 +368,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
           
           <motion.button 
             onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-150"
+            className={`p-2 rounded-xl ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-150`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             style={{ willChange: 'transform', color: textColor.primary }}
@@ -471,7 +475,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         </nav>
         
         {/* Logout Button for Desktop */}
-        <div className={`p-4 border-t border-gray-100 ${isOpen ? 'block' : 'hidden'}`}>
+        <div className={`p-4 ${isDarkMode ? 'border-t border-gray-700' : 'border-t border-gray-100'} ${isOpen ? 'block' : 'hidden'}`}>
           <motion.button
             onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
             className="flex items-center p-3 w-full rounded-xl transition-all duration-200"
@@ -499,7 +503,7 @@ function Sidebar({ toggleMobileMenu, isMobileMenuOpen }) {
         
         {/* Logout icon only for collapsed sidebar */}
         {!isOpen && (
-          <div className="p-4 border-t border-gray-100">
+          <div className={`p-4 ${isDarkMode ? 'border-t border-gray-700' : 'border-t border-gray-100'}`}>
             <motion.button
               onClick={(e) => handleLogoutEvent(e, null, FRONTEND_URL)}
               className="flex items-center justify-center p-3 w-full rounded-xl transition-all duration-200"
