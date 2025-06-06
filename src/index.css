@@ -4,6 +4,37 @@ body {
   font-family: 'Inter', sans-serif;
   margin: 0;
   background-color: #f9fafb;
+  transition: background-color 0.3s ease;
+}
+
+/* Mode Gelap */
+.dark body {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+@layer base {
+  :root {
+    --color-primary: #3b82f6;
+    --color-secondary: #10b981;
+    --color-accent: #8b5cf6;
+    --color-background: #f9fafb;
+    --color-background-alt: #f3f4f6;
+    --color-text: #1f2937;
+    --color-text-muted: #6b7280;
+    --color-border: #e5e7eb;
+  }
+
+  .dark {
+    --color-primary: #3b82f6;
+    --color-secondary: #10b981;
+    --color-accent: #8b5cf6;
+    --color-background: #111827;
+    --color-background-alt: #1f2937;
+    --color-text: #f9fafb;
+    --color-text-muted: #9ca3af;
+    --color-border: #374151;
+  }
 }
 
 @layer components {

@@ -48,6 +48,16 @@ export const globalTheme = {
   }
 };
 
+// Tema yang tersedia untuk pilihan pengguna
+export const availableThemes = [
+  { name: 'blue', primary: '#3b82f6', accent: '#60a5fa' },
+  { name: 'purple', primary: '#8b5cf6', accent: '#a78bfa' },
+  { name: 'green', primary: '#10b981', accent: '#34d399' },
+  { name: 'red', primary: '#ef4444', accent: '#f87171' },
+  { name: 'orange', primary: '#f97316', accent: '#fb923c' },
+  { name: 'pink', primary: '#ec4899', accent: '#f472b6' },
+];
+
 // Animations untuk Framer Motion yang bisa digunakan di kedua aplikasi
 export const animations = {
   // Fade in dari bawah (untuk elemen individu)
