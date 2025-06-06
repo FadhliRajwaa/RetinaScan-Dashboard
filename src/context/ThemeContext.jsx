@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { globalTheme, animations as sharedAnimations, availableThemes } from '../utils/theme';
+import { globalTheme, animations as sharedAnimations } from '../utils/theme';
 
 // Theme Context
 export const ThemeContext = createContext();
@@ -9,8 +9,6 @@ export const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [theme, setTheme] = useState(globalTheme);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [currentThemeName, setCurrentThemeName] = useState('blue');
 
   // Deteksi perangkat mobile
   useEffect(() => {
@@ -26,80 +24,8 @@ export const ThemeProvider = ({ children }) => {
     };
   }, []);
 
-  // Load theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    const savedDarkMode = localStorage.getItem('darkMode');
-    
-    if (savedTheme) {
-      try {
-        const themeObject = JSON.parse(savedTheme);
-        setTheme(themeObject);
-      } catch (error) {
-        console.error('Error parsing theme from localStorage:', error);
-      }
-    }
-
-    if (savedDarkMode) {
-      setIsDarkMode(savedDarkMode === 'true');
-    } else {
-      // Cek preferensi sistem
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDarkMode);
-    }
-    
-    // Load theme name
-    const savedThemeName = localStorage.getItem('themeName');
-    if (savedThemeName) {
-      setCurrentThemeName(savedThemeName);
-    }
-  }, []);
-
-  // Apply dark mode to document
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('darkMode', isDarkMode);
-  }, [isDarkMode]);
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
-  };
-
-  // Update theme
-  const updateTheme = (themeName) => {
-    const selectedTheme = availableThemes.find(t => t.name === themeName);
-    
-    if (selectedTheme) {
-      const newTheme = {
-        ...globalTheme,
-        primary: selectedTheme.primary,
-        accent: selectedTheme.accent,
-        primaryGradient: `linear-gradient(135deg, ${selectedTheme.primary}, ${selectedTheme.accent})`,
-      };
-      
-      setTheme(newTheme);
-      setCurrentThemeName(themeName);
-      
-      // Save to localStorage
-      localStorage.setItem('theme', JSON.stringify(newTheme));
-      localStorage.setItem('themeName', themeName);
-    }
-  };
-
   return (
-    <ThemeContext.Provider value={{ 
-      theme, 
-      setTheme: updateTheme, 
-      isMobile, 
-      isDarkMode, 
-      toggleDarkMode,
-      currentThemeName
-    }}>
+    <ThemeContext.Provider value={{ theme, setTheme, isMobile }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -26,10 +26,9 @@ import { useTheme } from '../context/ThemeContext';
 import { useNotification } from '../context/NotificationContext';
 import { toast } from 'react-toastify';
 import axios from 'axios';
-import { availableThemes } from '../utils/theme';
 
 function SettingsPageComponent() {
-  const { theme, setTheme, isDarkMode, toggleDarkMode, currentThemeName } = useTheme();
+  const { theme, setTheme, isDarkMode, toggleDarkMode } = useTheme();
   const { unreadCount, notificationSettings, updateNotificationSettings } = useNotification();
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   
@@ -44,7 +43,7 @@ function SettingsPageComponent() {
       system: true
     },
     appearance: {
-      theme: currentThemeName,
+      theme: 'blue',
       darkMode: isDarkMode,
       animations: true
     },
@@ -98,17 +97,6 @@ function SettingsPageComponent() {
       }
     }));
   }, [isDarkMode]);
-
-  // Efek untuk memperbarui pengaturan saat currentThemeName berubah
-  useEffect(() => {
-    setSettings(prev => ({
-      ...prev,
-      appearance: {
-        ...prev.appearance,
-        theme: currentThemeName
-      }
-    }));
-  }, [currentThemeName]);
   
   // Efek untuk memperbarui pengaturan notifikasi dari API
   useEffect(() => {
@@ -195,15 +183,13 @@ function SettingsPageComponent() {
       }
     }));
     
-    // Gunakan fungsi setTheme dari ThemeContext yang telah diperbarui
     setTheme(newTheme);
-    toast.success(`Tema berhasil diubah ke ${newTheme}`);
+    toast.success(`Tema berhasil diubah`);
   };
   
   // Fungsi untuk mengubah mode gelap
   const handleDarkModeChange = () => {
     toggleDarkMode();
-    toast.success(`Mode ${isDarkMode ? 'terang' : 'gelap'} diaktifkan`);
   };
   
   // Fungsi untuk mengubah pengaturan animasi
@@ -403,6 +389,16 @@ function SettingsPageComponent() {
     }
   };
   
+  // Tema yang tersedia
+  const availableThemes = [
+    { name: 'blue', primary: '#3b82f6', accent: '#60a5fa' },
+    { name: 'purple', primary: '#8b5cf6', accent: '#a78bfa' },
+    { name: 'green', primary: '#10b981', accent: '#34d399' },
+    { name: 'red', primary: '#ef4444', accent: '#f87171' },
+    { name: 'orange', primary: '#f97316', accent: '#fb923c' },
+    { name: 'pink', primary: '#ec4899', accent: '#f472b6' },
+  ];
+  
   // Render tab konten
   const renderTabContent = () => {
     switch (activeTab) {
@@ -597,82 +593,6 @@ function SettingsPageComponent() {
                     )}
                   </motion.button>
                 ))}
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="mb-8">
-              <h3 className="text-lg font-medium mb-4">Mode Tampilan</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleDarkModeChange}
-                  className={`p-5 rounded-xl border relative overflow-hidden ${
-                    !isDarkMode 
-                      ? 'border-2 border-blue-500 shadow-lg' 
-                      : isDarkMode 
-                        ? 'border-gray-700 hover:border-gray-600' 
-                        : 'border-gray-200 hover:border-gray-300'
-                  } flex flex-col items-center transition-all`}
-                >
-                  <div className="w-12 h-12 rounded-full mb-3 bg-gradient-to-r from-blue-400 to-cyan-300 flex items-center justify-center">
-                    <SunIcon className="h-7 w-7 text-white" />
-                  </div>
-                  <span className="font-medium">Mode Terang</span>
-                  {!isDarkMode && (
-                    <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 rounded-full p-0.5 shadow-md">
-                      <CheckIcon className="h-5 w-5 text-green-500" />
-                    </div>
-                  )}
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleDarkModeChange}
-                  className={`p-5 rounded-xl border relative overflow-hidden ${
-                    isDarkMode 
-                      ? 'border-2 border-indigo-500 shadow-lg' 
-                      : isDarkMode 
-                        ? 'border-gray-700 hover:border-gray-600' 
-                        : 'border-gray-200 hover:border-gray-300'
-                  } flex flex-col items-center transition-all`}
-                >
-                  <div className="w-12 h-12 rounded-full mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-center">
-                    <MoonIcon className="h-7 w-7 text-white" />
-                  </div>
-                  <span className="font-medium">Mode Gelap</span>
-                  {isDarkMode && (
-                    <div className="absolute top-2 right-2 bg-white dark:bg-gray-800 rounded-full p-0.5 shadow-md">
-                      <CheckIcon className="h-5 w-5 text-green-500" />
-                    </div>
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="mb-8">
-              <h3 className="text-lg font-medium mb-4">Animasi</h3>
-              <div className={`p-5 rounded-xl border ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-white/50'} flex justify-between items-center shadow-sm transition-all hover:shadow-md`}>
-                <div className="flex items-center">
-                  <div className="mr-3 p-3 rounded-full bg-purple-100 dark:bg-purple-900/60">
-                    <DevicePhoneMobileIcon className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Animasi UI</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Aktifkan animasi untuk pengalaman yang lebih menarik</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleAnimationsChange}
-                  className={`w-14 h-7 rounded-full p-1 transition-colors duration-300 ${settings.appearance.animations ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
-                >
-                  <motion.div 
-                    animate={{ x: settings.appearance.animations ? 28 : 0 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className="w-5 h-5 bg-white rounded-full shadow-md"
-                  />
-                </button>
               </div>
             </motion.div>
           </motion.div>
