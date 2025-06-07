@@ -31,8 +31,15 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   }, []);
   
   // Fungsi untuk mengambil data pengguna
-  const fetchUserData = async () => {
+  const fetchUserData = async (updatedUserData = null) => {
     try {
+      // Jika ada data pengguna yang diberikan, gunakan data tersebut
+      if (updatedUserData) {
+        console.log('Menggunakan data pengguna yang diperbarui:', updatedUserData);
+        setUserData(updatedUserData);
+        return;
+      }
+      
       const token = localStorage.getItem('token');
       
       if (!token) return;
@@ -44,6 +51,7 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       });
       
       if (response.data) {
+        console.log('Data pengguna berhasil diambil dari API:', response.data);
         setUserData(response.data);
       }
     } catch (error) {

@@ -60,8 +60,10 @@ const ProfileModal = ({ isOpen, onClose, userData, refreshUserData }) => {
         return;
       }
       
+      // Kirim data dengan properti name dan fullName untuk memastikan kompatibilitas
       const profileData = {
-        name: profileForm.name
+        name: profileForm.name,
+        fullName: profileForm.name
       };
       
       const response = await axios.put(
@@ -77,10 +79,22 @@ const ProfileModal = ({ isOpen, onClose, userData, refreshUserData }) => {
       if (response.status === 200) {
         toast.success('Profil berhasil diperbarui');
         
-        // Refresh data pengguna
-        if (refreshUserData) {
+        // Update userData langsung dari respons jika tersedia
+        if (response.data && response.data.user) {
+          // Jika respons berisi data user dalam properti user
+          refreshUserData(response.data.user);
+        } else if (response.data) {
+          // Jika respons langsung berisi data user
+          refreshUserData(response.data);
+        } else {
+          // Jika tidak ada data dalam respons, refresh data dari API
           refreshUserData();
         }
+        
+        // Tutup modal setelah berhasil
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -132,6 +146,11 @@ const ProfileModal = ({ isOpen, onClose, userData, refreshUserData }) => {
           newPassword: '',
           confirmPassword: ''
         });
+        
+        // Tutup modal setelah berhasil
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       }
     } catch (error) {
       console.error('Error updating password:', error);
