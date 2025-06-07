@@ -126,11 +126,12 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
         variants={headerVariants}
         initial="hidden"
         animate="visible"
-        className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-45 rounded-xl"
+        className="mx-2 sm:mx-4 md:mx-6 mb-6 p-4 sm:p-5 flex justify-between items-center sticky top-2 z-50 rounded-xl"
         style={{
           ...glassEffect,
           willChange: 'transform, opacity',
-          transform: 'translateZ(0)'
+          transform: 'translateZ(0)',
+          position: 'sticky'
         }}
       >
         <div className="flex items-center">
@@ -294,6 +295,23 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
                 </motion.div>
               )}
             </motion.button>
+            
+            {/* Profile Button for Mobile */}
+            <Link to="/profile">
+              <motion.div
+                variants={itemVariants}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+              >
+                <div 
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium"
+                  title={userName || 'Profil Pengguna'}
+                >
+                  {userInitial}
+                </div>
+              </motion.div>
+            </Link>
             
             {/* Settings Button for Mobile */}
             <Link to="/settings">
