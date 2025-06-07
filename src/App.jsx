@@ -14,6 +14,7 @@ import AnalysisPage from './pages/AnalysisPage';
 import ReportPage from './pages/ReportPage';
 import AddPatientPage from './pages/AddPatientPage';
 import PatientProfilePage from './pages/PatientProfilePage';
+import ProfilePage from './pages/ProfilePage';
 import Sidebar from './components/common/Sidebar';
 import Header from './components/common/Header';
 import { safeLogout } from './utils/logoutHelper';
@@ -42,6 +43,7 @@ function App() {
     else if (path === '/history') setCurrentTitle('History');
     else if (path === '/analysis') setCurrentTitle('Analysis');
     else if (path === '/report') setCurrentTitle('Report');
+    else if (path === '/profile') setCurrentTitle('Profil');
   }, [location.pathname]);
 
   // Handle token from URL query parameter
@@ -293,6 +295,7 @@ function App() {
             <Route path="/analysis-result" element={<AnalysisPage userId={userId} />} />
             <Route path="/report" element={<ReportPage userId={userId} />} />
             <Route path="/settings" element={<SettingsPage userId={userId} />} />
+            <Route path="/profile" element={<ProfilePage userId={userId} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>

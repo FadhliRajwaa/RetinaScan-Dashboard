@@ -5,6 +5,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import NotificationCenter from '../notifications/NotificationCenter';
+import axios from 'axios';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   const { theme, isMobile, isDarkMode } = useTheme();
@@ -14,6 +15,37 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
     toggleNotification, 
     closeNotification 
   } = useNotification();
+  
+  const [userInitial, setUserInitial] = useState('A');
+  const [userName, setUserName] = useState('');
+  
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await axios.get(`${API_URL}/api/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (response.data) {
+          const name = response.data.fullName || response.data.name || '';
+          setUserName(name);
+          if (name) {
+            setUserInitial(name.charAt(0).toUpperCase());
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, []);
   
   const headerVariants = {
     hidden: { y: -50, opacity: 0 },
@@ -220,8 +252,11 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
               whileTap={{ scale: 0.95 }}
               className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
-                A
+              <div 
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium"
+                title={userName || 'Profil Pengguna'}
+              >
+                {userInitial}
               </div>
             </motion.div>
           </Link>
