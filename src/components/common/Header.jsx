@@ -5,8 +5,6 @@ import { useNotification } from '../../context/NotificationContext';
 import { BellIcon, Cog6ToothIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import NotificationCenter from '../notifications/NotificationCenter';
-import ProfileModal from './ProfileModal';
-import axios from 'axios';
 
 function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
   const { theme, isMobile, isDarkMode } = useTheme();
@@ -16,63 +14,6 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
     toggleNotification, 
     closeNotification 
   } = useNotification();
-  
-  // State untuk data pengguna
-  const [userData, setUserData] = useState(null);
-  // State untuk modal profil
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  
-  // API URL
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  
-  // Effect untuk mengambil data pengguna
-  useEffect(() => {
-    fetchUserData();
-  }, []);
-  
-  // Fungsi untuk mengambil data pengguna
-  const fetchUserData = async (updatedUserData = null) => {
-    try {
-      // Jika ada data pengguna yang diberikan, gunakan data tersebut
-      if (updatedUserData) {
-        console.log('Menggunakan data pengguna yang diperbarui:', updatedUserData);
-        setUserData(updatedUserData);
-        return;
-      }
-      
-      const token = localStorage.getItem('token');
-      
-      if (!token) return;
-      
-      const response = await axios.get(`${API_URL}/api/user/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      if (response.data) {
-        console.log('Data pengguna berhasil diambil dari API:', response.data);
-        setUserData(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
-  };
-  
-  // Fungsi untuk mendapatkan inisial dari nama pengguna
-  const getUserInitials = () => {
-    if (!userData) return 'A';
-    
-    const name = userData.name || userData.fullName || '';
-    if (!name) return 'A';
-    
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-  };
-  
-  // Fungsi untuk toggle modal profil
-  const toggleProfileModal = () => {
-    setIsProfileModalOpen(!isProfileModalOpen);
-  };
   
   const headerVariants = {
     hidden: { y: -50, opacity: 0 },
@@ -273,16 +214,17 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
             </motion.button>
           </Link>
           
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200 cursor-pointer"
-            onClick={toggleProfileModal}
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
-              {getUserInitials()}
-            </div>
-          </motion.div>
+          <Link to="/profile">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+                A
+              </div>
+            </motion.div>
+          </Link>
         </motion.div>
 
         {/* Hamburger button in the header for mobile */}
@@ -331,19 +273,6 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
               </motion.button>
             </Link>
             
-            {/* Profile Button for Mobile */}
-            <motion.div
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-1 rounded-lg bg-white/50 hover:bg-white/80 transition-colors duration-200 mr-2 cursor-pointer"
-              onClick={toggleProfileModal}
-            >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                {getUserInitials()}
-              </div>
-            </motion.div>
-            
             <motion.button
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
@@ -375,14 +304,6 @@ function Header({ title, toggleMobileMenu, isMobileMenuOpen }) {
       
       {/* Notification Center */}
       <NotificationCenter isOpen={isNotificationOpen} onClose={closeNotification} />
-      
-      {/* Profile Modal */}
-      <ProfileModal 
-        isOpen={isProfileModalOpen} 
-        onClose={toggleProfileModal} 
-        userData={userData} 
-        refreshUserData={fetchUserData}
-      />
     </>
   );
 }
